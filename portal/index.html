@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#166534">
+    <title>Plantation Operation</title>
+    <link rel="icon" type="image/png" href="../palm-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Plantation Operation portal: the front door of this system. Each
+           card is one module; Stock is the classic app in ../index.html. */
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: #0F172A;
+               background: linear-gradient(160deg, #F0FDF4 0%, #ECFDF5 45%, #F8FAFC 100%); }
+        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px;
+               background: rgba(255,255,255,.75); backdrop-filter: blur(10px); border-bottom: 1px solid #E2E8F0; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; color: #14532D; }
+        .brand .leaf { width: 34px; height: 34px; border-radius: 10px; background: #166534; color: #fff; display: grid; place-items: center; font-size: 18px; }
+        .who { font-size: 12.5px; color: #475569; text-align: right; }
+        .who b { color: #0F172A; display: block; font-size: 13px; }
+        main { max-width: 960px; margin: 0 auto; padding: 36px 20px 60px; }
+        h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.01em; }
+        .sub { margin: 0 0 8px; color: #475569; font-size: 14.5px; }
+        .ctx { display: inline-flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 26px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .card { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: #fff; border: 1px solid #E2E8F0;
+                box-shadow: 0 2px 10px rgba(15,23,42,.05); text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
+        .card .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; color: #fff; }
+        .card h2 { margin: 4px 0 0; font-size: 17px; }
+        .card p { margin: 0; font-size: 13px; color: #64748B; line-height: 1.45; }
+        .card .go { margin-top: auto; font-size: 13px; font-weight: 600; color: #166534; }
+        .note { margin: 0 0 18px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
+        .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+        .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .splash { position: fixed; inset: 0; display: grid; place-items: center; background: #F0FDF4; z-index: 10; font-weight: 600; color: #14532D; }
+        .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes s { to { transform: rotate(360deg); } }
+        footer { text-align: center; font-size: 12px; color: #94A3B8; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div id="splash" class="splash" style="display:none;"><div><div class="spin"></div>Signing in from MJM Intranet…</div></div>
+    <header class="top">
+        <div class="brand"><span class="leaf">&#127796;</span> Plantation Operation</div>
+        <div class="who" id="who"></div>
+    </header>
+    <main>
+        <h1>Plantation Operation</h1>
+        <p class="sub">Choose a module.</p>
+        <div class="ctx" id="ctx"></div>
+        <div id="note"></div>
+        <div class="grid" id="grid"></div>
+    </main>
+    <footer>MJM Group · Plantation Operation</footer>
+
+<script>
+(function () {
+    // Same Supabase project and keys as the classic app (../index.html), so a
+    // session saved here is the session the app starts with.
+    const SUPABASE_URL = 'https://eukvdlyzhyjohkjqbqjb.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1a3ZkbHl6aHlqb2hranFicWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTg5MzYsImV4cCI6MjA5NDI3NDkzNn0.czKzWGeiujgZ_VpOBZjFaxDjGCca-_-aZ41N5T0gjmk';
+    const SESSION_KEY = 'opp_auth_session';
+    const APP = '../index.html';
+    const CTX_KEYS = ['gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
+    const SSO_ERRORS = {
+        err_forbidden:      'you do not have access to this module in the Intranet',
+        err_inactive:       'your account has been deactivated',
+        err_sso_invalid:    'the link has expired or was already used. Please open it from the Intranet again',
+        err_sso_not_set_up: 'the Intranet connection is not set up yet (missing API key)',
+        err_network:        'network error',
+    };
+
+    // The modules of this system. `module` is the deep link the classic app understands.
+    const MODULES = [
+        { module: 'stock',  title: 'Stock',             icon: '&#128230;', bg: '#166534',
+          desc: 'Fertiliser, chemical and seedling stock, transactions, ledger and records.' },
+        { module: 'report', title: 'Management Report', icon: '&#128202;', bg: '#0F766E',
+          desc: 'Penilaian Prestasi Ladang: monthly estate performance charts.' },
+    ];
+
+    const params = new URLSearchParams(location.search);
+    const ctx = {};
+    CTX_KEYS.forEach((k) => { const v = (params.get(k) || '').trim(); if (v) ctx[k] = v; });
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
+    function appLink(module) {
+        const u = new URL(APP, location.href);
+        u.searchParams.set('module', module);
+        Object.keys(ctx).forEach((k) => u.searchParams.set(k, ctx[k]));
+        return u.pathname + u.search;
+    }
+    function cleanUrl() {
+        try {
+            const u = new URL(location.href);
+            ['gw_token', 'module'].forEach((k) => u.searchParams.delete(k));
+            history.replaceState(null, '', u.pathname + u.search + u.hash);
+        } catch (e) {}
+    }
+    function draw(session, errorText) {
+        const who = document.getElementById('who');
+        who.innerHTML = session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '';
+        const chips = [];
+        if (ctx.gw_company_name || ctx.gw_company) chips.push('&#127970; ' + esc(ctx.gw_company_name || ctx.gw_company));
+        if (ctx.gw_estate) chips.push('&#128205; ' + esc(ctx.gw_estate));
+        document.getElementById('ctx').innerHTML = chips.map((c) => '<span class="chip">' + c + '</span>').join('');
+        const note = document.getElementById('note');
+        if (errorText) note.innerHTML = '<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>';
+        else if (!session) note.innerHTML = '<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>';
+        else note.innerHTML = '';
+        document.getElementById('grid').innerHTML = MODULES.map((m) =>
+            '<a class="card" href="' + esc(appLink(m.module)) + '">' +
+            '<div class="ic" style="background:' + m.bg + '">' + m.icon + '</div>' +
+            '<h2>' + esc(m.title) + '</h2><p>' + esc(m.desc) + '</p>' +
+            '<span class="go">Open &rsaquo;</span></a>').join('');
+    }
+
+    // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
+    // token is redeemed here, once; the module pages then start signed in.
+    async function signInFromIntranet(token) {
+        const splash = document.getElementById('splash');
+        splash.style.display = '';
+        let code = 'err_network';
+        try {
+            const res = await fetch(SUPABASE_URL + '/functions/v1/stock-sso', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY },
+                body: JSON.stringify({ token, module: 'stock' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data && data.session && data.session.email) {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(data.session));
+                if (data.auth && data.auth.access_token && window.supabase) {
+                    try {
+                        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+                        await sb.auth.setSession(data.auth);
+                    } catch (e) {}
+                }
+                splash.style.display = 'none';
+                return { session: data.session };
+            }
+            code = (data && data.error) || ('http_' + res.status);
+        } catch (e) {
+            console.warn('[SSO] sign-in from Intranet failed', e);
+        }
+        splash.style.display = 'none';
+        localStorage.removeItem(SESSION_KEY);
+        return { error: SSO_ERRORS[code] || code };
+    }
+
+    (async () => {
+        const token = params.get('gw_token');
+        const wanted = params.get('module'); // Intranet icon that points straight at one module
+        let session = loadSession(), error = '';
+        if (token) {
+            const r = await signInFromIntranet(token);
+            session = r.session || null;
+            error = r.error || '';
+        }
+        cleanUrl();
+        if (session && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
+        draw(session, error);
+    })();
+})();
+</script>
+</body>
+</html>
