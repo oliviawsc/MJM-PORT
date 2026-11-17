@@ -240,6 +240,8 @@
         .mr-save-btn { display:inline-flex; align-items:center; padding:8px 16px; border-radius:10px; border:0; background:#166534; color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
         .mr-save-btn[disabled] { opacity:.6; cursor:default; }
         .mr-card .mr-pending { text-align:center; font-size:11.5px; color:#B45309; font-style:italic; margin:2px 0 0; }
+        .mr-back { display:inline-block; margin-bottom:4px; font-size:12.5px; font-weight:600; color:#166534; text-decoration:none; }
+        .mr-back:hover { text-decoration:underline; }
         .mr-print-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; border:1px solid #CBD5E1; background:#fff; color:#0F172A; font-size:13px; font-weight:600; cursor:pointer; }
         .mr-print-btn:hover { background:#F1F5F9; }
         .mr-sheet { background:#fff; border:1px solid #E2E8F0; border-radius:14px; padding:22px 22px 18px; box-shadow:0 1px 3px rgba(0,0,0,.06); font-family:"Times New Roman", Times, serif; color:#111; }
@@ -1322,8 +1324,7 @@
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_tools">Tools</p>
             <button data-target="tools" class="nav-item" onclick="navigateToSection('tools')">                  <span class="nav-icon">&#128295;</span><span class="sb-label" data-i18n="sb_lbl_tools">Tools / Peralatan</span></button>
             <button data-target="toolsrecord" class="nav-item" onclick="navigateToSection('toolsrecord')">            <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_toolsrecord">Tools Record</span></button>
-            <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_mgmtreport">Management Report</p>
-            <button data-target="mgmtreport" class="nav-item" onclick="navigateToSection('mgmtreport')">            <span class="nav-icon">&#128202;</span><span class="sb-label" data-i18n="sb_lbl_mgmtreport">Management Report</span></button>
+            <!-- Management Report is opened from the Plantation Operation portal (../portal/), not from inside Stock -->
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Admin</p>
             <button data-target="settings" id="navSettings" class="nav-item hidden">
                 <span class="nav-icon">&#9881;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_settings">Settings</span>
@@ -1576,14 +1577,6 @@
                         <span class="home-card-title" data-i18n="home_card_tools">Tools</span>
                     </button>
                     <!-- Management Report -->
-                    <button class="home-card" id="homeCardMgmtReport" onclick="navigateToSection('mgmtreport')">
-                        <div class="home-card-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
-                            </svg>
-                        </div>
-                        <span class="home-card-title" data-i18n="home_card_mgmtreport">Management Report</span>
-                    </button>
                     <!-- Mobile Interface Preview -->
                     <button class="home-card" id="homeCardMobile" onclick="previewMobileInterface()">
                         <div class="home-card-icon">
@@ -3398,6 +3391,7 @@
         <section id="mgmtreport" class="page-section">
             <div class="mr-toolbar">
                 <div>
+                    <a href="portal/" class="mr-back">&lsaquo; <span data-i18n="mgmtreport_back">Plantation Operation</span></a>
                     <h2 class="text-3xl font-bold" data-i18n="page_mgmtreport">📊 Management Report</h2>
                     <p class="text-sm text-green-700" data-i18n="page_mgmtreport_sub">Estate performance evaluation, month by month.</p>
                 </div>
@@ -9121,6 +9115,7 @@ const I18N = {
         page_mgmtreport_sub:      'Estate performance evaluation, month by month.',
         mgmtreport_print:         'Print / PDF',
         mgmtreport_month:         'Report month',
+        mgmtreport_back:          'Plantation Operation',
         gw_company_nomatch:       'No estate here matches Intranet company "{c}". Choose the estate above, or set the exact estate name in Intranet Admin, Master Manage, Connector.',
         gw_company_ambiguous:     'Intranet company "{c}" could match several estates ({e}). Choose the estate above, or set the exact estate name in Intranet Admin, Master Manage, Connector.',
         mgmtreport_input:         'Input figures',
@@ -9642,6 +9637,7 @@ const I18N = {
         page_mgmtreport_sub:      'Penilaian prestasi ladang, bulan demi bulan.',
         mgmtreport_print:         'Cetak / PDF',
         mgmtreport_month:         'Bulan laporan',
+        mgmtreport_back:          'Plantation Operation',
         gw_company_nomatch:       'Tiada ladang di sini sepadan dengan syarikat Intranet "{c}". Pilih ladang di atas, atau tetapkan nama ladang yang tepat di Intranet Admin, Master Manage, Connector.',
         gw_company_ambiguous:     'Syarikat Intranet "{c}" boleh sepadan dengan beberapa ladang ({e}). Pilih ladang di atas, atau tetapkan nama ladang yang tepat di Intranet Admin, Master Manage, Connector.',
         mgmtreport_input:         'Masukkan angka',
