@@ -3360,6 +3360,23 @@
                 <p class="text-xs text-gray-500 mb-4" data-i18n="mgmtreport_src_this_sub">Reports from this system.</p>
                 <div id="mgmtReportLinks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
             </div>
+            <!-- Field Planting Chart -->
+            <div class="bg-white rounded-xl shadow mb-6" style="overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#064E3B 0%,#059669 100%);padding:20px 24px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <h3 style="color:#fff;font-size:15px;font-weight:700;margin:0 0 2px;" data-i18n="dash_seedling_plant_title">🌱 Field Planting</h3>
+                        <p style="color:#A7F3D0;font-size:11.5px;margin:0;" data-i18n="dash_seedling_plant_sub">Monthly planting vs cumulative — Oil Palm Seedling Out transactions</p>
+                    </div>
+                    <select id="mgmtFieldPlantYear" onchange="renderMgmtFieldPlantingChart()"
+                        style="background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;outline:none;">
+                    </select>
+                </div>
+                <p id="mgmtFieldPlantEmpty" class="hidden" style="text-align:center;color:#94A3B8;padding:40px 0;font-size:13px;" data-i18n="dash_seedling_plant_empty">No seedling planting records yet.</p>
+                <div id="mgmtFieldPlantWrap" style="padding:16px 24px 24px;position:relative;height:300px;">
+                    <canvas id="mgmtFieldPlantCanvas"></canvas>
+                </div>
+            </div>
+
             <div class="bg-white p-6 rounded-xl shadow">
                 <h3 class="text-lg font-bold text-green-900 mb-1" data-i18n="mgmtreport_src_other">Other systems</h3>
                 <p class="text-sm text-gray-500" data-i18n="mgmtreport_src_other_sub">Reports from other operation systems will appear here once they are connected.</p>
@@ -7348,16 +7365,24 @@ function renderRainfallChart() {
 /* -----------------------------------------------------------------
    DASHBOARD — SEEDLING PLANTING MIXED CHART (bar + line)
    ----------------------------------------------------------------- */
-var seedlingPlantChartInstance = null;
+/* Instances keyed by canvas id */
+var _fieldPlantChartInstances = {};
 
-function renderSeedlingPlantingChart() {
-    var empty  = document.getElementById('seedlingPlantEmpty');
-    var wrap   = document.getElementById('seedlingPlantWrap');
-    var canvas = document.getElementById('seedlingPlantCanvas');
-    var yearSel = document.getElementById('seedlingPlantYear');
+/**
+ * Shared renderer — builds the Field Planting mixed chart into any canvas.
+ * opts: { canvasId, yearSelId, emptyId, wrapId }
+ */
+function _renderFieldPlantingChartTo(opts) {
+    var empty  = document.getElementById(opts.emptyId);
+    var wrap   = document.getElementById(opts.wrapId);
+    var canvas = document.getElementById(opts.canvasId);
+    var yearSel = document.getElementById(opts.yearSelId);
     if (!empty || !wrap || !canvas || !yearSel) return;
 
-    if (seedlingPlantChartInstance) { seedlingPlantChartInstance.destroy(); seedlingPlantChartInstance = null; }
+    if (_fieldPlantChartInstances[opts.canvasId]) {
+        _fieldPlantChartInstances[opts.canvasId].destroy();
+        _fieldPlantChartInstances[opts.canvasId] = null;
+    }
 
     var d = I18N[currentLang] || I18N['en'];
     var monthsShort = d.months_short || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -7448,7 +7473,7 @@ function renderSeedlingPlantingChart() {
     var labelMonthly    = d.dash_seedling_monthly    || 'Monthly';
     var labelCumulative = d.dash_seedling_cumulative || 'Cumulative';
 
-    seedlingPlantChartInstance = new Chart(canvas, {
+    _fieldPlantChartInstances[opts.canvasId] = new Chart(canvas, {
         type: 'bar',
         plugins: [mixedLabelPlugin],
         data: {
@@ -7529,6 +7554,26 @@ function renderSeedlingPlantingChart() {
                 }
             }
         }
+    });
+}
+
+/* Thin wrappers — Dashboard and Management Report each call the shared renderer */
+function renderSeedlingPlantingChart() {
+    _renderFieldPlantingChartTo({
+        canvasId: 'seedlingPlantCanvas',
+        yearSelId: 'seedlingPlantYear',
+        emptyId:  'seedlingPlantEmpty',
+        wrapId:   'seedlingPlantWrap',
+    });
+}
+
+var _mgmtFieldPlantChartInstance = null;
+function renderMgmtFieldPlantingChart() {
+    _renderFieldPlantingChartTo({
+        canvasId: 'mgmtFieldPlantCanvas',
+        yearSelId: 'mgmtFieldPlantYear',
+        emptyId:  'mgmtFieldPlantEmpty',
+        wrapId:   'mgmtFieldPlantWrap',
     });
 }
 
@@ -9728,6 +9773,7 @@ function setLang(lang) {
     if (typeof renderChemUsageTracker === 'function') renderChemUsageTracker();
     if (typeof renderRainfallChart  === 'function') renderRainfallChart();
     if (typeof renderSeedlingPlantingChart === 'function') renderSeedlingPlantingChart();
+    if (typeof renderMgmtFieldPlantingChart === 'function') renderMgmtFieldPlantingChart();
     if (typeof renderRainfallReport  === 'function') renderRainfallReport();
     if (typeof renderRainfallSummary === 'function') renderRainfallSummary();
     if (typeof renderFertRecord === 'function') renderFertRecord();
@@ -16582,7 +16628,7 @@ function navigateToSection(target) {
     if (target === 'rainfallsummary') renderRainfallSummary();
     if (target === 'tools') renderToolsPage();
     if (target === 'toolsrecord') renderToolsRecord();
-    if (target === 'mgmtreport') renderMgmtReport();
+    if (target === 'mgmtreport') { renderMgmtReport(); renderMgmtFieldPlantingChart(); }
     if (target === 'mobile_rainfall') {
         const el = document.getElementById('mobileRfDate');
         if (el && !el.value) el.valueAsDate = new Date();
