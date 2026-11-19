@@ -16909,32 +16909,40 @@ function mgmtReportFigures(estate, ym) {
         put('tanam_kum', cum(_tanamForCum));
     }
 
-    // Jumlah Baja Ditabur (Pencapaian) — cumulative kg/palm from main P-rounds only
-    // Excludes INFILLING and any round without a P<n> pattern in its name.
-    const _mainRoundIds = new Set(
-        (typeof manuringRounds !== 'undefined' ? manuringRounds : [])
-            .filter((r) => {
-                const n = (r.name || '').toUpperCase();
-                return n.indexOf('INFILLING') === -1 && /\bP\d+\b/.test(n);
-            })
-            .map((r) => String(r.id))
-    );
-    const _totalPalms = (typeof locations !== 'undefined' ? locations : [])
-        .reduce((s, l) => s + (parseInt(l.numPalms, 10) || 0), 0);
-    if (_mainRoundIds.size > 0 && _totalPalms > 0) {
-        const _bajaMonthly = new Array(12).fill(0);
-        (typeof transactions !== 'undefined' ? transactions : []).forEach((t) => {
-            if (t.type !== 'Out' || !t.manuringRoundId || !t.date) return;
-            if (!_mainRoundIds.has(String(t.manuringRoundId))) return;
-            if (parseInt(t.date.slice(0, 4), 10) !== year) return;
-            const mo = parseInt(t.date.slice(5, 7), 10) - 1;
-            if (mo >= 0 && mo < 12) _bajaMonthly[mo] += parseFloat(t.qty) || 0;
+    // Jumlah Baja Ditabur — Sasaran and Pencapaian from main P-rounds (not INFILLING).
+    // Sasaran  : cumulative kg/palm target — each round's kgPerPalm added from its target month onward.
+    // Pencapaian: same, but a round only counts when its % applied (actual ÷ budget) >= 95 %.
+    const _mainRounds = (typeof manuringRounds !== 'undefined' ? manuringRounds : [])
+        .filter((r) => { const n = (r.name || '').toUpperCase(); return n.indexOf('INFILLING') === -1 && /\bP\d+\b/.test(n); });
+    if (_mainRounds.length > 0) {
+        const _bSasaran     = new Array(12).fill(0);
+        const _bPencapaian  = new Array(12).fill(0);
+        _mainRounds.forEach((r) => {
+            const tp = r.targetPeriod || r.targetperiod || '';
+            if (!tp) return;
+            if (parseInt(tp.slice(0, 4), 10) !== year) return;
+            const tpMo    = parseInt(tp.slice(5, 7), 10) - 1;
+            if (tpMo < 0 || tpMo > 11) return;
+            const kgPalm  = parseFloat(r.kgPerPalm) || 0;
+            if (kgPalm <= 0) return;
+            // Sasaran: accumulate dosage from the target month onward
+            for (let m = tpMo; m < 12; m++) _bSasaran[m] += kgPalm;
+            // Pencapaian: only add if round is >= 95 % applied
+            const kgPerUnit    = getKgPerUnit(r);
+            const budget       = calcRoundBudget(r);            // in bags
+            if (budget <= 0) return;
+            const appliedKg    = (typeof transactions !== 'undefined' ? transactions : [])
+                .filter((t) => String(t.manuringRoundId) === String(r.id) && t.type === 'Out')
+                .reduce((s, t) => s + (parseFloat(t.qty) || 0), 0);
+            const appliedBags  = kgPerUnit > 0 ? appliedKg / kgPerUnit : appliedKg;
+            const pctApplied   = (appliedBags / budget) * 100;
+            if (pctApplied >= 95) {
+                for (let m = tpMo; m < 12; m++) _bPencapaian[m] += kgPalm;
+            }
         });
-        // Convert monthly kg totals → cumulative kg/palm
-        const _bajaCum = cum(_bajaMonthly.map((v) => Math.round((v / _totalPalms) * 1000) / 1000));
-        if (_bajaCum.some((v) => v != null && v > 0)) {
-            put('baja_pencapaian', _bajaCum);
-        }
+        const _r2 = (arr) => arr.map((v) => Math.round(v * 100) / 100);
+        if (_bSasaran.some((v) => v > 0))    put('baja_sasaran',    _r2(_bSasaran));
+        if (_bPencapaian.some((v) => v > 0)) put('baja_pencapaian', _r2(_bPencapaian));
     }
 
     return { series, notes: hit ? hit.notes || [] : [], sample: !!hit && !fromDb, fromDb };
