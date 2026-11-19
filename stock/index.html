@@ -16884,6 +16884,35 @@ function mgmtReportFigures(estate, ym) {
         });
         put('tanam_kum', cum(_tanamForCum));
     }
+
+    // Jumlah Baja Ditabur (Pencapaian) — cumulative kg/palm from main P-rounds only
+    // Excludes INFILLING and any round without a P<n> pattern in its name.
+    const _mainRoundIds = new Set(
+        (typeof manuringRounds !== 'undefined' ? manuringRounds : [])
+            .filter((r) => {
+                const n = (r.name || '').toUpperCase();
+                return n.indexOf('INFILLING') === -1 && /\bP\d+\b/.test(n);
+            })
+            .map((r) => String(r.id))
+    );
+    const _totalPalms = (typeof locations !== 'undefined' ? locations : [])
+        .reduce((s, l) => s + (parseInt(l.numPalms, 10) || 0), 0);
+    if (_mainRoundIds.size > 0 && _totalPalms > 0) {
+        const _bajaMonthly = new Array(12).fill(0);
+        (typeof transactions !== 'undefined' ? transactions : []).forEach((t) => {
+            if (t.type !== 'Out' || !t.manuringRoundId || !t.date) return;
+            if (!_mainRoundIds.has(String(t.manuringRoundId))) return;
+            if (parseInt(t.date.slice(0, 4), 10) !== year) return;
+            const mo = parseInt(t.date.slice(5, 7), 10) - 1;
+            if (mo >= 0 && mo < 12) _bajaMonthly[mo] += parseFloat(t.qty) || 0;
+        });
+        // Convert monthly kg totals → cumulative kg/palm
+        const _bajaCum = cum(_bajaMonthly.map((v) => Math.round((v / _totalPalms) * 1000) / 1000));
+        if (_bajaCum.some((v) => v != null && v > 0)) {
+            put('baja_pencapaian', _bajaCum);
+        }
+    }
+
     return { series, notes: hit ? hit.notes || [] : [], sample: !!hit && !fromDb, fromDb };
 }
 
