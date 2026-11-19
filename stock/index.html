@@ -3683,8 +3683,14 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Category</label>
-                                <input id="itemCategory" type="text" placeholder="e.g. Fertilizer, Chemical, Oil Palm Seedling" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                                <p class="text-xs text-gray-400 mt-1">Type any category name.</p>
+                                <input id="itemCategory" type="text" list="itemCategoryList" placeholder="Select or type category…" class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
+                                <datalist id="itemCategoryList">
+                                    <option value="Fertilizer">
+                                    <option value="Chemical">
+                                    <option value="Oil Palm Seedling">
+                                    <option value="Tools">
+                                </datalist>
+                                <p class="text-xs text-gray-400 mt-1">Choose a standard category or type a custom one.</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Base Unit <span class="text-red-500">*</span></label>
