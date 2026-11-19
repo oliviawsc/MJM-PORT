@@ -5717,15 +5717,9 @@ function renderRoundProgress() {
     if (manuringRounds.length === 0) {
         body.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">No manuring rounds defined yet.</td></tr>';
     } else {
-        // Sort by targetPeriod ascending; rounds without targetPeriod go last
-        const sorted = [...manuringRounds].sort((a, b) => {
-            const tpA = a.targetPeriod || a.targetperiod || '';
-            const tpB = b.targetPeriod || b.targetperiod || '';
-            if (!tpA && !tpB) return 0;
-            if (!tpA) return 1;
-            if (!tpB) return -1;
-            return tpA.localeCompare(tpB);
-        });
+        // Sort by round name (P1 < P2 < … < P10) using natural numeric order
+        const sorted = [...manuringRounds].sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
         sorted.forEach(r => {
             const totalApplied = calcRoundTotalApplied(r.id);
             const budget       = calcRoundBudget(r);
@@ -5776,15 +5770,10 @@ function renderRoundProgress() {
         });
     });
 
-    // Sort by round targetPeriod ascending, then by blockName
+    // Sort by round name (P1 < P2 < … < P10), then by blockName
     blockRows.sort((a, b) => {
-        const tpA = a.r.targetPeriod || a.r.targetperiod || '';
-        const tpB = b.r.targetPeriod || b.r.targetperiod || '';
-        if (tpA !== tpB) {
-            if (!tpA) return 1;
-            if (!tpB) return -1;
-            return tpA.localeCompare(tpB);
-        }
+        const rCmp = (a.r.name || '').localeCompare(b.r.name || '', undefined, { numeric: true, sensitivity: 'base' });
+        if (rCmp !== 0) return rCmp;
         return a.blockName.localeCompare(b.blockName);
     });
 
@@ -14417,7 +14406,8 @@ function applyFilterRpBlock() {
     });
 }
 function populateRpFilters() {
-    const roundNames = [...new Set(manuringRounds.map(r => r.name).filter(Boolean))].sort();
+    const roundNames = [...new Set(manuringRounds.map(r => r.name).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     const fertNames  = [...new Set(manuringRounds.map(r => {
         const it = items.find(i => String(i.id) === String(r.fertilizerItemId));
         return it ? it.name : null;
