@@ -6,7 +6,7 @@ import { defineConfig, type Plugin } from 'vitest/config';
 
 /** Until the React app has every section, the live site (GitHub Pages
  *  "deploy from branch" = main root) serves the CLASSIC app from the root
- *  index.html. The React entry is app.html. In the build output the React
+ *  stock/index.html (the root index.html is the Plantation Operation portal). The React entry is app.html. In the build output the React
  *  app becomes dist/index.html and the classic app is shipped at /legacy/.
  *  Cutover: swap the two (see docs/security-cutover.md). */
 function arrangeOutput(): Plugin {
@@ -17,7 +17,7 @@ function arrangeOutput(): Plugin {
       const dist = resolve(__dirname, 'dist');
       renameSync(resolve(dist, 'app.html'), resolve(dist, 'index.html'));
       mkdirSync(resolve(dist, 'legacy'), { recursive: true });
-      for (const f of ['index.html', 'sw.js', 'manifest.json']) copyFileSync(resolve(__dirname, f), resolve(dist, 'legacy', f));
+      for (const f of ['index.html', 'sw.js', 'manifest.json']) copyFileSync(resolve(__dirname, 'stock', f), resolve(dist, 'legacy', f));
     },
   };
 }
