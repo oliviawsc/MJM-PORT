@@ -5717,9 +5717,8 @@ function renderRoundProgress() {
     if (manuringRounds.length === 0) {
         body.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">No manuring rounds defined yet.</td></tr>';
     } else {
-        // Sort by round name (P1 < P2 < … < P10) using natural numeric order
-        const sorted = [...manuringRounds].sort((a, b) =>
-            (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
+        // Sort: main rounds (P1, P2…) first, then INFILLING, then other
+        const sorted = [...manuringRounds].sort((a, b) => compareRoundNames(a.name, b.name));
         sorted.forEach(r => {
             const totalApplied = calcRoundTotalApplied(r.id);
             const budget       = calcRoundBudget(r);
@@ -5770,9 +5769,9 @@ function renderRoundProgress() {
         });
     });
 
-    // Sort by round name (P1 < P2 < … < P10), then by blockName
+    // Sort: main rounds first (P1, P2…), then INFILLING, then other; then by blockName
     blockRows.sort((a, b) => {
-        const rCmp = (a.r.name || '').localeCompare(b.r.name || '', undefined, { numeric: true, sensitivity: 'base' });
+        const rCmp = compareRoundNames(a.r.name, b.r.name);
         if (rCmp !== 0) return rCmp;
         return a.blockName.localeCompare(b.blockName);
     });
@@ -5819,6 +5818,23 @@ function renderRoundProgress() {
     });
 
     populateRpFilters();
+}
+
+/* -----------------------------------------------------------------
+   ROUND NAME SORT — main rounds (P1, P2…) first, then INFILLING,
+   then anything else; numeric within each group.
+   ----------------------------------------------------------------- */
+function compareRoundNames(a, b) {
+    function key(name) {
+        var n = (name || '').toUpperCase();
+        var group = n.indexOf('INFILLING') !== -1 ? 1 : 0;
+        var m = n.match(/\bP(\d+)\b/);
+        return [group, m ? parseInt(m[1], 10) : 9999];
+    }
+    var ka = key(a), kb = key(b);
+    if (ka[0] !== kb[0]) return ka[0] - kb[0];
+    if (ka[1] !== kb[1]) return ka[1] - kb[1];
+    return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
 }
 
 /* -----------------------------------------------------------------
@@ -6645,10 +6661,8 @@ function renderManuringPctChart() {
                  pct:pct, fertilizer:r.fertilizerName||'--', monthlyBags:monthlyBags, pkgUnit:pkgUnit };
     });
 
-    // Sort cards by round name: P1, P2 … P10 (natural numeric order)
-    roundData.sort(function(a, b) {
-        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
-    });
+    // Sort: main rounds (P1, P2…) first, then INFILLING, then other
+    roundData.sort(function(a, b) { return compareRoundNames(a.name, b.name); });
 
     cardBox.innerHTML = '';
 
@@ -14412,7 +14426,7 @@ function applyFilterRpBlock() {
 }
 function populateRpFilters() {
     const roundNames = [...new Set(manuringRounds.map(r => r.name).filter(Boolean))]
-        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+        .sort(compareRoundNames);
     const fertNames  = [...new Set(manuringRounds.map(r => {
         const it = items.find(i => String(i.id) === String(r.fertilizerItemId));
         return it ? it.name : null;
