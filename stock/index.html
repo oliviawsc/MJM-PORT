@@ -6655,14 +6655,21 @@ function renderManuringPctChart() {
             }
         });
         monthlyBags = monthlyBags.map(function(v){ return parseFloat(v.toFixed(2)); });
-        return { id:r.id, name:r.name, tpLabel:tpLabel, tpMIdx:tpMIdx,
+        return { id:r.id, name:r.name, tp:tp, tpLabel:tpLabel, tpMIdx:tpMIdx,
                  budget:Math.round(budget), applied:Math.round(appliedBags),
                  budgetRaw:budget, appliedRaw:appliedBags,
                  pct:pct, fertilizer:r.fertilizerName||'--', monthlyBags:monthlyBags, pkgUnit:pkgUnit };
     });
 
-    // Sort: main rounds (P1, P2…) first, then INFILLING, then other
-    roundData.sort(function(a, b) { return compareRoundNames(a.name, b.name); });
+    // Sort by target month ascending; within the same month sort by round name (P1, P2…)
+    // Rounds with no target period go last.
+    roundData.sort(function(a, b) {
+        if (!a.tp && !b.tp) return compareRoundNames(a.name, b.name);
+        if (!a.tp) return 1;
+        if (!b.tp) return -1;
+        if (a.tp !== b.tp) return a.tp < b.tp ? -1 : 1;
+        return compareRoundNames(a.name, b.name);
+    });
 
     cardBox.innerHTML = '';
 
