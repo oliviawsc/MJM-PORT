@@ -6645,6 +6645,11 @@ function renderManuringPctChart() {
                  pct:pct, fertilizer:r.fertilizerName||'--', monthlyBags:monthlyBags, pkgUnit:pkgUnit };
     });
 
+    // Sort cards by round name: P1, P2 … P10 (natural numeric order)
+    roundData.sort(function(a, b) {
+        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+    });
+
     cardBox.innerHTML = '';
 
     roundData.forEach(function(d){
