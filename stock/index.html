@@ -6899,9 +6899,26 @@ function renderMaintPctTracker() {
             }
         }
 
-        return { id:r.id, name:r.name, tpLabel:tpLabel, tpMIdx:tpMIdx,
+        return { id:r.id, name:r.name, tp:tp, tpLabel:tpLabel, tpMIdx:tpMIdx,
+                 maintType:r.maintType||'',
                  totalArea:parseFloat(totalArea.toFixed(2)), totalClaimed:parseFloat(totalClaimed.toFixed(2)),
                  pct:pct, monthlyClaimedArr:monthlyClaimedArr, cumulativePct:cumulativePct };
+    });
+
+    // Sort by maintenance type (Spraying → Slashing → Pruning → other), then by target month
+    var MAINT_ORDER = ['spray', 'slash', 'weed', 'prun'];
+    function maintTypeGroup(t) {
+        var n = (t || '').toLowerCase();
+        for (var i = 0; i < MAINT_ORDER.length; i++) { if (n.indexOf(MAINT_ORDER[i]) !== -1) return i; }
+        return MAINT_ORDER.length;
+    }
+    roundData.sort(function(a, b) {
+        var tg = maintTypeGroup(a.maintType) - maintTypeGroup(b.maintType);
+        if (tg !== 0) return tg;
+        if (!a.tp && !b.tp) return (a.name||'').localeCompare(b.name||'');
+        if (!a.tp) return 1;
+        if (!b.tp) return -1;
+        return a.tp < b.tp ? -1 : a.tp > b.tp ? 1 : 0;
     });
 
     cardBox.innerHTML = '';
