@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261120-01';
+var APP_BUILD = '20261120-02';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17155,10 +17155,19 @@ function mgmtReportFigures(estate, ym) {
         if (_bPencapaian.some((v) => v > 0)) put('baja_pencapaian', _r2(_bPencapaian));
     }
 
-    // Hujan — monthly totals from daily rainfall transactions
+    // Hujan — monthly totals from daily rainfall transactions.
+    // Read from the estate-scoped localStorage key first (always saved by loadFromSupabase before
+    // refreshAll fires), then fall back to the in-memory rainfallTxns global as a last resort.
+    const _rfData = (() => {
+        try {
+            const lsData = JSON.parse(localStorage.getItem('opp_rainfall_txns::' + estate));
+            if (Array.isArray(lsData) && lsData.length > 0) return lsData;
+        } catch (e) {}
+        return (typeof rainfallTxns !== 'undefined') ? rainfallTxns : [];
+    })();
     const _rfMonth = (yr) => {
         const totals = new Array(12).fill(null);
-        (typeof rainfallTxns !== 'undefined' ? rainfallTxns : []).forEach((t) => {
+        _rfData.forEach((t) => {
             if (!t.date || t.mm == null) return;
             if (parseInt(t.date.slice(0, 4), 10) !== yr) return;
             const mo = parseInt(t.date.slice(5, 7), 10) - 1;
