@@ -11092,6 +11092,7 @@ function bootApp(session) {
     const _module = _params.get('module');
     if (_module) {
         if (_module === 'report') navigateToSection('mgmtreport');
+        else if (_module === 'ffbrecord') navigateToSection('ffbrecord');
         else if (_module === 'stock') navigateToSection('home');
         const _url = new URL(window.location.href);
         ['module', 'gw_estate', 'gw_estate_short', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => _url.searchParams.delete(k));

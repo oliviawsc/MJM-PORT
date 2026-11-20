@@ -78,10 +78,12 @@
 
     // The modules of this system. `module` is the deep link the classic app understands.
     const MODULES = [
-        { module: 'stock',  title: 'Stock',             icon: '&#128230;', bg: '#166534',
+        { module: 'stock',     title: 'Stock',             icon: '&#128230;', bg: '#166534',
           desc: 'Fertiliser, chemical and seedling stock, transactions, ledger and records.' },
-        { module: 'report', title: 'Management Report', icon: '&#128202;', bg: '#0F766E',
+        { module: 'report',    title: 'Management Report', icon: '&#128202;', bg: '#0F766E',
           desc: 'Penilaian Prestasi Ladang: monthly estate performance charts.' },
+        { module: 'ffbrecord', title: 'FFB Production',    icon: '&#127804;', bg: '#B45309',
+          desc: 'Record monthly FFB production, harvesters and grading. Links to Management Report.' },
     ];
 
     const params = new URLSearchParams(location.search);
