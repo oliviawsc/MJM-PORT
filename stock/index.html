@@ -1329,6 +1329,7 @@ var APP_BUILD = '20261120-01';
             <button data-target="fertrecord"   class="nav-item">          <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_fertrecord">Fertilizer Application</span></button>
             <button data-target="chemrecord"   class="nav-item">          <span class="nav-icon">&#9879;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_chemrecord">Chemical Application</span></button>
             <button data-target="plantrecord"  class="nav-item">          <span class="nav-icon">&#127807;</span><span class="sb-label" data-i18n="sb_lbl_plantrecord">Field Planting Record</span></button>
+            <button data-target="ffbrecord" class="nav-item"><span class="nav-icon">🌴</span><span class="sb-label" data-i18n="sb_lbl_ffbrecord">FFB Production</span></button>
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_rainfall">Rainfall</p>
             <button data-target="rainfall" class="nav-item">              <span class="nav-icon">&#127783;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_rainfall">Rainfall Transactions</span></button>
             <button data-target="rainfallreport" class="nav-item">        <span class="nav-icon">&#128200;</span><span class="sb-label" data-i18n="sb_lbl_rainfallreport">Monthly Rainfall Record</span></button>
@@ -2286,6 +2287,7 @@ var APP_BUILD = '20261120-01';
                 <button class="htab-btn active" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
+                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="nav_roundprogress">Fertilizer Issuance</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="progress_subtitle">Track fertilizer application progress across fertilizer issuance rounds and blocks. Compare actual quantities applied against the budgeted fertilizer requirement.</p>
@@ -2390,6 +2392,7 @@ var APP_BUILD = '20261120-01';
                 <button class="htab-btn" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn active" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
+                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="page_maintprogress">📊 Maintenance Progress</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="page_maintprogress_sub">Track field maintenance progress by round and block. Record claimed maintenance area and monitor completion against planned block coverage.</p>
@@ -2513,6 +2516,7 @@ var APP_BUILD = '20261120-01';
                 <button class="htab-btn" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn active" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
+                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="page_chemusage">&#x2697;&#xFE0F; Chemical Usage</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="page_chemusage_sub">View chemical usage per hectare by round and block. Manage active ingredient definitions and maximum dosage rates.</p>
@@ -2608,6 +2612,47 @@ var APP_BUILD = '20261120-01';
                 </div>
             </div>
 
+        </section>
+
+        <!-- ============ PAGE: FFB PRODUCTION RECORD ============ -->
+        <section id="ffbrecord" class="page-section">
+            <div class="htab-bar">
+                <button class="htab-btn" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
+                <button class="htab-btn" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
+                <button class="htab-btn" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
+                <button class="htab-btn active" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
+            </div>
+            <h2 class="text-3xl font-bold mb-2" data-i18n="page_ffbrecord">🌴 FFB Production Record</h2>
+            <p class="text-sm text-green-700 mb-4" data-i18n="page_ffbrecord_sub">Record monthly FFB production, number of harvesters and FFB grading. Figures saved here link directly to the Management Report charts.</p>
+
+            <!-- Year selector -->
+            <div class="flex items-center gap-3 mb-6">
+                <label class="text-sm font-semibold text-green-800" data-i18n="ffb_lbl_year">Year</label>
+                <select id="ffbYearSel" onchange="renderFfbModule()" class="text-sm text-green-800 bg-white border border-green-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"></select>
+            </div>
+
+            <!-- Summary cards -->
+            <div id="ffbSummaryCards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+
+            <!-- Monthly table -->
+            <div class="bg-white p-6 rounded-xl shadow mb-6">
+                <h3 class="text-xl font-bold mb-3" data-i18n="ffb_tbl_title">Monthly FFB Data</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm" style="border-collapse:collapse;">
+                        <thead class="bg-green-100 text-green-800">
+                            <tr>
+                                <th class="px-3 py-2 text-center border border-green-200">Month</th>
+                                <th class="px-3 py-2 text-center border border-green-200" data-i18n="ffb_col_ffb_mt">FFB (MT)</th>
+                                <th class="px-3 py-2 text-center border border-green-200" data-i18n="ffb_col_harvesters">Harvesters</th>
+                                <th class="px-3 py-2 text-center border border-green-200" data-i18n="ffb_col_grading">Grading (%)</th>
+                                <th class="px-3 py-2 text-center border border-green-200" data-i18n="ffb_col_yield">Yield / Ha (MT)</th>
+                                <th class="px-3 py-2 text-center border border-green-200">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ffbTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <!-- ============ MOBILE VIEW RECORD HUB (estate-mobile only) ============ -->
@@ -4646,6 +4691,8 @@ async function loadFromSupabase() {
         // dosage data (kgPerPalm) is available for Sasaran / Pencapaian computation.
         { const _mrSec = document.getElementById('mgmtreport');
           if (_mrSec && _mrSec.classList.contains('active')) renderMgmtReport(); }
+        { const _ffbSec = document.getElementById('ffbrecord');
+          if (_ffbSec && _ffbSec.classList.contains('active') && typeof renderFfbModule === 'function') renderFfbModule(); }
 
         // Re-render mobile panes that are open but not covered by refreshAll().
         // Critical on a fresh-browser login: localStorage was empty at boot, so
@@ -8149,6 +8196,10 @@ function refreshAll() {
     if (typeof renderToolsRecord === 'function') renderToolsRecord();
     { const _mrSec = document.getElementById('mgmtreport');
       if (_mrSec && _mrSec.classList.contains('active')) renderMgmtReport(); }
+    if (typeof renderFfbModule === 'function') {
+        const _ffbSec = document.getElementById('ffbrecord');
+        if (_ffbSec && _ffbSec.classList.contains('active')) renderFfbModule();
+    }
 }
 
 /* -----------------------------------------------------------------
@@ -9107,6 +9158,17 @@ const I18N = {
         nav_plantrecord:          '🌱 Field Planting Record',
         page_plantrecord:         '🌱 Field Planting Record',
         page_plantrecord_sub:     'Daily seedling transactions by block — track quantity in, quantity out, and running balance per seedling item.',
+        /* FFB Production Record (ffbrecord) */
+        sb_lbl_ffbrecord:         'FFB Production',
+        tab_ffb_record:           'FFB Production',
+        page_ffbrecord:           '🌴 FFB Production Record',
+        page_ffbrecord_sub:       'Record monthly FFB production, number of harvesters and FFB grading. Figures saved here link directly to the Management Report charts.',
+        ffb_lbl_year:             'Year',
+        ffb_tbl_title:            'Monthly FFB Data',
+        ffb_col_ffb_mt:           'FFB (MT)',
+        ffb_col_harvesters:       'Harvesters',
+        ffb_col_grading:          'Grading (%)',
+        ffb_col_yield:            'Yield / Ha (MT)',
         pr_lbl_item:              'Seedling Item',
         pr_select_item:           '-- Select a Seedling Item --',
         pr_select_item_prompt:    'Please select a Seedling Item above to view the planting record.',
@@ -9636,6 +9698,17 @@ const I18N = {
         pr_col_pengeluaran:       'Kuantiti Keluar',
         pr_col_jumlah:            'Jumlah Kuantiti Keluar',
         pr_no_data:               'Tiada rekod penanaman ditemui untuk penapis yang dipilih.',
+        /* FFB Production Record (ffbrecord) */
+        sb_lbl_ffbrecord:         'Pengeluaran FFB',
+        tab_ffb_record:           'Pengeluaran FFB',
+        page_ffbrecord:           '🌴 Rekod Pengeluaran FFB',
+        page_ffbrecord_sub:       'Rekod pengeluaran FFB bulanan, bilangan pemotong dan gred FFB. Angka yang disimpan di sini dihubungkan terus ke carta Laporan Pengurusan.',
+        ffb_lbl_year:             'Tahun',
+        ffb_tbl_title:            'Data FFB Bulanan',
+        ffb_col_ffb_mt:           'FFB (MT)',
+        ffb_col_harvesters:       'Pemotong',
+        ffb_col_grading:          'Penilaian (%)',
+        ffb_col_yield:            'Hasil / Ha (MT)',
         /* Rainfall */
         sb_section_rainfall:      'Hujan',
         sb_lbl_rainfall:          'Transaksi Hujan',
@@ -9926,6 +9999,7 @@ const ALL_SECTIONS = [
     { id: 'roundprogress',   label: '📈 Fertilizer Issuance',        group: 'Field Operations' },
     { id: 'maintprogress',   label: '📊 Maintenance Progress',       group: 'Field Operations' },
     { id: 'chemusage',       label: '⚗️ Chemical Usage',             group: 'Field Operations' },
+    { id: 'ffbrecord',       label: '🌴 FFB Production Record',      group: 'Field Operations' },
     // Reports
     { id: 'fertrecord',      label: '📋 Fertilizer Issuance Record', group: 'Reports' },
     { id: 'chemrecord',      label: '⚗️ Chemical Issuance Record',   group: 'Reports' },
@@ -9954,7 +10028,7 @@ const ESTATE_SECTIONS = [
 const USER_MODULES = [
     { name: 'Dashboard',        icon: '🏠', iconBg: '#16a34a', sections: ['dashboard'] },
     { name: 'Stock Record',     icon: '📦', iconBg: '#0284c7', sections: ['transactions', 'summary', 'ledger'] },
-    { name: 'Field Operations', icon: '🌿', iconBg: '#9333ea', sections: ['roundprogress', 'maintprogress', 'chemusage'] },
+    { name: 'Field Operations', icon: '🌿', iconBg: '#9333ea', sections: ['roundprogress', 'maintprogress', 'chemusage', 'ffbrecord'] },
     { name: 'Reports',          icon: '📄', iconBg: '#3b82f6', sections: ['fertrecord', 'chemrecord', 'plantrecord'] },
     { name: 'Rainfall',         icon: '🌧️', iconBg: '#f59e0b', sections: ['rainfall', 'rainfallreport', 'rainfallsummary'] },
     { name: 'Tools',            icon: '🔧', iconBg: '#f97316', sections: ['tools', 'toolsrecord'] },
@@ -11165,7 +11239,7 @@ function applyNavPermissions(session) {
     // Field Operations home card: visible if ANY field ops sub-section is accessible
     const homeCardFieldOps = document.getElementById('homeCardFieldOps');
     if (homeCardFieldOps && !isSuperAdmin) {
-        const anyFieldOps = ['roundprogress', 'maintprogress', 'chemusage'].some(s => getSectionAccess(session, s) !== 'none');
+        const anyFieldOps = ['roundprogress', 'maintprogress', 'chemusage', 'ffbrecord'].some(s => getSectionAccess(session, s) !== 'none');
         homeCardFieldOps.classList.toggle('hidden', !anyFieldOps);
     }
 
@@ -11918,7 +11992,8 @@ function buildExpandedUserRow(u) {
         estate_racun:    'Chemical (Racun)',
         estate_anak:     'Oil Palm Seedling',
         mobile_rainfall: 'Rainfall',
-        tools_mobile_cat:'Tools'
+        tools_mobile_cat:'Tools',
+        ffbrecord:       'FFB Production Record'
     };
     var moduleCards = mods.map(function(mod) {
         var accCount = mod.sections.filter(function(s) { return getSectionAccess(u, s) !== 'none'; }).length;
@@ -16654,7 +16729,7 @@ function navigateToFirstStockSection() {
 
 function navigateToFirstFieldOpsSection() {
     const session = loadSession();
-    const order = ['roundprogress', 'maintprogress', 'chemusage'];
+    const order = ['roundprogress', 'maintprogress', 'chemusage', 'ffbrecord'];
     if (session && session.role !== 'superadmin') {
         const first = order.find(s => getSectionAccess(session, s) !== 'none');
         if (!first) { alert('You do not have permission to access this section.'); return; }
@@ -17277,6 +17352,7 @@ function navigateToSection(target) {
     if (target === 'fertrecord') renderFertRecord();
     if (target === 'chemrecord') renderChemRecord();
     if (target === 'plantrecord') renderPlantRecord();
+    if (target === 'ffbrecord') renderFfbModule();
     if (target === 'rainfall') {
         const rfDate = document.getElementById('rfDate');
         if (rfDate && !rfDate.value) rfDate.valueAsDate = new Date();
@@ -17450,6 +17526,141 @@ async function deleteSettingsBlock(id) {
         if (settingsBlocksEstate === activeEstate) { loadEstateData(activeEstate); refreshAll(); }
     } catch (e) {
         alert('Error deleting block: ' + e.message);
+    }
+}
+</script>
+
+<!-- ============ FFB PRODUCTION RECORD — JS ============ -->
+<script>
+var MR_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderFfbModule() {
+    var sec = document.getElementById('ffbrecord');
+    if (!sec || !sec.classList.contains('active')) return;
+
+    // Populate year dropdown
+    var yrSel = document.getElementById('ffbYearSel');
+    if (yrSel) {
+        var curYear = new Date().getFullYear();
+        var selYear = parseInt(yrSel.value, 10) || curYear;
+        if (!yrSel.options.length) {
+            for (var y = curYear + 1; y >= curYear - 5; y--) {
+                var opt = document.createElement('option');
+                opt.value = y; opt.textContent = y;
+                if (y === selYear) opt.selected = true;
+                yrSel.appendChild(opt);
+            }
+        }
+        selYear = parseInt(yrSel.value, 10) || curYear;
+        var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+        if (!estate) {
+            document.getElementById('ffbTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
+            return;
+        }
+        mrLoadRows(estate, selYear).then(function(rows) {
+            _renderFfbTable(selYear, rows);
+            _renderFfbSummary(selYear, rows);
+        });
+    }
+}
+
+function _renderFfbTable(year, rows) {
+    var tbody = document.getElementById('ffbTableBody');
+    if (!tbody) return;
+    var totalHa = (typeof mrTotalAreaHa === 'function') ? mrTotalAreaHa() : 0;
+    var html = '';
+    for (var m = 1; m <= 12; m++) {
+        var row = rows.find(function(r) { return r.month === m; }) || {};
+        var ffb = row.ffb_mt != null ? row.ffb_mt : '';
+        var harv = row.harvesters != null ? row.harvesters : '';
+        var grad = row.grading_pct != null ? row.grading_pct : '';
+        var yieldHa = (ffb !== '' && totalHa > 0) ? (parseFloat(ffb) / totalHa).toFixed(2) : '—';
+        html += '<tr class="border-b border-gray-100 hover:bg-green-50">' +
+            '<td class="px-3 py-2 font-medium text-green-800 text-center border border-gray-200">' + MR_MONTH_NAMES[m-1] + '</td>' +
+            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="0.01" min="0" value="' + ffb + '" placeholder="—"' +
+                ' id="ffbMt_' + year + '_' + m + '" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded px-1"></td>' +
+            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="1" min="0" value="' + harv + '" placeholder="—"' +
+                ' id="ffbHarv_' + year + '_' + m + '" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded px-1"></td>' +
+            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="0.01" min="0" max="100" value="' + grad + '" placeholder="—"' +
+                ' id="ffbGrad_' + year + '_' + m + '" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded px-1"></td>' +
+            '<td class="px-3 py-2 text-center text-sm text-gray-600 border border-gray-200" id="ffbYield_' + year + '_' + m + '">' + yieldHa + '</td>' +
+            '<td class="px-2 py-1 text-center border border-gray-200">' +
+                '<button onclick="ffbSaveRow(' + year + ',' + m + ')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 mr-1">Save</button>' +
+                (ffb !== '' || harv !== '' || grad !== '' ? '<button onclick="ffbDeleteRow(' + year + ',' + m + ')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">×</button>' : '') +
+            '</td></tr>';
+    }
+    tbody.innerHTML = html;
+}
+
+function _renderFfbSummary(year, rows) {
+    var container = document.getElementById('ffbSummaryCards');
+    if (!container) return;
+    var totalHa = (typeof mrTotalAreaHa === 'function') ? mrTotalAreaHa() : 0;
+    var filled = rows.filter(function(r) { return r.ffb_mt != null; });
+    var totalFfb = filled.reduce(function(s, r) { return s + (parseFloat(r.ffb_mt) || 0); }, 0);
+    var avgHarv = rows.filter(function(r) { return r.harvesters != null; });
+    var avgHarvVal = avgHarv.length ? (avgHarv.reduce(function(s,r){return s+(parseFloat(r.harvesters)||0);},0)/avgHarv.length).toFixed(1) : '—';
+    var gradRows = rows.filter(function(r) { return r.grading_pct != null; });
+    var avgGrad = gradRows.length ? (gradRows.reduce(function(s,r){return s+(parseFloat(r.grading_pct)||0);},0)/gradRows.length).toFixed(1) : '—';
+    var yieldHa = (filled.length && totalHa > 0) ? (totalFfb / totalHa).toFixed(2) : '—';
+    var cards = [
+        { label: 'Total FFB (MT)', value: filled.length ? totalFfb.toFixed(2) : '—', color: 'green' },
+        { label: 'Avg Harvesters', value: avgHarvVal, color: 'blue' },
+        { label: 'Avg Grading (%)', value: avgGrad !== '—' ? avgGrad + '%' : '—', color: 'yellow' },
+        { label: 'Total Yield / Ha (MT)', value: yieldHa, color: 'teal' }
+    ];
+    var colorMap = { green:'bg-green-50 border-green-200 text-green-800', blue:'bg-blue-50 border-blue-200 text-blue-800', yellow:'bg-yellow-50 border-yellow-200 text-yellow-800', teal:'bg-teal-50 border-teal-200 text-teal-800' };
+    container.innerHTML = cards.map(function(c) {
+        return '<div class="border rounded-xl p-4 ' + colorMap[c.color] + '">' +
+            '<p class="text-xs font-semibold opacity-70 mb-1">' + c.label + '</p>' +
+            '<p class="text-2xl font-bold">' + c.value + '</p></div>';
+    }).join('');
+}
+
+async function ffbSaveRow(year, month) {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) return;
+    var ffbMt = document.getElementById('ffbMt_' + year + '_' + month);
+    var ffbHarv = document.getElementById('ffbHarv_' + year + '_' + month);
+    var ffbGrad = document.getElementById('ffbGrad_' + year + '_' + month);
+    var payload = {
+        estate: estate, year: year, month: month,
+        ffb_mt: ffbMt && ffbMt.value !== '' ? parseFloat(ffbMt.value) : null,
+        harvesters: ffbHarv && ffbHarv.value !== '' ? parseInt(ffbHarv.value, 10) : null,
+        grading_pct: ffbGrad && ffbGrad.value !== '' ? parseFloat(ffbGrad.value) : null
+    };
+    try {
+        var { error } = await supabase.from('opp_mgmt_monthly')
+            .upsert(payload, { onConflict: 'estate,year,month' });
+        if (error) throw error;
+        // Update cache
+        var key = estate + '|' + year;
+        if (typeof _mrRows !== 'undefined' && _mrRows[key]) {
+            var idx = _mrRows[key].rows.findIndex(function(r){return r.month===month;});
+            if (idx >= 0) _mrRows[key].rows[idx] = Object.assign(_mrRows[key].rows[idx], payload);
+            else _mrRows[key].rows.push(payload);
+        }
+        renderFfbModule();
+    } catch(e) {
+        alert('Error saving FFB data: ' + e.message);
+    }
+}
+
+async function ffbDeleteRow(year, month) {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) return;
+    if (!confirm('Clear FFB data for ' + MR_MONTH_NAMES[month-1] + ' ' + year + '?')) return;
+    try {
+        var { error } = await supabase.from('opp_mgmt_monthly')
+            .delete().eq('estate', estate).eq('year', year).eq('month', month);
+        if (error) throw error;
+        var key = estate + '|' + year;
+        if (typeof _mrRows !== 'undefined' && _mrRows[key]) {
+            _mrRows[key].rows = _mrRows[key].rows.filter(function(r){return r.month!==month;});
+        }
+        renderFfbModule();
+    } catch(e) {
+        alert('Error deleting FFB data: ' + e.message);
     }
 }
 </script>
