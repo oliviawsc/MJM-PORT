@@ -1084,6 +1084,17 @@
      sessionStorage. The overlay is restored on logout or if Supabase rejects
      the cached session. Without this the login form glitches through on refresh. -->
 <script>
+// APP_BUILD is checked by the auto-refresh guard below.
+// Bump this string whenever code is deployed to force stale cached pages to reload.
+var APP_BUILD = '20261120-01';
+(function () {
+    // If this constant is missing (old cached file) and the URL doesn't already
+    // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
+    // cache — so the latest version is fetched from the server.
+    if (typeof APP_BUILD === 'undefined' && window.location.search.indexOf('_vr') === -1) {
+        window.location.replace(window.location.pathname + '?_vr=1' + (window.location.hash || ''));
+    }
+})();
 (function () {
     try {
         var raw = localStorage.getItem('opp_auth_session');
