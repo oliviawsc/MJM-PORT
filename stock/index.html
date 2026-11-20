@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261120-02';
+var APP_BUILD = '20261120-03';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -1330,9 +1330,6 @@ var APP_BUILD = '20261120-02';
             <button data-target="chemrecord"   class="nav-item">          <span class="nav-icon">&#9879;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_chemrecord">Chemical Application</span></button>
             <button data-target="plantrecord"  class="nav-item">          <span class="nav-icon">&#127807;</span><span class="sb-label" data-i18n="sb_lbl_plantrecord">Field Planting Record</span></button>
             <button data-target="ffbrecord" class="nav-item"><span class="nav-icon">🌴</span><span class="sb-label" data-i18n="sb_lbl_ffbrecord">FFB Production</span></button>
-            <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_rainfall">Rainfall</p>
-            <button data-target="rainfall" class="nav-item">              <span class="nav-icon">&#127783;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_rainfall">Rainfall Transactions</span></button>
-            <button data-target="rainfallreport" class="nav-item">        <span class="nav-icon">&#128200;</span><span class="sb-label" data-i18n="sb_lbl_rainfallreport">Monthly Rainfall Record</span></button>
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_tools">Tools</p>
             <button data-target="tools" class="nav-item" onclick="navigateToSection('tools')">                  <span class="nav-icon">&#128295;</span><span class="sb-label" data-i18n="sb_lbl_tools">Tools / Peralatan</span></button>
             <button data-target="toolsrecord" class="nav-item" onclick="navigateToSection('toolsrecord')">            <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_toolsrecord">Tools Record</span></button>
@@ -1566,18 +1563,6 @@ var APP_BUILD = '20261120-02';
                             </svg>
                         </div>
                         <span class="home-card-title" data-i18n="home_card_reports">Reports</span>
-                    </button>
-                    <!-- Rainfall -->
-                    <button class="home-card" id="homeCardRainfall" onclick="navigateToFirstRainfallSection()">
-                        <div class="home-card-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/>
-                                <line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/>
-                                <line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/>
-                                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
-                            </svg>
-                        </div>
-                        <span class="home-card-title" data-i18n="home_card_rainfall">Rainfall</span>
                     </button>
                     <!-- Tools -->
                     <button class="home-card" id="homeCardTools" onclick="navigateToFirstToolsSection()">
@@ -1898,13 +1883,6 @@ var APP_BUILD = '20261120-02';
                             <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_anak_sawit">Anak Sawit</div>
                         </button>
 
-                        <!-- Hujan -->
-                        <button id="estateHubRainfallCard" class="estate-card" onclick="navToSection('mobile_rainfall')" style="padding:22px 12px;">
-                            <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#0369a1,#0c4a6e);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(3,105,161,.25);">
-                                <span style="font-size:28px;">&#127783;&#65039;</span>
-                            </div>
-                            <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="home_card_rainfall">Hujan</div>
-                        </button>
 
                         <!-- Peralatan / Tools -->
                         <button id="estateHubToolsCard" class="estate-card" onclick="navToSection('tools_mobile_cat')" style="padding:22px 12px;">
@@ -2818,18 +2796,6 @@ var APP_BUILD = '20261120-02';
                         <span style="font-size:22px;color:#FCD34D;">&#8250;</span>
                     </button>
 
-                    <!-- Rainfall Report -->
-                    <button class="estate-card" onclick="navToSection('rainfallreport')"
-                        style="flex-direction:row;justify-content:flex-start;padding:20px 22px;gap:18px;border-radius:18px;">
-                        <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#16a34a,#166534);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(22,163,74,.25);">
-                            <span style="font-size:26px;">&#127783;&#65039;</span>
-                        </div>
-                        <div style="text-align:left;flex:1;">
-                            <div data-i18n="sb_lbl_rainfallreport" style="font-size:15px;font-weight:700;color:#0F172A;margin-bottom:3px;">Monthly Rainfall Record</div>
-                            <div style="font-size:11px;color:#16a34a;background:#DCFCE7;display:inline-block;padding:3px 10px;border-radius:99px;font-weight:600;" data-i18n="hub_view_report">View Report</div>
-                        </div>
-                        <span style="font-size:22px;color:#A5D6A7;">&#8250;</span>
-                    </button>
 
                 </div>
             </div>
