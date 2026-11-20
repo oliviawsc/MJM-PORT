@@ -4631,6 +4631,10 @@ async function loadFromSupabase() {
         renderMaintPctTracker();
         renderChemUsageTracker();
         renderRainfallChart();
+        // Re-render the management report if it is currently open, so live round
+        // dosage data (kgPerPalm) is available for Sasaran / Pencapaian computation.
+        { const _mrSec = document.getElementById('mgmtreport');
+          if (_mrSec && _mrSec.classList.contains('active')) renderMgmtReport(); }
 
         // Re-render mobile panes that are open but not covered by refreshAll().
         // Critical on a fresh-browser login: localStorage was empty at boot, so
@@ -8132,6 +8136,8 @@ function refreshAll() {
     if (typeof renderToolsTxns === 'function') renderToolsTxns();
     if (typeof renderToolsStockSummary === 'function') renderToolsStockSummary();
     if (typeof renderToolsRecord === 'function') renderToolsRecord();
+    { const _mrSec = document.getElementById('mgmtreport');
+      if (_mrSec && _mrSec.classList.contains('active')) renderMgmtReport(); }
 }
 
 /* -----------------------------------------------------------------
