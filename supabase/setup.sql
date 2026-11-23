@@ -14,10 +14,10 @@
 -- ---------------------------------------------------------------------
 -- Column names are camelCase (quoted) because the classic app saves its
 -- in-memory objects as they are. Ids are Date.now() numbers from the app.
--- Every data table carries `estate` = the estate name (opp_estates.name).
+-- Every data table carries `estate` = the estate name (port_estates.name).
 -- ---------------------------------------------------------------------
 
-create table if not exists public.opp_estates (
+create table if not exists public.port_estates (
   name          text primary key,
   intranet_id   uuid,            -- gw_company_estates.id or gw_companies.id in the MJM Intranet
   intranet_kind text,            -- 'estate' | 'company'
@@ -28,9 +28,9 @@ create table if not exists public.opp_estates (
   synced_at     timestamptz,
   created_at    timestamptz not null default now()
 );
-create unique index if not exists opp_estates_intranet_id_idx on public.opp_estates (intranet_id) where intranet_id is not null;
+create unique index if not exists port_estates_intranet_id_idx on public.port_estates (intranet_id) where intranet_id is not null;
 
-create table if not exists public.opp_users (
+create table if not exists public.port_users (
   id            bigint primary key,
   name          text not null default '',
   email         text not null,
@@ -41,9 +41,9 @@ create table if not exists public.opp_users (
   last_active   timestamptz,
   created_at    timestamptz not null default now()
 );
-create unique index if not exists opp_users_email_idx on public.opp_users (lower(email));
+create unique index if not exists port_users_email_idx on public.port_users (lower(email));
 
-create table if not exists public.opp_items (
+create table if not exists public.port_items (
   id               bigint primary key,
   estate           text not null,
   "itemCode"       text,
@@ -58,9 +58,9 @@ create table if not exists public.opp_items (
   active           boolean not null default true,
   created_at       timestamptz not null default now()
 );
-create index if not exists opp_items_estate_idx on public.opp_items (estate);
+create index if not exists port_items_estate_idx on public.port_items (estate);
 
-create table if not exists public.opp_locations (
+create table if not exists public.port_locations (
   id          bigint primary key,
   estate      text not null,
   name        text not null,
@@ -68,9 +68,9 @@ create table if not exists public.opp_locations (
   "numPalms"  integer,
   created_at  timestamptz not null default now()
 );
-create index if not exists opp_locations_estate_idx on public.opp_locations (estate);
+create index if not exists port_locations_estate_idx on public.port_locations (estate);
 
-create table if not exists public.opp_transactions (
+create table if not exists public.port_transactions (
   id                  bigint primary key,
   estate              text not null,
   date                text not null,            -- yyyy-mm-dd
@@ -92,9 +92,9 @@ create table if not exists public.opp_transactions (
   "user"              text,
   created_at          timestamptz not null default now()
 );
-create index if not exists opp_transactions_estate_date_idx on public.opp_transactions (estate, date);
+create index if not exists port_transactions_estate_date_idx on public.port_transactions (estate, date);
 
-create table if not exists public.opp_manuring_rounds (
+create table if not exists public.port_manuring_rounds (
   id                 bigint primary key,
   estate             text not null,
   name               text not null,
@@ -110,7 +110,7 @@ create table if not exists public.opp_manuring_rounds (
   created_at         timestamptz not null default now()
 );
 
-create table if not exists public.opp_fieldmaint_rounds (
+create table if not exists public.port_fieldmaint_rounds (
   id             bigint primary key,
   estate         text not null,
   name           text not null,
@@ -123,7 +123,7 @@ create table if not exists public.opp_fieldmaint_rounds (
   created_at     timestamptz not null default now()
 );
 
-create table if not exists public.opp_maint_claims (
+create table if not exists public.port_maint_claims (
   id            bigint primary key,
   estate        text not null,
   "roundId"     text,
@@ -134,7 +134,7 @@ create table if not exists public.opp_maint_claims (
   created_at    timestamptz not null default now()
 );
 
-create table if not exists public.opp_chem_ingredients (
+create table if not exists public.port_chem_ingredients (
   id          bigint primary key,
   estate      text not null,
   name        text not null,
@@ -146,7 +146,7 @@ create table if not exists public.opp_chem_ingredients (
   created_at  timestamptz not null default now()
 );
 
-create table if not exists public.opp_rainfall_txns (
+create table if not exists public.port_rainfall_txns (
   id          bigint primary key,
   estate      text not null,
   date        text not null,                    -- yyyy-mm-dd
@@ -155,9 +155,9 @@ create table if not exists public.opp_rainfall_txns (
   "createdAt" text,
   created_at  timestamptz not null default now()
 );
-create index if not exists opp_rainfall_estate_date_idx on public.opp_rainfall_txns (estate, date);
+create index if not exists port_rainfall_estate_date_idx on public.port_rainfall_txns (estate, date);
 
-create table if not exists public.opp_dashboard_comments (
+create table if not exists public.port_dashboard_comments (
   id          bigserial primary key,
   estate      text not null default '',
   author_name text not null default '',
@@ -167,7 +167,7 @@ create table if not exists public.opp_dashboard_comments (
 );
 
 -- Management Report: monthly figures per estate (FFB, grading, harvesters, ...)
-create table if not exists public.opp_mgmt_monthly (
+create table if not exists public.port_mgmt_monthly (
   id            uuid primary key default gen_random_uuid(),
   estate        text not null,
   year          int  not null check (year between 2000 and 2100),
@@ -185,7 +185,7 @@ create table if not exists public.opp_mgmt_monthly (
   updated_at    timestamptz not null default now(),
   unique (estate, year, month)
 );
-create index if not exists opp_mgmt_monthly_estate_year_idx on public.opp_mgmt_monthly (estate, year);
+create index if not exists port_mgmt_monthly_estate_year_idx on public.port_mgmt_monthly (estate, year);
 
 -- Sign-in protection (Edge Functions only)
 create table if not exists public.stock_login_attempts (
@@ -212,7 +212,7 @@ create table if not exists public.mantap_portal_users (
 );
 
 -- ---------------------------------------------------------------------
--- Access rules. The classic app signs in with the anon key, so the opp_*
+-- Access rules. The classic app signs in with the anon key, so the port_*
 -- tables are open to anon and authenticated (same as the old project);
 -- the login tables and Mantap portal list are Edge-Function only.
 -- The cutover RLS migration tightens this once the classic app retires.
@@ -221,9 +221,9 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'opp_estates','opp_users','opp_items','opp_locations','opp_transactions','opp_manuring_rounds',
-    'opp_fieldmaint_rounds','opp_maint_claims','opp_chem_ingredients','opp_rainfall_txns',
-    'opp_dashboard_comments','opp_mgmt_monthly'
+    'port_estates','port_users','port_items','port_locations','port_transactions','port_manuring_rounds',
+    'port_fieldmaint_rounds','port_maint_claims','port_chem_ingredients','port_rainfall_txns',
+    'port_dashboard_comments','port_mgmt_monthly'
   ] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('grant select, insert, update, delete on public.%I to anon, authenticated', t);
@@ -238,12 +238,12 @@ alter table public.mantap_login_attempts enable row level security;
 alter table public.mantap_portal_users   enable row level security;
 revoke all on public.stock_login_attempts, public.mantap_login_attempts, public.mantap_portal_users from anon, authenticated;
 
--- The app watches its own opp_users row for status changes (sign out when deactivated)
+-- The app watches its own port_users row for status changes (sign out when deactivated)
 do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
-     and not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'opp_users') then
-    alter publication supabase_realtime add table public.opp_users;
+     and not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'port_users') then
+    alter publication supabase_realtime add table public.port_users;
   end if;
 end $$;
 
@@ -264,28 +264,28 @@ declare
   t text;
 begin
   if p_old is null or p_new is null or p_old = p_new then return 0; end if;
-  if exists (select 1 from public.opp_estates where name = p_new) then
+  if exists (select 1 from public.port_estates where name = p_new) then
     raise exception 'estate % already exists', p_new;
   end if;
   for r in
     select table_name from information_schema.columns
-     where table_schema = 'public' and column_name = 'estate' and table_name like 'opp\_%' escape '\'
+     where table_schema = 'public' and column_name = 'estate' and table_name like 'port\_%' escape '\'
   loop
     execute format('update public.%I set estate = $1 where estate = $2', r.table_name) using p_new, p_old;
     get diagnostics c = row_count;
     n := n + c;
   end loop;
   select data_type into t from information_schema.columns
-   where table_schema = 'public' and table_name = 'opp_users' and column_name = 'estates';
+   where table_schema = 'public' and table_name = 'port_users' and column_name = 'estates';
   if t = 'ARRAY' then
-    execute 'update public.opp_users set estates = array_replace(estates, $2, $1) where $2 = any(estates)' using p_new, p_old;
+    execute 'update public.port_users set estates = array_replace(estates, $2, $1) where $2 = any(estates)' using p_new, p_old;
   elsif t = 'jsonb' then
-    execute $q$update public.opp_users
+    execute $q$update public.port_users
                 set estates = (select coalesce(jsonb_agg(case when e = $2 then to_jsonb($1) else to_jsonb(e) end), '[]'::jsonb)
                                  from jsonb_array_elements_text(estates) e)
               where estates ? $2$q$ using p_new, p_old;
   end if;
-  update public.opp_estates set name = p_new where name = p_old;
+  update public.port_estates set name = p_new where name = p_old;
   return n;
 end;
 $$;

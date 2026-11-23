@@ -1,5 +1,5 @@
 // Settings → Estates → "Sync from Intranet": copies the Intranet company /
-// estate list into opp_estates (see _shared/masterSync.ts). Super Admin only;
+// estate list into port_estates (see _shared/masterSync.ts). Super Admin only;
 // the same sync also runs by itself after each sign-in from the Intranet.
 //   POST {}  (Authorization: the Super Admin's Supabase session)
 //   → { ok, total, added, renamed, deactivated, skipped }

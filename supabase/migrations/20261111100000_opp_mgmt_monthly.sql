@@ -7,7 +7,7 @@
 -- Safe to run more than once.
 -- =====================================================================
 
-create table if not exists public.opp_mgmt_monthly (
+create table if not exists public.port_mgmt_monthly (
   id            uuid primary key default gen_random_uuid(),
   estate        text not null,
   year          int  not null check (year between 2000 and 2100),
@@ -25,13 +25,13 @@ create table if not exists public.opp_mgmt_monthly (
   updated_at    timestamptz not null default now(),
   unique (estate, year, month)
 );
-create index if not exists opp_mgmt_monthly_estate_year_idx on public.opp_mgmt_monthly (estate, year);
+create index if not exists port_mgmt_monthly_estate_year_idx on public.port_mgmt_monthly (estate, year);
 
--- Same access as the other opp_* tables while the classic app is live
+-- Same access as the other port_* tables while the classic app is live
 -- (it signs in with the anon key). The cutover RLS migration locks it to
--- the estates a user may open, like opp_rainfall_txns.
-alter table public.opp_mgmt_monthly enable row level security;
-grant select, insert, update, delete on public.opp_mgmt_monthly to anon, authenticated;
-drop policy if exists opp_mgmt_monthly_all on public.opp_mgmt_monthly;
-create policy opp_mgmt_monthly_all on public.opp_mgmt_monthly
+-- the estates a user may open, like port_rainfall_txns.
+alter table public.port_mgmt_monthly enable row level security;
+grant select, insert, update, delete on public.port_mgmt_monthly to anon, authenticated;
+drop policy if exists port_mgmt_monthly_all on public.port_mgmt_monthly;
+create policy port_mgmt_monthly_all on public.port_mgmt_monthly
   for all to anon, authenticated using (true) with check (true);

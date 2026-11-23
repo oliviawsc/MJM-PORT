@@ -26,17 +26,17 @@ function superAdminSession(id: number | undefined, prev: Session | null): Sessio
   };
 }
 
-/** opp_users id of the Super Admin (for last_active), if the row exists. */
+/** port_users id of the Super Admin (for last_active), if the row exists. */
 async function superAdminId(): Promise<number | undefined> {
   try {
-    const { data } = await supabase.from('opp_users').select('id').eq('email', SUPER_ADMIN_EMAIL).maybeSingle();
+    const { data } = await supabase.from('port_users').select('id').eq('email', SUPER_ADMIN_EMAIL).maybeSingle();
     return (data as { id?: number } | null)?.id;
   } catch { return undefined; }
 }
 
 export function touchLastActive(id: number | undefined) {
   if (!id) return;
-  void supabase.from('opp_users').update({ last_active: new Date().toISOString() }).eq('id', id)
+  void supabase.from('port_users').update({ last_active: new Date().toISOString() }).eq('id', id)
     .then(() => {}, () => {});
 }
 

@@ -1,7 +1,7 @@
 # Security cutover
 
 The legacy app (`legacy/index.html`) talks to Supabase with the anon key:
-it reads `opp_users.password_hash` to check passwords in the browser and
+it reads `port_users.password_hash` to check passwords in the browser and
 upserts whole `opp_*` tables. The React app does not need either:
 
 - HQ users sign in through the `stock-auth` Edge Function, which checks the
@@ -27,7 +27,7 @@ the caller's JWT itself for `me` and `change_password`).
 
 ## Policies applied at cutover (`*_cutover_rls.sql`)
 
-**`opp_users`**
+**`port_users`**
 - `anon`: no access at all.
 - `authenticated`: column grants only — `select (id, name, email, estates,
   permissions, status, last_active)` and `update (last_active)`.
@@ -36,13 +36,13 @@ the caller's JWT itself for `me` and `change_password`).
   a user may update `last_active` on their own row only.
 - Realtime status watch keeps working (it needs select on the own row).
 
-**`opp_estates`**: every signed-in user reads; only the Super Admin writes.
+**`port_estates`**: every signed-in user reads; only the Super Admin writes.
 
-**`opp_items`, `opp_locations`, `opp_transactions`, `opp_manuring_rounds`,
-`opp_fieldmaint_rounds`, `opp_maint_claims`, `opp_chem_ingredients`,
-`opp_rainfall_txns`**: `anon` has no access; `authenticated` may read and
-write rows whose `estate` is in their `opp_users.estates` (and their account
-is not inactive). The Super Admin (the HQ admin email, or any `opp_users` row
+**`port_items`, `port_locations`, `port_transactions`, `port_manuring_rounds`,
+`port_fieldmaint_rounds`, `port_maint_claims`, `port_chem_ingredients`,
+`port_rainfall_txns`**: `anon` has no access; `authenticated` may read and
+write rows whose `estate` is in their `port_users.estates` (and their account
+is not inactive). The Super Admin (the HQ admin email, or any `port_users` row
 with `permissions.__role = 'superadmin'`) may access every estate. Workers
 match the same rule, so the Worker Portal keeps access to their estates.
 
@@ -55,7 +55,7 @@ Helper functions (`security definer`, fixed `search_path`):
    no longer linked from anywhere (Intranet, bookmarks, the `/legacy/` copy).
 2. User Management in the React app creates users / resets passwords /
    changes permissions and status through an Edge Function (service role).
-   After cutover the browser can no longer write `opp_users` (only
+   After cutover the browser can no longer write `port_users` (only
    `last_active`), and the legacy `get_auth_users` RPC should be reviewed.
 3. List current policies and drop the permissive legacy ones — policies are
    OR-ed, so a leftover `using (true)` would undo the lock-down:
@@ -63,7 +63,7 @@ Helper functions (`security definer`, fixed `search_path`):
    select tablename, policyname, roles, cmd, qual
    from pg_policies where schemaname = 'public' and tablename like 'opp_%';
    ```
-4. Check the type of `opp_users.estates` / `permissions` (the helpers use
+4. Check the type of `port_users.estates` / `permissions` (the helpers use
    `to_jsonb`, so `text[]`, `json` and `jsonb` all work).
 5. Rename the migration to the real date, apply on a branch/staging project
    first, and test: HQ user (own estates only), Super Admin (all), worker via

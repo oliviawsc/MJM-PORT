@@ -24,7 +24,7 @@ function setup(opts: { online?: boolean; results?: RemoteResult[] } = {}) {
   return { api, notify, engine, sleeps, setOnline: (v: boolean) => { online = v; } };
 }
 
-const ins = { kind: 'upsert' as const, table: 'opp_items' as const, estate: 'E', rows: [{ id: 1, name: 'A' }] };
+const ins = { kind: 'upsert' as const, table: 'port_items' as const, estate: 'E', rows: [{ id: 1, name: 'A' }] };
 
 describe('SyncEngine.submit', () => {
   beforeEach(() => localStorage.clear());
@@ -32,7 +32,7 @@ describe('SyncEngine.submit', () => {
   it('sends the single row, tagged with its estate', async () => {
     const { api, engine, notify } = setup();
     expect(await engine.submit(ins)).toBe('sent');
-    expect(api.upsert).toHaveBeenCalledWith('opp_items', [{ id: 1, name: 'A', estate: 'E' }]);
+    expect(api.upsert).toHaveBeenCalledWith('port_items', [{ id: 1, name: 'A', estate: 'E' }]);
     expect(notify.queued).not.toHaveBeenCalled();
     expect(loadQueue()).toEqual([]);
   });
@@ -48,7 +48,7 @@ describe('SyncEngine.submit', () => {
   it('server error while online: sync error toast + queued', async () => {
     const { engine, notify } = setup({ results: [fail] });
     expect(await engine.submit(ins)).toBe('queued');
-    expect(notify.error).toHaveBeenCalledWith('save', 'opp_items', 'boom');
+    expect(notify.error).toHaveBeenCalledWith('save', 'port_items', 'boom');
     expect(notify.queued).toHaveBeenCalled();
     expect(loadQueue()).toHaveLength(1);
   });
@@ -57,26 +57,26 @@ describe('SyncEngine.submit', () => {
     const s = setup({ online: false });
     await s.engine.submit(ins);
     s.setOnline(true);
-    await s.engine.submit({ kind: 'update', table: 'opp_items', estate: 'E', id: 1, patch: { name: 'B' } });
+    await s.engine.submit({ kind: 'update', table: 'port_items', estate: 'E', id: 1, patch: { name: 'B' } });
     await vi.waitFor(() => expect(loadQueue()).toEqual([]));
     // the update was folded into the queued insert → one upsert with the new name
-    expect(s.api.upsert).toHaveBeenCalledWith('opp_items', [{ id: 1, name: 'B', estate: 'E' }]);
+    expect(s.api.upsert).toHaveBeenCalledWith('port_items', [{ id: 1, name: 'B', estate: 'E' }]);
     expect(s.api.update).not.toHaveBeenCalled();
   });
 
   it('a confirmed transaction delete clears its tombstone', async () => {
     const { engine } = setup();
     addTombstones('E', [7]);
-    await engine.submit({ kind: 'delete', table: 'opp_transactions', estate: 'E', ids: [7] });
+    await engine.submit({ kind: 'delete', table: 'port_transactions', estate: 'E', ids: [7] });
     expect(readTombstones('E').size).toBe(0);
   });
 
   it('a failed transaction delete keeps its tombstone', async () => {
     const { engine, notify } = setup({ results: [fail] });
     addTombstones('E', [7]);
-    await engine.submit({ kind: 'delete', table: 'opp_transactions', estate: 'E', ids: [7] });
+    await engine.submit({ kind: 'delete', table: 'port_transactions', estate: 'E', ids: [7] });
     expect(readTombstones('E').has('7')).toBe(true);
-    expect(notify.error).toHaveBeenCalledWith('delete', 'opp_transactions', 'boom');
+    expect(notify.error).toHaveBeenCalledWith('delete', 'port_transactions', 'boom');
   });
 });
 
@@ -123,12 +123,12 @@ describe('SyncEngine.drain', () => {
   });
 
   it('drains converted legacy entries with the old whole-array semantics', async () => {
-    localStorage.setItem('opp_sync_queue', JSON.stringify([{ key: 'opp_rainfall_txns', estate: 'E' }]));
-    localStorage.setItem('opp_rainfall_txns::E', JSON.stringify([{ id: 1, date: '2026-01-01', mm: 3 }]));
+    localStorage.setItem('opp_sync_queue', JSON.stringify([{ key: 'port_rainfall_txns', estate: 'E' }]));
+    localStorage.setItem('port_rainfall_txns::E', JSON.stringify([{ id: 1, date: '2026-01-01', mm: 3 }]));
     const s = setup();
     expect(s.engine.migrateLegacy()).toBe(1);
     await s.engine.drain();
-    expect(s.api.upsert).toHaveBeenCalledWith('opp_rainfall_txns', [{ id: 1, date: '2026-01-01', mm: 3, estate: 'E' }]);
+    expect(s.api.upsert).toHaveBeenCalledWith('port_rainfall_txns', [{ id: 1, date: '2026-01-01', mm: 3, estate: 'E' }]);
     expect(loadQueue()).toEqual([]);
     expect(localStorage.getItem('opp_sync_queue')).toBeNull();
   });

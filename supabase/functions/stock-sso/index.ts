@@ -2,7 +2,7 @@
 //   { token, module: 'stock' | 'report' } → { session, auth, module }
 // The Intranet opens the app with ?gw_token=<60-second single-use token>.
 // We redeem it once with the Intranet's gw-check-access (server to server,
-// with that module's API key), then look the person up in opp_users — and
+// with that module's API key), then look the person up in port_users — and
 // create an HQ User row for them if this is their first visit. The browser
 // gets the same session object the classic login builds, plus a Supabase
 // Auth session (so the Super Admin / React paths work too).

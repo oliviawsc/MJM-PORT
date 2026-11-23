@@ -30,7 +30,7 @@ export const ROW_QUEUE_KEY = 'opp_row_queue';
  *  false to get the legacy look back. */
 export const SIDEBAR_ENABLED = true;
 
-/** Used until opp_estates has loaded (same list as the legacy app). */
+/** Used until port_estates has loaded (same list as the legacy app). */
 export const DEFAULT_ESTATES = [
   'Elewsun', 'Estet Seri Mawar', 'Gama Menang', 'Mega Jutamas (Suai)',
   'Meridian Palma', 'MJM Plantation 1', 'MJM Plantation 2', 'MJM Plantation 3',

@@ -12,7 +12,7 @@ Legacy line numbers refer to `legacy/index.html`.
 | Register / list / expand / kebab / filters / `renderUsersTable` / edit modal / `saveEditUser` | 10941–11476 |
 
 Must change for security: the legacy page hashes passwords in the browser
-and writes `opp_users.password_hash` with the anon key. After cutover the
+and writes `port_users.password_hash` with the anon key. After cutover the
 browser can no longer do that (see `docs/security-cutover.md`), so create /
 reset password / permissions / status must go through a Super-Admin-only
 Edge Function (like Mantap's `mantap-worker-admin`). Permission sets:

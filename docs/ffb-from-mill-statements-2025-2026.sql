@@ -1,7 +1,7 @@
 -- FFB tonnage and grading per estate and month, read from the mill's monthly FFB Statement emails
 -- (MJM Palm Oil Mill, noreply@opispro.com). Grading = 100 - "Unsatisfactory FFB %". Jan-Apr 2025 figures
 -- are the mill's graded tonnage (older statement layout). Re-running overwrites the same months.
-insert into public.opp_mgmt_monthly (estate, year, month, ffb_mt, grading_pct, source, updated_by, notes) values
+insert into public.port_mgmt_monthly (estate, year, month, ffb_mt, grading_pct, source, updated_by, notes) values
   ('Estet Seri Mawar', 2025, 1, 862.950, 99.84, 'mill_statement', 'import', 'Mill statement 25000305'),
   ('Estet Seri Mawar', 2025, 2, 1131.360, 99.95, 'mill_statement', 'import', 'Mill statement 25000305'),
   ('Estet Seri Mawar', 2025, 3, 1149.020, 99.62, 'mill_statement', 'import', 'Mill statement 25000305'),
@@ -201,5 +201,5 @@ insert into public.opp_mgmt_monthly (estate, year, month, ffb_mt, grading_pct, s
   ('Ulu Niah Estate', 2026, 9, 97.120, 99.65, 'mill_statement', 'import', 'Mill statement 26000975'),
   ('Ulu Niah Estate', 2026, 10, 81.720, 99.89, 'mill_statement', 'import', 'Mill statement 26000975')
 on conflict (estate, year, month) do update set
-  ffb_mt = excluded.ffb_mt, grading_pct = coalesce(excluded.grading_pct, opp_mgmt_monthly.grading_pct),
+  ffb_mt = excluded.ffb_mt, grading_pct = coalesce(excluded.grading_pct, port_mgmt_monthly.grading_pct),
   source = excluded.source, updated_by = excluded.updated_by, notes = excluded.notes, updated_at = now();

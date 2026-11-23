@@ -1,4 +1,4 @@
-// Keeps opp_estates equal to the MJM Intranet company list, so the estate
+// Keeps port_estates equal to the MJM Intranet company list, so the estate
 // dropdowns of Plantation Operation (Stock), Management Report and Mantap
 // all show the Intranet's companies and estates.
 //
@@ -85,7 +85,7 @@ async function wantedFromIntranet(): Promise<Wanted[]> {
 /** Runs the sync. With `force` false it is skipped when a sync ran in the last 10 minutes. */
 export async function syncEstatesFromIntranet(force = false): Promise<SyncResult> {
   const db = serviceClient();
-  const { data: rows0, error } = await db.from('opp_estates').select('name, intranet_id, is_active, synced_at');
+  const { data: rows0, error } = await db.from('port_estates').select('name, intranet_id, is_active, synced_at');
   if (error) throw error;
   const rows = (rows0 ?? []) as (Row & { synced_at: string | null })[];
   const last = Math.max(0, ...rows.map((r) => r.synced_at ? Date.parse(r.synced_at) : 0));
@@ -117,11 +117,11 @@ export async function syncEstatesFromIntranet(force = false): Promise<SyncResult
         taken.delete(row.name); taken.add(w.name);
         row.name = w.name;
       }
-      const { error: e3 } = await db.from('opp_estates').update(fields).eq('name', row.name);
+      const { error: e3 } = await db.from('port_estates').update(fields).eq('name', row.name);
       if (e3) throw e3;
     } else {
       if (taken.has(w.name)) continue; // a different linked row already has this name
-      const { error: e4 } = await db.from('opp_estates').insert({ name: w.name, ...fields });
+      const { error: e4 } = await db.from('port_estates').insert({ name: w.name, ...fields });
       if (e4) throw e4;
       taken.add(w.name); linked.add(w.name); added.push(w.name);
     }
@@ -129,7 +129,7 @@ export async function syncEstatesFromIntranet(force = false): Promise<SyncResult
   // Everything the Intranet did not list: keep the records, hide from the dropdowns
   for (const r of rows) {
     if (linked.has(r.name) || !r.is_active) continue;
-    const { error: e5 } = await db.from('opp_estates').update({ is_active: false, synced_at: now }).eq('name', r.name);
+    const { error: e5 } = await db.from('port_estates').update({ is_active: false, synced_at: now }).eq('name', r.name);
     if (e5) throw e5;
     deactivated.push(r.name);
   }

@@ -1,5 +1,5 @@
 // Per-estate localStorage cache, same keys as the legacy app
-// (`opp_items::<estate>` …) so existing users' cached data is reused.
+// (`port_items::<estate>` …) so existing users' cached data is reused.
 import { readArray, writeJson } from '../lib/storage';
 import type { RowId } from '../lib/types';
 import { COLLECTION_KEYS, TABLES, emptyCollections, type CollectionKey, type Collections } from './tables';

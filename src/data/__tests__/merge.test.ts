@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mergeRainfall, mergeReplace, mergeTransactions, overlayPending } from '../merge';
 import type { RowOp } from '../queue';
 
-const T = 'opp_transactions';
+const T = 'port_transactions';
 const up = (rows: { id: number | string; [k: string]: unknown }[], table = T): RowOp => ({ qid: 'q' + Math.random(), kind: 'upsert', table: table as never, estate: 'E', rows });
 const upd = (id: number, patch: Record<string, unknown>): RowOp => ({ qid: 'u' + id, kind: 'update', table: T, estate: 'E', id, patch });
 const del = (ids: (number | string)[]): RowOp => ({ qid: 'd' + ids.join(), kind: 'delete', table: T, estate: 'E', ids });
@@ -20,7 +20,7 @@ describe('overlayPending', () => {
 
 describe('mergeReplace', () => {
   it('server copy replaces the cache, pending writes stay on top', () => {
-    expect(mergeReplace([{ id: 1, name: 'A' }], [up([{ id: 2, name: 'B' }], 'opp_items')])).toEqual([{ id: 1, name: 'A' }, { id: 2, name: 'B' }]);
+    expect(mergeReplace([{ id: 1, name: 'A' }], [up([{ id: 2, name: 'B' }], 'port_items')])).toEqual([{ id: 1, name: 'A' }, { id: 2, name: 'B' }]);
   });
 });
 
@@ -46,7 +46,7 @@ describe('mergeTransactions', () => {
 });
 
 describe('mergeRainfall', () => {
-  const R = 'opp_rainfall_txns';
+  const R = 'port_rainfall_txns';
   it('keeps and pushes cached rows the server never got', () => {
     const r = mergeRainfall([{ id: 1, date: '2026-01-01', mm: 1 }], [{ id: 2, date: '2026-01-02', mm: 5 }], []);
     expect(r.rows.map((x) => x.id)).toEqual([2, 1]); // newest date first

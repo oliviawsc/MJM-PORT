@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { enqueue, loadQueue, migrateLegacyQueue, saveQueue, type RowOp } from '../queue';
 
-const T = 'opp_items' as const;
+const T = 'port_items' as const;
 const base = { table: T, estate: 'E' };
 
 describe('enqueue coalescing', () => {
@@ -41,7 +41,7 @@ describe('enqueue coalescing', () => {
   it('different estates and tables never coalesce', () => {
     let q = enqueue([], { ...base, kind: 'upsert', rows: [{ id: 1 }] });
     q = enqueue(q, { table: T, estate: 'F', kind: 'update', id: 1, patch: { a: 1 } });
-    q = enqueue(q, { table: 'opp_locations', estate: 'E', kind: 'update', id: 1, patch: { a: 1 } });
+    q = enqueue(q, { table: 'port_locations', estate: 'E', kind: 'update', id: 1, patch: { a: 1 } });
     expect(q).toHaveLength(3);
   });
   it('does not mutate the input queue', () => {
@@ -62,12 +62,12 @@ describe('persistence and legacy migration', () => {
     expect(localStorage.getItem('opp_row_queue')).toBeNull();
   });
   it('turns legacy {key, estate} entries into an upsert of the cached snapshot, once', () => {
-    localStorage.setItem('opp_sync_queue', JSON.stringify([{ key: 'opp_items', estate: 'Ulu Niah Estate' }, { key: 'opp_locations', estate: 'X' }]));
-    localStorage.setItem('opp_items::Ulu Niah Estate', JSON.stringify([{ id: 1, name: 'NPK' }, { id: 2, name: 'Urea' }]));
+    localStorage.setItem('opp_sync_queue', JSON.stringify([{ key: 'port_items', estate: 'Ulu Niah Estate' }, { key: 'port_locations', estate: 'X' }]));
+    localStorage.setItem('port_items::Ulu Niah Estate', JSON.stringify([{ id: 1, name: 'NPK' }, { id: 2, name: 'Urea' }]));
     const { queue, migrated } = migrateLegacyQueue([]);
     expect(migrated).toBe(2);
-    expect(queue).toHaveLength(1); // empty snapshot for opp_locations::X adds nothing
-    expect(queue[0]).toMatchObject({ kind: 'upsert', table: 'opp_items', estate: 'Ulu Niah Estate', rows: [{ id: 1, name: 'NPK', estate: 'Ulu Niah Estate' }, { id: 2, name: 'Urea', estate: 'Ulu Niah Estate' }] });
+    expect(queue).toHaveLength(1); // empty snapshot for port_locations::X adds nothing
+    expect(queue[0]).toMatchObject({ kind: 'upsert', table: 'port_items', estate: 'Ulu Niah Estate', rows: [{ id: 1, name: 'NPK', estate: 'Ulu Niah Estate' }, { id: 2, name: 'Urea', estate: 'Ulu Niah Estate' }] });
     expect(localStorage.getItem('opp_sync_queue')).toBeNull();
     expect(migrateLegacyQueue([]).migrated).toBe(0);
   });

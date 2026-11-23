@@ -20,14 +20,14 @@ export type Collections = { [K in CollectionKey]: RowTypes[K][] };
 
 /** Collection → table (same mapping as legacy STORAGE_KEYS). */
 export const TABLES = {
-  items: 'opp_items',
-  locations: 'opp_locations',
-  transactions: 'opp_transactions',
-  manuringRounds: 'opp_manuring_rounds',
-  fieldMaintRounds: 'opp_fieldmaint_rounds',
-  maintClaims: 'opp_maint_claims',
-  chemIngredients: 'opp_chem_ingredients',
-  rainfallTxns: 'opp_rainfall_txns',
+  items: 'port_items',
+  locations: 'port_locations',
+  transactions: 'port_transactions',
+  manuringRounds: 'port_manuring_rounds',
+  fieldMaintRounds: 'port_fieldmaint_rounds',
+  maintClaims: 'port_maint_claims',
+  chemIngredients: 'port_chem_ingredients',
+  rainfallTxns: 'port_rainfall_txns',
 } as const satisfies Record<CollectionKey, string>;
 
 export type TableName = (typeof TABLES)[CollectionKey];
