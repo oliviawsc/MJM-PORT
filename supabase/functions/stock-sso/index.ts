@@ -9,6 +9,7 @@
 import {
   ApiError, anonClient, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, toAuthEmail, USERS_TABLE, type UserRow,
 } from '../_shared/common.ts';
+import { syncEstatesFromIntranet } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
 
@@ -130,5 +131,7 @@ Deno.serve(handler(async (_req, body) => {
 
   const auth = await issueSession(row);
   await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString() }).eq('id', row.id);
+  // Keep the estate list equal to the Intranet's companies (at most once every 10 minutes)
+  try { await syncEstatesFromIntranet(false); } catch (e) { console.warn('[stock-sso] estate sync skipped:', e instanceof Error ? e.message : e); }
   return { session: toSession(row), auth, module };
 }));

@@ -3709,18 +3709,11 @@ var APP_BUILD = '20261120-03';
                 <div id="settingsEstatesPanel">
                     <div class="bg-white p-6 rounded-xl shadow mb-6">
                         <h3 class="text-xl font-bold mb-1">🌴 Estate Management</h3>
-                        <p class="text-xs text-gray-400 mb-5">Add or remove estates. Estates appear in all dropdowns and user assignment forms across the system.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 items-end">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold mb-1">New Estate Name <span class="text-red-500">*</span></label>
-                                <input id="newEstateName" type="text" placeholder="e.g. Ladang Baharu"
-                                    class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600"
-                                    onkeydown="if(event.key==='Enter')addEstate()" />
-                            </div>
-                            <div>
-                                <button onclick="addEstate()"
-                                    class="w-full bg-green-800 hover:bg-green-900 text-white px-5 py-2 rounded-lg font-semibold">➕ Add Estate</button>
-                            </div>
+                        <p class="text-xs text-gray-400 mb-4">The estate list follows the MJM Intranet. Add, rename or remove companies and estates in the Intranet (Admin → Master Manage); they appear here, in Management Report and in Mantap.</p>
+                        <div class="flex flex-wrap items-center gap-3 mb-6">
+                            <button onclick="syncEstatesFromIntranet()" id="syncEstatesBtn"
+                                class="bg-green-800 hover:bg-green-900 text-white px-5 py-2 rounded-lg font-semibold">🔄 Sync from Intranet</button>
+                            <span id="syncEstatesMsg" class="text-sm text-gray-500"></span>
                         </div>
                         <h4 class="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Current Estates</h4>
                         <div id="estatesListContainer"><p class="text-sm text-gray-400 italic">Loading…</p></div>
@@ -10526,11 +10519,44 @@ let GLOBAL_ESTATES = ['Elewsun','Estet Seri Mawar','Gama Menang','Mega Jutamas (
     'Meridian Palma','MJM Plantation 1','MJM Plantation 2','MJM Plantation 3',
     'Mono Gaya','Sungai Mak Plantation','Ulu Niah Estate'];
 
+// The estate list follows the MJM Intranet companies (opp_estates is synced
+// from the Intranet by stock-master-sync). Inactive rows are hidden.
+let GLOBAL_ESTATE_ROWS = [];
+// Settings → "Sync from Intranet": asks the stock-master-sync Edge Function to
+// copy the Intranet company / estate list into opp_estates right now.
+async function syncEstatesFromIntranet() {
+    const btn = document.getElementById('syncEstatesBtn'), msg = document.getElementById('syncEstatesMsg');
+    if (btn) btn.disabled = true;
+    if (msg) msg.textContent = 'Syncing…';
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const res = await fetch(SUPABASE_URL + '/functions/v1/stock-master-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + ((session && session.access_token) || SUPABASE_PUBLISHABLE_KEY) },
+            body: '{}',
+        });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok || !r.ok) throw new Error(r.error === 'err_forbidden' ? 'only the Super Admin can sync' : r.error === 'err_sso_not_set_up' ? 'the Intranet API key is not set in this project' : (r.error || ('http ' + res.status)));
+        const parts = [];
+        if (r.added.length) parts.push('added ' + r.added.join(', '));
+        if (r.renamed.length) parts.push('renamed ' + r.renamed.map(x => x[0] + ' → ' + x[1]).join(', '));
+        if (r.deactivated.length) parts.push('hidden ' + r.deactivated.join(', '));
+        if (msg) msg.textContent = 'Synced ' + r.total + ' estates' + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
+        await renderEstatesList();
+    } catch (e) {
+        if (msg) msg.textContent = 'Sync failed: ' + e.message;
+    }
+    if (btn) btn.disabled = false;
+}
+
 async function loadEstatesFromSupabase() {
     try {
-        const { data, error } = await supabaseClient.from('opp_estates').select('name').order('name');
-        if (error) throw error;
-        if (data && data.length > 0) GLOBAL_ESTATES = data.map(r => r.name).sort((a, b) => a.localeCompare(b));
+        let res = await supabaseClient.from('opp_estates').select('name, is_active, company_name, intranet_id').order('sort_order').order('name');
+        if (res.error) res = await supabaseClient.from('opp_estates').select('name').order('name'); // before the 20261123 migration
+        if (res.error) throw res.error;
+        const data = (res.data || []).filter(r => r.is_active !== false);
+        GLOBAL_ESTATE_ROWS = data;
+        if (data.length > 0) GLOBAL_ESTATES = data.map(r => r.name);
     } catch (e) {
         console.warn('Could not load estates from Supabase, using defaults:', e.message);
     }
@@ -10590,6 +10616,7 @@ async function renderEstatesList() {
                     <tr>
                         <th class="px-3 py-2 text-left">#</th>
                         <th class="px-3 py-2 text-left">Estate Name</th>
+                        <th class="px-3 py-2 text-left">Intranet company</th>
                         <th class="px-3 py-2 text-left">Blocks</th>
                         <th class="px-3 py-2 text-left">Action</th>
                     </tr>
@@ -10599,14 +10626,11 @@ async function renderEstatesList() {
                         <tr class="border-b border-gray-100 hover:bg-green-50" id="estate-row-${i}">
                             <td class="px-3 py-2 text-gray-400 tabular-nums">${i + 1}</td>
                             <td class="px-3 py-2 font-medium" id="estate-name-${i}">🌴 ${e}</td>
+                            <td class="px-3 py-2 text-gray-500">${(GLOBAL_ESTATE_ROWS.find(r => r.name === e) || {}).intranet_id ? ((GLOBAL_ESTATE_ROWS.find(r => r.name === e) || {}).company_name || e) : '<span class="text-amber-600">not linked yet</span>'}</td>
                             <td class="px-3 py-2 text-gray-500">${blockCounts[e] || 0} block${(blockCounts[e] || 0) !== 1 ? 's' : ''}</td>
                             <td class="px-3 py-2 whitespace-nowrap" id="estate-actions-${i}">
-                                <button onclick="startEditEstate(${i})"
-                                    class="text-blue-600 hover:text-blue-800 text-xs font-semibold border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded mr-1">✏️ Edit</button>
                                 <button onclick="settingsManageBlocks(${i})"
                                     class="text-green-700 hover:text-green-900 text-xs font-semibold border border-green-300 hover:bg-green-50 px-2 py-1 rounded mr-1">📍 Blocks</button>
-                                <button onclick="deleteEstateByIdx(${i})"
-                                    class="text-red-600 hover:text-red-800 text-xs font-semibold border border-red-200 hover:bg-red-50 px-2 py-1 rounded">🗑 Delete</button>
                             </td>
                         </tr>`).join('')}
                 </tbody>
