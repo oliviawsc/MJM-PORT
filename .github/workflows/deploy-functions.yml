@@ -18,7 +18,7 @@ on:
     paths: ['supabase/functions/**']
 
 env:
-  PROJECT_REF: eukvdlyzhyjohkjqbqjb
+  PROJECT_REF: pxzvayptwpvuvlenmdwp
 
 jobs:
   deploy:
@@ -38,3 +38,4 @@ jobs:
           version: latest
       - run: supabase functions deploy stock-auth --no-verify-jwt --project-ref "$PROJECT_REF" --yes
       - run: supabase functions deploy stock-sso --no-verify-jwt --project-ref "$PROJECT_REF" --yes
+      - run: supabase functions deploy stock-master-sync --project-ref "$PROJECT_REF" --yes

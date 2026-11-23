@@ -17,5 +17,5 @@ Legacy line numbers refer to `legacy/index.html`.
 
 Renames cascade to transactions (item name, location name, round name):
 use `upsertRows('transactions', changedRows)`. Blocks of another estate:
-pass `{ estate }` to the row functions. Estates (`opp_estates`) are not an
+pass `{ estate }` to the row functions. Estates (`port_estates`) are not an
 estate-scoped collection — write them directly (Super Admin only).

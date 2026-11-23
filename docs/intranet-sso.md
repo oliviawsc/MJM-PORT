@@ -5,7 +5,7 @@ the Intranet opens this app with `?module=stock|report&gw_token=<token>`
 (a 60-second, single-use token). The app sends the token to the `stock-sso`
 Edge Function, which redeems it with the Intranet (`gw-check-access`, using
 that module's API key), finds — or on first visit creates — the person's
-`opp_users` row, and returns the normal app session. The login form never
+`port_users` row, and returns the normal app session. The login form never
 appears; the person lands on Home (Stock) or on Management Report.
 
 First-visit users are created as **HQ User**, status active, no estates:
@@ -30,7 +30,7 @@ with the reason.
    key for each** module (copy them — they are shown once). The module URLs are
    `https://oliviawsc.github.io/plantationstockmanagementsystem/?module=stock`
    and `...?module=report`.
-3. **Supabase → project `eukvdlyzhyjohkjqbqjb` → Edge Functions → Secrets**:
+3. **Supabase → project `pxzvayptwpvuvlenmdwp` → Edge Functions → Secrets**:
    add `INTRANET_STOCK_API_KEY` (the Stock module's key) and
    `INTRANET_REPORT_API_KEY` (the Management Report module's key).
    Optional: `INTRANET_SUPABASE_URL` if the Intranet ever moves (default
@@ -47,4 +47,4 @@ with the reason.
 | `err_sso_not_set_up` | the module's API key secret is missing in Supabase |
 | `err_sso_invalid` | the Intranet rejected the token (expired / already used / wrong module key) |
 | `err_forbidden` | the Intranet says this person may not use the module |
-| `err_inactive` | the `opp_users` row is deactivated |
+| `err_inactive` | the `port_users` row is deactivated |

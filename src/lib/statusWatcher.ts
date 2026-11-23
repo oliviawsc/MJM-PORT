@@ -1,5 +1,5 @@
 // Force sign-out when an admin deactivates the signed-in user, and keep
-// opp_users.last_active fresh (legacy startStatusWatcher ~10702).
+// port_users.last_active fresh (legacy startStatusWatcher ~10702).
 //  - Realtime UPDATE on the user's row → instant sign-out when inactive.
 //  - Fallback: check every 30 s and whenever the tab becomes visible.
 //  - Any click writes last_active, at most once per 2 minutes.
@@ -10,7 +10,7 @@ import type { Session } from './types';
 
 export async function isInactive(email: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from('opp_users').select('status').eq('email', email).maybeSingle();
+    const { data, error } = await supabase.from('port_users').select('status').eq('email', email).maybeSingle();
     if (error) return false;
     return (data as { status?: string } | null)?.status === 'inactive';
   } catch {
@@ -30,7 +30,7 @@ export function startStatusWatcher(session: Session, onInactive: () => void): ()
     channel = supabase
       .channel('status-watch-' + session.email.replace(/[^a-z0-9]/gi, '_'))
       .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'opp_users', filter: 'email=eq.' + session.email },
+        { event: 'UPDATE', schema: 'public', table: 'port_users', filter: 'email=eq.' + session.email },
         (payload) => { if ((payload.new as { status?: string })?.status === 'inactive') fire(); })
       .subscribe();
     interval = setInterval(() => void check(), STATUS_POLL_MS);
@@ -46,7 +46,7 @@ export function startStatusWatcher(session: Session, onInactive: () => void): ()
     const now = Date.now();
     if (now - lastFlush < LAST_ACTIVE_THROTTLE_MS) return;
     lastFlush = now;
-    const q = supabase.from('opp_users').update({ last_active: new Date().toISOString() });
+    const q = supabase.from('port_users').update({ last_active: new Date().toISOString() });
     void (session.id ? q.eq('id', session.id) : q.eq('email', session.email)).then(() => {}, () => {});
   };
   document.addEventListener('click', onClick);

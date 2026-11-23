@@ -1,4 +1,4 @@
-// Estate list (opp_estates) and the estates a user may open.
+// Estate list (port_estates) and the estates a user may open.
 import { DEFAULT_ESTATES } from './config';
 import { supabase } from './supabase';
 import type { Session } from './types';
@@ -6,7 +6,7 @@ import type { Session } from './types';
 /** All estate names, sorted; falls back to the built-in list. */
 export async function fetchEstateNames(): Promise<string[]> {
   try {
-    const { data, error } = await supabase.from('opp_estates').select('name').order('name');
+    const { data, error } = await supabase.from('port_estates').select('name').order('name');
     if (error) throw error;
     const names = (data ?? []).map((r: { name: string }) => r.name).filter(Boolean);
     return names.length > 0 ? names.sort((a, b) => a.localeCompare(b)) : DEFAULT_ESTATES;

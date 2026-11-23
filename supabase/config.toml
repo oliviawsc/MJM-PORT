@@ -1,5 +1,5 @@
-# Plantation Stock Edge Functions (Supabase project eukvdlyzhyjohkjqbqjb).
-# supabase link --project-ref eukvdlyzhyjohkjqbqjb
+# Plantation Stock Edge Functions (Supabase project pxzvayptwpvuvlenmdwp).
+# supabase link --project-ref pxzvayptwpvuvlenmdwp
 # supabase functions deploy stock-auth
 project_id = "PlantationStock"
 
@@ -11,3 +11,7 @@ verify_jwt = false
 [functions.stock-sso]
 # Called right after the Intranet redirect (?gw_token=…), before there is a session.
 verify_jwt = false
+
+[functions.stock-master-sync]
+# Settings → Estates → "Sync from Intranet" (Super Admin's session required).
+verify_jwt = true

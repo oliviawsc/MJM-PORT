@@ -11,7 +11,7 @@ interface EstateRow {
   estate?: string;
 }
 
-/** opp_items — Item File (Settings → Item Files). */
+/** port_items — Item File (Settings → Item Files). */
 export interface ItemRow extends EstateRow {
   itemCode?: string;
   name: string;
@@ -27,7 +27,7 @@ export interface ItemRow extends EstateRow {
   active?: boolean;
 }
 
-/** opp_locations — blocks (Settings → Estates & Blocks). */
+/** port_locations — blocks (Settings → Estates & Blocks). */
 export interface LocationRow extends EstateRow {
   name: string;
   area?: number;
@@ -36,7 +36,7 @@ export interface LocationRow extends EstateRow {
 
 export type TxnType = 'In' | 'Out' | 'Adj' | 'Adjustment' | string;
 
-/** opp_transactions — stock and tools movements. */
+/** port_transactions — stock and tools movements. */
 export interface TransactionRow extends EstateRow {
   /** yyyy-mm-dd */
   date: string;
@@ -62,7 +62,7 @@ export interface TransactionRow extends EstateRow {
   user?: string;
 }
 
-/** opp_manuring_rounds — Manuring Program. */
+/** port_manuring_rounds — Manuring Program. */
 export interface ManuringRoundRow extends EstateRow {
   name: string;
   fertilizerItemId: RowId;
@@ -78,7 +78,7 @@ export interface ManuringRoundRow extends EstateRow {
   active?: boolean;
 }
 
-/** opp_fieldmaint_rounds — Maintenance Program. */
+/** port_fieldmaint_rounds — Maintenance Program. */
 export interface FieldMaintRoundRow extends EstateRow {
   name: string;
   blocks: string[];
@@ -90,7 +90,7 @@ export interface FieldMaintRoundRow extends EstateRow {
   active?: boolean;
 }
 
-/** opp_maint_claims — claimed maintenance area per round/block/month. */
+/** port_maint_claims — claimed maintenance area per round/block/month. */
 export interface MaintClaimRow extends EstateRow {
   roundId: RowId;
   roundName: string;
@@ -100,7 +100,7 @@ export interface MaintClaimRow extends EstateRow {
   month: string;
 }
 
-/** opp_chem_ingredients — active ingredient definitions. */
+/** port_chem_ingredients — active ingredient definitions. */
 export interface ChemIngredientRow extends EstateRow {
   name: string;
   itemId: RowId;
@@ -110,7 +110,7 @@ export interface ChemIngredientRow extends EstateRow {
   density?: number | null;
 }
 
-/** opp_rainfall_txns — one reading per date. */
+/** port_rainfall_txns — one reading per date. */
 export interface RainfallRow extends EstateRow {
   date: string;
   mm: number;
@@ -118,7 +118,7 @@ export interface RainfallRow extends EstateRow {
   createdAt?: string;
 }
 
-/** opp_estates */
+/** port_estates */
 export interface EstateNameRow {
   name: string;
 }
@@ -126,13 +126,13 @@ export interface EstateNameRow {
 export type Role = 'superadmin' | 'hq_user' | 'estate_user' | 'user';
 export type Access = 'none' | 'view' | 'edit';
 
-/** permissions JSON on opp_users: section id → access, plus flags.
+/** permissions JSON on port_users: section id → access, plus flags.
  *  Very old rows store an array of section ids (all 'edit'). */
 export type Permissions =
   | (Record<string, Access | string | boolean | undefined> & { __role?: Role; __configured?: boolean })
   | string[];
 
-/** opp_users — profile columns (password_hash is never sent to the browser). */
+/** port_users — profile columns (password_hash is never sent to the browser). */
 export interface UserRow {
   id: number;
   name: string;
