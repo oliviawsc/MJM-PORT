@@ -1,0 +1,63 @@
+# Copies the whole Plantation Operation database (all opp_* tables with their
+# data, functions, policies, and the sign-in users) from the OLD Supabase
+# project into a NEW, empty one. Run it from the Actions tab; nobody needs
+# anything installed.
+#
+# One-time setup (GitHub → this repo → Settings → Secrets and variables → Actions):
+#   OLD_DB_URL  the old project's connection string
+#   NEW_DB_URL  the new project's connection string
+# Get each string in Supabase: open the project → "Connect" button (top bar)
+# → Session pooler → copy the URI and replace [YOUR-PASSWORD] with the
+# database password (Project Settings → Database → Reset password if unknown).
+#
+# Safe to run more than once: tables are recreated from the old copy each
+# time (anything typed into the NEW project meanwhile is replaced).
+name: Copy database to new Supabase project
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    env:
+      OLD_DB_URL: ${{ secrets.OLD_DB_URL }}
+      NEW_DB_URL: ${{ secrets.NEW_DB_URL }}
+    steps:
+      - name: Check the two connection strings are set
+        run: |
+          [ -n "$OLD_DB_URL" ] || { echo "::error::Add the OLD_DB_URL secret first (see the top of this file)."; exit 1; }
+          [ -n "$NEW_DB_URL" ] || { echo "::error::Add the NEW_DB_URL secret first (see the top of this file)."; exit 1; }
+      - name: Install PostgreSQL 17 client tools
+        run: |
+          sudo apt-get install -y -qq curl ca-certificates gnupg >/dev/null
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+          echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+      - name: Dump the old project (tables, data, functions, policies)
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$OLD_DB_URL" \
+            --schema=public --no-owner --clean --if-exists --quote-all-identifiers \
+            --no-comments -f public.sql
+          echo "dump: $(wc -l < public.sql) lines"
+      - name: Dump the sign-in users (same passwords keep working)
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$OLD_DB_URL" \
+            --data-only --column-inserts --on-conflict-do-nothing \
+            --table=auth.users --table=auth.identities -f auth.sql
+          echo "users: $(grep -c 'INSERT INTO "auth"."users"' auth.sql || true)"
+      - name: Load into the new project
+        run: |
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -q -f public.sql
+          psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -q -f auth.sql
+      - name: Compare row counts (old vs new)
+        run: |
+          q="select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by 1"
+          for t in $(psql "$OLD_DB_URL" -At -c "$q"); do
+            o=$(psql "$OLD_DB_URL" -At -c "select count(*) from public.\"$t\"")
+            n=$(psql "$NEW_DB_URL" -At -c "select count(*) from public.\"$t\"" 2>/dev/null || echo MISSING)
+            flag=""; [ "$o" = "$n" ] || flag="  <-- DIFFERENT"
+            printf '%-32s old %8s   new %8s%s\n' "$t" "$o" "$n" "$flag"
+          done
+          echo "auth users: old $(psql "$OLD_DB_URL" -At -c 'select count(*) from auth.users')  new $(psql "$NEW_DB_URL" -At -c 'select count(*) from auth.users')"
