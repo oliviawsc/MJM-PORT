@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261120-03';
+var APP_BUILD = '20261123-01';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -1856,7 +1856,7 @@ var APP_BUILD = '20261120-03';
                 <!-- Module cards -->
                 <div style="padding:0 16px;display:flex;flex-direction:column;gap:14px;">
 
-                    <!-- 2×2 grid: Baja, Kimia, Anak Sawit, Hujan -->
+                    <!-- 2×2 grid: Baja, Kimia, Anak Sawit, Peralatan -->
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
                         <!-- Baja -->
@@ -16836,6 +16836,11 @@ function navigateToFirstReportsSection() {
 }
 
 function navigateToFirstRainfallSection() {
+    // On estate-mobile the mobile_rainfall section is the correct entry point.
+    if (document.body.classList.contains('estate-mobile')) {
+        navToSection('mobile_rainfall');
+        return;
+    }
     const session = loadSession();
     const order = ['rainfall', 'rainfallreport', 'rainfallsummary'];
     if (session && session.role !== 'superadmin') {
