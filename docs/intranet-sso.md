@@ -30,7 +30,7 @@ with the reason.
    key for each** module (copy them — they are shown once). The module URLs are
    `https://oliviawsc.github.io/plantationstockmanagementsystem/?module=stock`
    and `...?module=report`.
-3. **Supabase → project `eukvdlyzhyjohkjqbqjb` → Edge Functions → Secrets**:
+3. **Supabase → project `pxzvayptwpvuvlenmdwp` → Edge Functions → Secrets**:
    add `INTRANET_STOCK_API_KEY` (the Stock module's key) and
    `INTRANET_REPORT_API_KEY` (the Management Report module's key).
    Optional: `INTRANET_SUPABASE_URL` if the Intranet ever moves (default
