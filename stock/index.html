@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-02';
+var APP_BUILD = '20261124-03';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -6078,7 +6078,7 @@ function populateLocationDropdowns() {
    ----------------------------------------------------------------- */
 function calcOnHand(itemId) {
     return transactions
-        .filter(t => t.itemId === itemId)
+        .filter(t => String(t.itemId) === String(itemId))
         .reduce((total, t) => {
             if (t.type === 'In' || t.type === 'Adj') return total + t.qty;
             if (t.type === 'Out')                    return total - t.qty;
@@ -6089,7 +6089,7 @@ function calcOnHand(itemId) {
 function calcOnHandFiltered(itemId, from, to) {
     return transactions
         .filter(t => {
-            if (t.itemId !== itemId) return false;
+            if (String(t.itemId) !== String(itemId)) return false;
             if (from && (t.date || '') < from) return false;
             if (to   && (t.date || '') > to)   return false;
             return true;
@@ -6183,7 +6183,7 @@ function getFilteredTransactions() {
 // Running balance for an item up to and including the given transaction
 function calcBalanceUpTo(itemId, refTxn) {
     return transactions
-        .filter(t => t.itemId === itemId &&
+        .filter(t => String(t.itemId) === String(itemId) &&
                     (t.date < refTxn.date || (t.date === refTxn.date && t.id <= refTxn.id)))
         .reduce((total, t) => {
             if (t.type === 'In' || t.type === 'Adj') return total + t.qty;
