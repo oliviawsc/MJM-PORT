@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-12';
+var APP_BUILD = '20261124-13';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17029,7 +17029,12 @@ function mgmtReportFigures(estate, ym) {
         put('ffb_kum', cum(ffb)); put('ffb_kum_prev', cum(ffbPrev));
         put('ha_kum', perHa(cum(ffb))); put('ha_kum_prev', perHa(cum(ffbPrev)));
         put('grading', got(year, 'grading_pct')); put('grading_prev', got(year - 1, 'grading_pct'));
-        put('penombak', got(year, 'harvesters')); put('penombak_prev', got(year - 1, 'harvesters'));
+    }
+    // Harvesters from port_ffb_production (Summary No. of Harvesters)
+    if (typeof _ffbAllRows !== 'undefined' && _ffbAllRows.loaded && _ffbAllRows.estate === estate) {
+        const ffbRows = _ffbAllRows.rows;
+        const gotFfb = (y, field) => MR_MONTHS.map((m, i) => { const r = ffbRows.find((x) => x.year === y && x.month === i + 1); return r && r[field] != null ? Number(r[field]) : null; });
+        put('penombak', gotFfb(year, 'harvesters')); put('penombak_prev', gotFfb(year - 1, 'harvesters'));
     }
     // Field Planting — always pulled live from Oil Palm Seedling Out transactions
     // (overrides sample/db so the chart always reflects the real transaction data)
@@ -17216,11 +17221,12 @@ function renderMgmtReport() {
     const btn = document.getElementById('mrInputBtn');
     if (btn) btn.style.display = estate && getSectionAccess(loadSession(), 'mgmtreport') === 'edit' ? '' : 'none';
     drawMgmtReport();
+    const redrawIfActive = () => { const sec = document.getElementById('mgmtreport'); if (sec && sec.classList.contains('active')) drawMgmtReport(); };
     if (estate && !(_mrRows.key === estate + '|' + year && _mrRows.loaded)) {
-        mrLoadRows(estate, year).then(() => {
-            const sec = document.getElementById('mgmtreport');
-            if (sec && sec.classList.contains('active')) drawMgmtReport();
-        });
+        mrLoadRows(estate, year).then(redrawIfActive);
+    }
+    if (estate && typeof ffbLoadAllRows !== 'undefined' && !(_ffbAllRows.estate === estate && _ffbAllRows.loaded)) {
+        ffbLoadAllRows(estate).then(redrawIfActive);
     }
 }
 
