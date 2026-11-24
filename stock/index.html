@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-16';
+var APP_BUILD = '20261124-17';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -16942,12 +16942,12 @@ function mrChartSpecs(year) {
             { key: 'produktiviti', type: 'bar', label: 'Pencapaian', color: MR_COLORS.y26yellow },
             { key: 'produktiviti_sasaran', type: 'line', label: 'Sasaran', color: MR_COLORS.target, dashed: true, labelPos: 'above', decimals: 1 },
           ] },
-        { title: 'Hasil FFB Bulanan', yLabel: 'MT', yMax: 450, step: 50,
+        { title: 'Hasil FFB Bulanan', yLabel: 'MT', yMax: 450, step: 50, decimals: 0,
           series: [
             { key: 'ffb_prev', type: 'bar', label: prev, color: MR_COLORS.pink25 },
             { key: 'ffb', type: 'bar', label: cur, color: MR_COLORS.y26yellow, labelPos: 'middle' },
           ] },
-        { title: 'Kumulatif Hasil FFB', yLabel: 'MT', yMax: 4500, step: 750,
+        { title: 'Kumulatif Hasil FFB', yLabel: 'MT', yMax: 4500, step: 750, decimals: 0,
           series: [
             { key: 'ffb_kum_prev', type: 'bar', label: prev, color: MR_COLORS.y25blue },
             { key: 'ffb_kum', type: 'bar', label: cur, color: MR_COLORS.y26yellow, labelPos: 'middle' },
