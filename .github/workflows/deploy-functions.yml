@@ -18,7 +18,7 @@ on:
     paths: ['supabase/functions/**']
 
 env:
-  PROJECT_REF: eukvdlyzhyjohkjqbqjb
+  PROJECT_REF: pxzvayptwpvuvlenmdwp
 
 jobs:
   deploy:
