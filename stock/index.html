@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-11';
+var APP_BUILD = '20261124-12';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17622,7 +17622,7 @@ async function ffbLoadAllRows(estate) {
     if (!estate || typeof supabaseClient === 'undefined') { _ffbAllRows.loaded = true; return []; }
     var curYear = new Date().getFullYear();
     try {
-        var resp = await supabaseClient.from('port_mgmt_monthly').select('*')
+        var resp = await supabaseClient.from('port_ffb_production').select('*')
             .eq('estate', estate).gte('year', 2015).lte('year', curYear + 1)
             .order('year', { ascending: true }).order('month', { ascending: true });
         if (resp.error) console.warn('[FFB] load', resp.error);
@@ -17841,7 +17841,7 @@ async function ffbSaveHarvestYear(year) {
     }
     try {
         if (toUpsert.length>0){
-            var resp=await supabaseClient.from('port_mgmt_monthly').upsert(toUpsert,{onConflict:'estate,year,month'});
+            var resp=await supabaseClient.from('port_ffb_production').upsert(toUpsert,{onConflict:'estate,year,month'});
             if (resp.error) throw resp.error;
             toUpsert.forEach(function(p){_ffbUpdateCache(p);});
         }
@@ -17866,7 +17866,7 @@ async function ffbSaveHarvestersYear(year) {
     }
     try {
         if (toUpsert.length>0){
-            var resp=await supabaseClient.from('port_mgmt_monthly').upsert(toUpsert,{onConflict:'estate,year,month'});
+            var resp=await supabaseClient.from('port_ffb_production').upsert(toUpsert,{onConflict:'estate,year,month'});
             if (resp.error) throw resp.error;
             toUpsert.forEach(function(p){_ffbUpdateCache(p);});
         }
@@ -17891,7 +17891,7 @@ async function ffbSaveGradingYear(year) {
     }
     try {
         if (toUpsert.length>0){
-            var resp=await supabaseClient.from('port_mgmt_monthly').upsert(toUpsert,{onConflict:'estate,year,month'});
+            var resp=await supabaseClient.from('port_ffb_production').upsert(toUpsert,{onConflict:'estate,year,month'});
             if (resp.error) throw resp.error;
             toUpsert.forEach(function(p){_ffbUpdateCache(p);});
         }
@@ -17912,13 +17912,13 @@ async function ffbClearField(year, month, field) {
     var hasData=merged.ffb_mt!=null||merged.harvesters!=null||merged.grading_pct!=null;
     try {
         if (!hasData){
-            var resp=await supabaseClient.from('port_mgmt_monthly').delete().eq('estate',estate).eq('year',year).eq('month',month);
+            var resp=await supabaseClient.from('port_ffb_production').delete().eq('estate',estate).eq('year',year).eq('month',month);
             if (resp.error) throw resp.error;
             _ffbAllRows.rows=_ffbAllRows.rows.filter(function(r){return!(r.year===year&&r.month===month);});
             if (typeof _mrRows!=='undefined'&&_mrRows.key===estate+'|'+year)
                 _mrRows.rows=_mrRows.rows.filter(function(r){return r.month!==month;});
         } else {
-            var resp=await supabaseClient.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
+            var resp=await supabaseClient.from('port_ffb_production').upsert(payload,{onConflict:'estate,year,month'});
             if (resp.error) throw resp.error;
             _ffbUpdateCache(payload);
         }
