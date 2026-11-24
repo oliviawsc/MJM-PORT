@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-21';
+var APP_BUILD = '20261124-22';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17769,10 +17769,13 @@ function _renderFfbHarvestSummary(allRows) {
     allRows.forEach(function(r){if(r.ffb_mt!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
     if (years.indexOf(curYear)===-1) years.push(curYear);
     _ffbExtraYears.forEach(function(y){if(years.indexOf(y)===-1)years.push(y);});
+    // also show years that have targets
+    allRows.forEach(function(r){if(r.ffb_target!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
     years.sort(function(a,b){return b-a;});
     var html = '';
     years.forEach(function(yr) {
         var yRows = allRows.filter(function(r){return r.year===yr;});
+        // ── Actual row ──
         var cells='', total=0, count=0;
         for (var m=1;m<=12;m++) {
             var r=yRows.find(function(x){return x.month===m;})||{};
@@ -17786,10 +17789,32 @@ function _renderFfbHarvestSummary(allRows) {
         }
         var totalStr=count?total.toFixed(2):'—';
         var yieldStr=(count&&totalHa>0)?(total/totalHa).toFixed(2):'—';
-        html+='<tr class="hover:bg-green-50"><td class="px-3 py-1.5 font-bold text-center border border-gray-200 bg-green-50">'+yr+'</td>'+cells+
+        html+='<tr class="hover:bg-green-50">'+
+            '<td class="px-3 py-1.5 border border-gray-200 bg-green-50" style="min-width:70px;"><span class="font-bold text-green-900 block text-center">'+yr+'</span><span class="text-xs text-green-700 block text-center">Actual</span></td>'+
+            cells+
             '<td class="px-3 py-1.5 font-semibold text-center border border-gray-200 bg-green-50">'+totalStr+'</td>'+
             '<td class="px-3 py-1.5 font-semibold text-center border border-gray-200 bg-green-50">'+yieldStr+'</td>'+
             '<td class="px-2 py-1 text-center border border-gray-200"><button id="ffbSaveHarvestBtn_'+yr+'" onclick="ffbSaveHarvestYear('+yr+')" class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 font-semibold">Save</button></td></tr>';
+        // ── Target row ──
+        var tCells='', tTotal=0, tCount=0;
+        for (var m=1;m<=12;m++) {
+            var r=yRows.find(function(x){return x.month===m;})||{};
+            var tv=r.ffb_target!=null?parseFloat(r.ffb_target):'';
+            if (tv!==''){tTotal+=tv;tCount++;}
+            tCells+='<td class="px-1 py-0.5 border border-amber-200" style="min-width:58px;">'+
+                '<input type="number" step="0.01" min="0" value="'+(tv!==''?tv:'')+'" placeholder="—"'+
+                ' id="ffbTargetIn_'+yr+'_'+m+'"'+
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-amber-400 rounded px-1 py-0.5">'+
+                '</td>';
+        }
+        var tTotalStr=tCount?tTotal.toFixed(2):'—';
+        var tYieldStr=(tCount&&totalHa>0)?(tTotal/totalHa).toFixed(2):'—';
+        html+='<tr class="hover:bg-amber-50">'+
+            '<td class="px-3 py-1.5 border border-amber-200 bg-amber-50" style="min-width:70px;"><span class="font-bold text-amber-800 block text-center">'+yr+'</span><span class="text-xs text-amber-700 block text-center">Target</span></td>'+
+            tCells+
+            '<td class="px-3 py-1.5 font-semibold text-center border border-amber-200 bg-amber-50">'+tTotalStr+'</td>'+
+            '<td class="px-3 py-1.5 font-semibold text-center border border-amber-200 bg-amber-50">'+tYieldStr+'</td>'+
+            '<td class="px-2 py-1 text-center border border-amber-200"><button id="ffbSaveTargetBtn_'+yr+'" onclick="ffbSaveTargetYear('+yr+')" class="text-xs bg-amber-500 text-white px-3 py-1 rounded hover:bg-amber-600 font-semibold">Save</button></td></tr>';
     });
     tbody.innerHTML = html;
 }
@@ -17898,6 +17923,31 @@ async function ffbSaveHarvestYear(year) {
         var existing=yRows.find(function(r){return r.month===m;});
         if (val!==null||(existing&&existing.ffb_mt!=null))
             toUpsert.push({estate:estate,year:year,month:m,ffb_mt:val});
+    }
+    try {
+        if (toUpsert.length>0){
+            var resp=await supabaseClient.from('port_ffb_production').upsert(toUpsert,{onConflict:'estate,year,month'});
+            if (resp.error) throw resp.error;
+            toUpsert.forEach(function(p){_ffbUpdateCache(p);});
+        }
+        if (btn){btn.disabled=false;btn.textContent='✓ Saved';setTimeout(function(){if(btn)btn.textContent='Save';},2000);}
+        renderFfbHarvestTab();
+    } catch(e){if (btn){btn.disabled=false;btn.textContent='Save';}alert('Error saving: '+e.message);}
+}
+async function ffbSaveTargetYear(year) {
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    if (!estate) return;
+    var btn=document.getElementById('ffbSaveTargetBtn_'+year);
+    if (btn){btn.disabled=true;btn.textContent='Saving…';}
+    var yRows=_ffbAllRows.rows.filter(function(r){return r.year===year;});
+    var toUpsert=[];
+    for (var m=1;m<=12;m++){
+        var el=document.getElementById('ffbTargetIn_'+year+'_'+m);
+        if (!el) continue;
+        var val=el.value!==''?parseFloat(el.value):null;
+        var existing=yRows.find(function(r){return r.month===m;});
+        if (val!==null||(existing&&existing.ffb_target!=null))
+            toUpsert.push({estate:estate,year:year,month:m,ffb_target:val});
     }
     try {
         if (toUpsert.length>0){
