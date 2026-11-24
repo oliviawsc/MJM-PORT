@@ -1086,14 +1086,25 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-24';
+var APP_BUILD = '20261124-25';
 (function () {
-    // If this constant is missing (old cached file) and the URL doesn't already
-    // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
-    // cache — so the latest version is fetched from the server.
-    if (typeof APP_BUILD === 'undefined' && window.location.search.indexOf('_vr') === -1) {
+    var _vr = window.location.search.indexOf('_vr') !== -1;
+    // Legacy guard: very old cached pages have no APP_BUILD at all.
+    if (typeof APP_BUILD === 'undefined' && !_vr) {
         window.location.replace(window.location.pathname + '?_vr=1' + (window.location.hash || ''));
+        return;
     }
+    // Version-change guard: compare the running build against the last stored
+    // build. If they differ the page is stale (service worker served old cache);
+    // bounce through a cache-busting URL so the network-fresh version loads.
+    try {
+        var stored = localStorage.getItem('opp_app_build');
+        if (stored && stored !== APP_BUILD && !_vr) {
+            window.location.replace(window.location.pathname + '?_vr=' + APP_BUILD + (window.location.hash || ''));
+            return;
+        }
+        localStorage.setItem('opp_app_build', APP_BUILD);
+    } catch (_e) {}
 })();
 (function () {
     try {
