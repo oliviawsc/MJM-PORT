@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-27';
+var APP_BUILD = '20261124-28';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -17339,6 +17339,21 @@ function drawMgmtReport() {
                 borderRadius: 3, borderSkipped: 'bottom', categoryPercentage: 0.78, barPercentage: sr.wide ? 1.9 : 0.9, grouped: !sr.wide,
             });
         });
+        // Auto-scale Y-axis: if any data value exceeds the spec's yMax, compute
+        // a nicely-rounded ceiling so the data always fits within the chart area.
+        // Percent charts stay capped at 100; all others scale up with the data.
+        let chartMax = c.yMax, chartStep = c.step;
+        if (!c.percent) {
+            const allVals = datasets.flatMap((ds) => (ds.data || []).filter((v) => v != null && !isNaN(v)));
+            const dataMax = allVals.length > 0 ? Math.max(...allVals) : 0;
+            if (dataMax > c.yMax) {
+                const target = dataMax * 1.12;
+                const rawStep = target / 5;
+                const mag = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+                chartStep = Math.ceil(rawStep / mag) * mag;
+                chartMax  = Math.ceil(target / chartStep) * chartStep;
+            }
+        }
         _mrCharts.push(new Chart(canvas, {
             type: 'bar',
             data: { labels: MR_MONTHS, datasets },
@@ -17349,8 +17364,8 @@ function drawMgmtReport() {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { family: '"Times New Roman", serif', size: 11 }, color: '#111' } },
-                    y: { beginAtZero: true, max: c.yMax, ticks: { stepSize: c.step, font: { family: '"Times New Roman", serif', size: 11 }, color: '#111',
-                         callback: (v) => c.percent ? v + '%' : (c.decimals === 2 && c.yMax <= 40 ? Number(v).toFixed(2) : Number(v).toLocaleString('en-US')) },
+                    y: { beginAtZero: true, max: chartMax, ticks: { stepSize: chartStep, font: { family: '"Times New Roman", serif', size: 11 }, color: '#111',
+                         callback: (v) => c.percent ? v + '%' : (c.decimals === 2 && chartMax <= 40 ? Number(v).toFixed(2) : Number(v).toLocaleString('en-US')) },
                          title: { display: !!c.yLabel, text: c.yLabel, font: { family: '"Times New Roman", serif', size: 12 }, color: '#111' },
                          grid: { color: '#D9D9D9' } },
                 },
