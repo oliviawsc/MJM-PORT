@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-18';
+var APP_BUILD = '20261124-19';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -1892,6 +1892,17 @@ var APP_BUILD = '20261124-18';
                         </button>
 
                     </div>
+
+                    <!-- Hujan (full-width) -->
+                    <button id="estateHubRainfallCard" class="estate-card" onclick="navigateToSection('mobile_rainfall')" style="padding:18px 20px;display:flex;align-items:center;gap:16px;text-align:left;">
+                        <div style="width:52px;height:52px;flex-shrink:0;border-radius:16px;background:linear-gradient(135deg,#0ea5e9,#0284c7);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(14,165,233,.25);">
+                            <span style="font-size:28px;">&#127783;&#65039;</span>
+                        </div>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="mobile_rf_header_short">Hujan</div>
+                            <div style="font-size:12px;color:#64748B;margin-top:2px;" data-i18n="hub_hujan_sub">Rekod &amp; laporan hujan</div>
+                        </div>
+                    </button>
 
                 </div>
 
@@ -8940,6 +8951,8 @@ const I18N = {
         mobile_lbl_baki_stok:    'Balance Stock',
         mobile_lbl_transaksi:    'Transactions',
         mobile_lbl_rekod:        'Record',
+        mobile_rf_header_short:  'Rainfall',
+        hub_hujan_sub:           'Record & rainfall report',
         mobile_rf_header:        '🌧️ Rainfall',
         mobile_rf_card_rekod:    'Rainfall Record',
         mobile_rf_card_transaksi:'Rainfall List',
@@ -9471,6 +9484,8 @@ const I18N = {
         mobile_lbl_baki_stok:    'Baki Stok',
         mobile_lbl_transaksi:    'Transaksi',
         mobile_lbl_rekod:        'Rekod',
+        mobile_rf_header_short:  'Hujan',
+        hub_hujan_sub:           'Rekod & laporan hujan',
         mobile_rf_header:        '🌧️ Hujan',
         mobile_rf_card_rekod:    'Rekod Hujan',
         mobile_rf_card_transaksi:'Transaksi Hujan',
