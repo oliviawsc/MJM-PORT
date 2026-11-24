@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-17';
+var APP_BUILD = '20261124-18';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17050,14 +17050,17 @@ function mgmtReportFigures(estate, ym) {
         delete series.ha_kum; delete series.ha_kum_prev;
         delete series.grading; delete series.grading_prev;
         delete series.penombak; delete series.penombak_prev;
+        delete series.produktiviti;
         const ffbRows = _ffbAllRows.rows;
         const gotFfb = (y, field) => MR_MONTHS.map((m, i) => { const r = ffbRows.find((x) => x.year === y && x.month === i + 1); return r && r[field] != null ? Number(r[field]) : null; });
         const ffb = gotFfb(year, 'ffb_mt'), ffbPrev = gotFfb(year - 1, 'ffb_mt');
+        const harv = gotFfb(year, 'harvesters');
         put('ffb', ffb); put('ffb_prev', ffbPrev);
         put('ffb_kum', cum(ffb)); put('ffb_kum_prev', cum(ffbPrev));
         put('ha_kum', perHa(cum(ffb))); put('ha_kum_prev', perHa(cum(ffbPrev)));
         put('grading', gotFfb(year, 'grading_pct')); put('grading_prev', gotFfb(year - 1, 'grading_pct'));
-        put('penombak', gotFfb(year, 'harvesters')); put('penombak_prev', gotFfb(year - 1, 'harvesters'));
+        put('penombak', harv); put('penombak_prev', gotFfb(year - 1, 'harvesters'));
+        put('produktiviti', ffb.map((v, i) => (v != null && harv[i] != null && harv[i] > 0) ? Math.round(v / harv[i] / 26 * 100) / 100 : null));
     }
     // Field Planting — always pulled live from Oil Palm Seedling Out transactions
     // (overrides sample/db so the chart always reflects the real transaction data)
