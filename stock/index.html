@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-09';
+var APP_BUILD = '20261124-10';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -2593,27 +2593,6 @@ var APP_BUILD = '20261124-09';
 
             <!-- Panel: Harvesting Report -->
             <div id="ffbPanel_harvest" class="pt-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm font-semibold text-green-800">Year</label>
-                    <select id="ffbHarvestYearSel" onchange="renderFfbHarvestInput()"
-                        class="text-sm text-green-800 bg-white border border-green-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-400"></select>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-green-800 mb-3">Monthly FFB Input</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm" style="border-collapse:collapse;">
-                            <thead class="bg-green-100 text-green-800">
-                                <tr>
-                                    <th class="px-3 py-2 text-center border border-green-200">Month</th>
-                                    <th class="px-3 py-2 text-center border border-green-200">FFB (MT)</th>
-                                    <th class="px-3 py-2 text-center border border-green-200">Yield / Ha (MT)</th>
-                                    <th class="px-3 py-2 text-center border border-green-200">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ffbHarvestInputBody"></tbody>
-                        </table>
-                    </div>
-                </div>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
                     <h3 class="text-base font-bold text-green-800 mb-3">Summary Harvesting Report</h3>
                     <div class="overflow-x-auto">
@@ -2645,26 +2624,6 @@ var APP_BUILD = '20261124-09';
 
             <!-- Panel: No. of Harvesters -->
             <div id="ffbPanel_harvesters" class="pt-6" style="display:none;">
-                <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm font-semibold text-blue-800">Year</label>
-                    <select id="ffbHarvesterYearSel" onchange="renderFfbHarvestersInput()"
-                        class="text-sm text-blue-800 bg-white border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-blue-800 mb-3">Monthly Harvesters Input</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm" style="border-collapse:collapse;">
-                            <thead class="bg-blue-100 text-blue-800">
-                                <tr>
-                                    <th class="px-3 py-2 text-center border border-blue-200">Month</th>
-                                    <th class="px-3 py-2 text-center border border-blue-200">No. of Harvesters</th>
-                                    <th class="px-3 py-2 text-center border border-blue-200">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ffbHarvestersInputBody"></tbody>
-                        </table>
-                    </div>
-                </div>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
                     <h3 class="text-base font-bold text-blue-800 mb-3">Summary No. of Harvesters</h3>
                     <div class="overflow-x-auto">
@@ -2695,47 +2654,32 @@ var APP_BUILD = '20261124-09';
 
             <!-- Panel: FFB Grading -->
             <div id="ffbPanel_grading" class="pt-6" style="display:none;">
-                <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm font-semibold text-amber-800">Year</label>
-                    <select id="ffbGradingYearSel" onchange="renderFfbGradingInput()"
-                        class="text-sm text-amber-800 bg-white border border-amber-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400"></select>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-amber-800 mb-2">Monthly Grading Input</h3>
-                    <p class="text-xs text-amber-700 mb-3">Total FFB (MT) is from the Harvesting Report. Enter Satisfactory (%) to calculate grading figures.</p>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm" style="border-collapse:collapse;">
-                            <thead class="bg-amber-100 text-amber-800">
-                                <tr>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Month</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Total FFB (MT)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Satisfactory (%)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Satisfactory (MT)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Unsatisfactory (MT)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ffbGradingInputBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <p class="text-xs text-amber-700 mb-3">Enter Satisfactory (%) per month. Sat/Unsat MT is computed from the Harvesting Report FFB figures.</p>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
                     <h3 class="text-base font-bold text-amber-800 mb-3">Summary FFB Grading Record</h3>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm" style="border-collapse:collapse;">
+                        <table class="min-w-full text-sm" style="border-collapse:collapse;white-space:nowrap;">
                             <thead class="bg-amber-100 text-amber-800">
                                 <tr>
-                                    <th class="px-3 py-2 text-center border border-amber-200" rowspan="2">Year</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200" rowspan="2">Period</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200" colspan="2">Satisfactory</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200" colspan="2">Unsatisfactory</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200" rowspan="2">Total (MT)</th>
-                                </tr>
-                                <tr>
-                                    <th class="px-3 py-2 text-center border border-amber-200">(MT)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">(%)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">(MT)</th>
-                                    <th class="px-3 py-2 text-center border border-amber-200">(%)</th>
+                                    <th class="px-3 py-2 text-center border border-amber-200">Year</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Jan (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Feb (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Mar (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Apr (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">May (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Jun (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Jul (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Aug (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Sep (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Oct (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Nov (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Dec (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Period</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Sat (MT)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Sat (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Unsat (MT)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Unsat (%)</th>
+                                    <th class="px-2 py-2 text-center border border-amber-200">Total (MT)</th>
                                 </tr>
                             </thead>
                             <tbody id="ffbGradingSummaryBody"></tbody>
@@ -17747,257 +17691,160 @@ function renderFfbModule() {
 
 // ── Harvesting Report ──────────────────────────────────────────────────────
 function renderFfbHarvestTab() {
-    _ffbPopulateYearSel('ffbHarvestYearSel');
     var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    var tbody = document.getElementById('ffbHarvestSummaryBody');
     if (!estate) {
-        var tb = document.getElementById('ffbHarvestInputBody');
-        if (tb) tb.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
+        if (tbody) tbody.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
         return;
     }
-    ffbLoadAllRows(estate).then(function(allRows) {
-        var selYear = parseInt((document.getElementById('ffbHarvestYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbHarvestInput(selYear, allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbHarvestSummary(allRows);
-    });
+    ffbLoadAllRows(estate).then(function(allRows) { _renderFfbHarvestSummary(allRows); });
 }
-function renderFfbHarvestInput() {
-    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
-    if (!estate) return;
-    ffbLoadAllRows(estate).then(function(allRows) {
-        var selYear = parseInt((document.getElementById('ffbHarvestYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbHarvestInput(selYear, allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbHarvestSummary(allRows);
-    });
-}
-function _renderFfbHarvestInput(year, rows) {
-    var tbody = document.getElementById('ffbHarvestInputBody');
-    if (!tbody) return;
-    var totalHa = (typeof mrTotalAreaHa === 'function') ? mrTotalAreaHa() : 0;
-    var html = '';
-    for (var m = 1; m <= 12; m++) {
-        var row = rows.find(function(r){return r.month===m;})||{};
-        var ffb = row.ffb_mt != null ? row.ffb_mt : '';
-        var yieldHa = (ffb !== '' && totalHa > 0) ? (parseFloat(ffb)/totalHa).toFixed(2) : '—';
-        html += '<tr class="border-b border-gray-100 hover:bg-green-50">' +
-            '<td class="px-3 py-2 font-medium text-green-800 text-center border border-gray-200">' + MR_MONTH_NAMES[m-1] + '</td>' +
-            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="0.01" min="0" value="' + ffb + '" placeholder="—"' +
-                ' id="ffbMt_' + year + '_' + m + '" onchange="ffbUpdateYield(' + year + ',' + m + ')" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded px-1"></td>' +
-            '<td class="px-3 py-2 text-center text-sm text-gray-600 border border-gray-200" id="ffbYield_' + year + '_' + m + '">' + yieldHa + '</td>' +
-            '<td class="px-2 py-1 text-center border border-gray-200">' +
-                '<button onclick="ffbSaveHarvestRow(' + year + ',' + m + ')" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 mr-1">Save</button>' +
-                (ffb !== '' ? '<button onclick="ffbClearField(' + year + ',' + m + ',\'ffb_mt\')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">×</button>' : '') +
-            '</td></tr>';
-    }
-    tbody.innerHTML = html;
-}
+function renderFfbHarvestInput() { renderFfbHarvestTab(); }
 function _renderFfbHarvestSummary(allRows) {
     var tbody = document.getElementById('ffbHarvestSummaryBody');
     if (!tbody) return;
     var totalHa = (typeof mrTotalAreaHa === 'function') ? mrTotalAreaHa() : 0;
+    var curYear = new Date().getFullYear();
     var years = [];
     allRows.forEach(function(r){if(r.ffb_mt!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
+    if (years.indexOf(curYear)===-1) years.push(curYear);
     years.sort(function(a,b){return b-a;});
-    if (!years.length) { tbody.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-4">No data yet.</td></tr>'; return; }
     var html = '';
     years.forEach(function(yr) {
         var yRows = allRows.filter(function(r){return r.year===yr;});
         var cells='', total=0, count=0;
         for (var m=1;m<=12;m++) {
             var r=yRows.find(function(x){return x.month===m;})||{};
-            if (r.ffb_mt!=null){var v=parseFloat(r.ffb_mt)||0;cells+='<td class="px-2 py-1.5 text-center border border-gray-200">'+v.toFixed(2)+'</td>';total+=v;count++;}
-            else cells+='<td class="px-2 py-1.5 text-center text-gray-300 border border-gray-200">—</td>';
+            var v=r.ffb_mt!=null?parseFloat(r.ffb_mt):'';
+            if (v!==''){total+=v;count++;}
+            cells+='<td class="px-1 py-0.5 border border-gray-200" style="min-width:58px;">'+
+                '<input type="number" step="0.01" min="0" value="'+(v!==''?v:'')+'" placeholder="—"'+
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded px-1 py-0.5"'+
+                ' onblur="ffbAutoSaveHarvest('+yr+','+m+',this)" onkeydown="if(event.key===\'Enter\')this.blur()">'+
+                '</td>';
         }
         var totalStr=count?total.toFixed(2):'—';
         var yieldStr=(count&&totalHa>0)?(total/totalHa).toFixed(2):'—';
-        html+='<tr class="hover:bg-green-50"><td class="px-3 py-1.5 font-bold text-center border border-gray-200">'+yr+'</td>'+cells+
+        html+='<tr class="hover:bg-green-50"><td class="px-3 py-1.5 font-bold text-center border border-gray-200 bg-green-50">'+yr+'</td>'+cells+
             '<td class="px-3 py-1.5 font-semibold text-center border border-gray-200 bg-green-50">'+totalStr+'</td>'+
             '<td class="px-3 py-1.5 font-semibold text-center border border-gray-200 bg-green-50">'+yieldStr+'</td></tr>';
     });
     tbody.innerHTML = html;
 }
-function ffbUpdateYield(year, month) {
-    var ffbEl=document.getElementById('ffbMt_'+year+'_'+month);
-    var yEl=document.getElementById('ffbYield_'+year+'_'+month);
-    if (!ffbEl||!yEl) return;
-    var totalHa=(typeof mrTotalAreaHa==='function')?mrTotalAreaHa():0;
-    var v=ffbEl.value!==''?parseFloat(ffbEl.value):NaN;
-    yEl.textContent=(!isNaN(v)&&totalHa>0)?(v/totalHa).toFixed(2):'—';
-}
-async function ffbSaveHarvestRow(year, month) {
-    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate) return;
-    var el=document.getElementById('ffbMt_'+year+'_'+month);
-    var payload={estate:estate,year:year,month:month,ffb_mt:el&&el.value!==''?parseFloat(el.value):null};
-    try {
-        var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
-        if (resp.error) throw resp.error;
-        _ffbUpdateCache(payload); renderFfbHarvestTab();
-    } catch(e){alert('Error saving: '+e.message);}
-}
 
 // ── No. of Harvesters ─────────────────────────────────────────────────────
 function renderFfbHarvestersTab() {
-    _ffbPopulateYearSel('ffbHarvesterYearSel');
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate){var tb=document.getElementById('ffbHarvestersInputBody');if(tb)tb.innerHTML='<tr><td colspan="3" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
-    ffbLoadAllRows(estate).then(function(allRows){
-        var selYear=parseInt((document.getElementById('ffbHarvesterYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbHarvestersInput(selYear,allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbHarvestersSummary(allRows);
-    });
+    var tbody=document.getElementById('ffbHarvestersSummaryBody');
+    if (!estate){if(tbody)tbody.innerHTML='<tr><td colspan="14" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
+    ffbLoadAllRows(estate).then(function(allRows){ _renderFfbHarvestersSummary(allRows); });
 }
-function renderFfbHarvestersInput() {
-    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate) return;
-    ffbLoadAllRows(estate).then(function(allRows){
-        var selYear=parseInt((document.getElementById('ffbHarvesterYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbHarvestersInput(selYear,allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbHarvestersSummary(allRows);
-    });
-}
-function _renderFfbHarvestersInput(year, rows) {
-    var tbody=document.getElementById('ffbHarvestersInputBody');
-    if (!tbody) return;
-    var html='';
-    for (var m=1;m<=12;m++){
-        var row=rows.find(function(r){return r.month===m;})||{};
-        var harv=row.harvesters!=null?row.harvesters:'';
-        html+='<tr class="border-b border-gray-100 hover:bg-blue-50">'+
-            '<td class="px-3 py-2 font-medium text-blue-800 text-center border border-gray-200">'+MR_MONTH_NAMES[m-1]+'</td>'+
-            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="1" min="0" value="'+harv+'" placeholder="—"'+
-                ' id="ffbHarv_'+year+'_'+m+'" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"></td>'+
-            '<td class="px-2 py-1 text-center border border-gray-200">'+
-                '<button onclick="ffbSaveHarvestersRow('+year+','+m+')" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 mr-1">Save</button>'+
-                (harv!==''?'<button onclick="ffbClearField('+year+','+m+',\'harvesters\')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">×</button>':'')+
-            '</td></tr>';
-    }
-    tbody.innerHTML=html;
-}
+function renderFfbHarvestersInput() { renderFfbHarvestersTab(); }
 function _renderFfbHarvestersSummary(allRows) {
     var tbody=document.getElementById('ffbHarvestersSummaryBody');
     if (!tbody) return;
+    var curYear=new Date().getFullYear();
     var years=[];
     allRows.forEach(function(r){if(r.harvesters!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
+    if (years.indexOf(curYear)===-1) years.push(curYear);
     years.sort(function(a,b){return b-a;});
-    if (!years.length){tbody.innerHTML='<tr><td colspan="14" class="text-center text-gray-400 py-4">No data yet.</td></tr>';return;}
     var html='';
     years.forEach(function(yr){
         var yRows=allRows.filter(function(r){return r.year===yr;});
         var cells='',total=0,count=0;
         for (var m=1;m<=12;m++){
             var r=yRows.find(function(x){return x.month===m;})||{};
-            if (r.harvesters!=null){var v=parseInt(r.harvesters,10)||0;cells+='<td class="px-2 py-1.5 text-center border border-gray-200">'+v+'</td>';total+=v;count++;}
-            else cells+='<td class="px-2 py-1.5 text-center text-gray-300 border border-gray-200">—</td>';
+            var v=r.harvesters!=null?parseInt(r.harvesters,10):'';
+            if (v!==''){total+=v;count++;}
+            cells+='<td class="px-1 py-0.5 border border-gray-200" style="min-width:52px;">'+
+                '<input type="number" step="1" min="0" value="'+(v!==''?v:'')+'" placeholder="—"'+
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1 py-0.5"'+
+                ' onblur="ffbAutoSaveHarvesters('+yr+','+m+',this)" onkeydown="if(event.key===\'Enter\')this.blur()">'+
+                '</td>';
         }
-        html+='<tr class="hover:bg-blue-50"><td class="px-3 py-1.5 font-bold text-center border border-gray-200">'+yr+'</td>'+cells+
+        html+='<tr class="hover:bg-blue-50"><td class="px-3 py-1.5 font-bold text-center border border-gray-200 bg-blue-50">'+yr+'</td>'+cells+
             '<td class="px-3 py-1.5 font-semibold text-center border border-gray-200 bg-blue-50">'+(count?(total/count).toFixed(1):'—')+'</td></tr>';
     });
     tbody.innerHTML=html;
 }
-async function ffbSaveHarvestersRow(year, month) {
+
+// ── FFB Grading ───────────────────────────────────────────────────────────
+function renderFfbGradingTab() {
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    var tbody=document.getElementById('ffbGradingSummaryBody');
+    if (!estate){if(tbody)tbody.innerHTML='<tr><td colspan="19" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
+    ffbLoadAllRows(estate).then(function(allRows){ _renderFfbGradingSummary(allRows); });
+}
+function renderFfbGradingInput() { renderFfbGradingTab(); }
+function _renderFfbGradingSummary(allRows) {
+    var tbody=document.getElementById('ffbGradingSummaryBody');
+    if (!tbody) return;
+    var curYear=new Date().getFullYear();
+    var years=[];
+    allRows.forEach(function(r){if(r.grading_pct!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
+    if (years.indexOf(curYear)===-1) years.push(curYear);
+    years.sort(function(a,b){return b-a;});
+    var html='';
+    years.forEach(function(yr){
+        var yRows=allRows.filter(function(r){return r.year===yr;});
+        var cells='',totalFfb=0,totalSat=0,firstM=null,lastM=null;
+        for (var m=1;m<=12;m++){
+            var r=yRows.find(function(x){return x.month===m;})||{};
+            var grad=r.grading_pct!=null?parseFloat(r.grading_pct):'';
+            var ffb=r.ffb_mt!=null?parseFloat(r.ffb_mt):null;
+            if (grad!==''&&ffb!=null){
+                totalFfb+=ffb; totalSat+=ffb*grad/100;
+                if(firstM===null||m<firstM)firstM=m;
+                if(lastM===null||m>lastM)lastM=m;
+            }
+            cells+='<td class="px-1 py-0.5 border border-gray-200" style="min-width:52px;">'+
+                '<input type="number" step="0.01" min="0" max="100" value="'+(grad!==''?grad:'')+'" placeholder="—"'+
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-amber-400 rounded px-1 py-0.5"'+
+                ' onblur="ffbAutoSaveGrading('+yr+','+m+',this)" onkeydown="if(event.key===\'Enter\')this.blur()">'+
+                '</td>';
+        }
+        var totalUnsat=totalFfb-totalSat;
+        var satPct=totalFfb>0?(totalSat/totalFfb*100).toFixed(2)+'%':'—';
+        var unsatPct=totalFfb>0?(totalUnsat/totalFfb*100).toFixed(2)+'%':'—';
+        var period=(firstM!==null&&lastM!==null)?_ffbShortMo[firstM-1]+' - '+_ffbShortMo[lastM-1]:'—';
+        html+='<tr class="hover:bg-amber-50">'+
+            '<td class="px-3 py-1.5 font-bold text-center border border-gray-200 bg-amber-50">'+yr+'</td>'+cells+
+            '<td class="px-2 py-1.5 text-center border border-gray-200 text-gray-600">'+period+'</td>'+
+            '<td class="px-2 py-1.5 text-center border border-gray-200">'+(totalSat?totalSat.toFixed(2):'—')+'</td>'+
+            '<td class="px-2 py-1.5 text-center border border-gray-200">'+satPct+'</td>'+
+            '<td class="px-2 py-1.5 text-center border border-gray-200">'+(totalUnsat?totalUnsat.toFixed(2):'—')+'</td>'+
+            '<td class="px-2 py-1.5 text-center border border-gray-200">'+unsatPct+'</td>'+
+            '<td class="px-2 py-1.5 font-semibold text-center border border-gray-200 bg-amber-50">'+(totalFfb?totalFfb.toFixed(2):'—')+'</td></tr>';
+    });
+    tbody.innerHTML=html||'<tr><td colspan="19" class="text-center text-gray-400 py-4">No data yet.</td></tr>';
+}
+async function ffbAutoSaveHarvest(year, month, inputEl) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
-    var el=document.getElementById('ffbHarv_'+year+'_'+month);
-    var payload={estate:estate,year:year,month:month,harvesters:el&&el.value!==''?parseInt(el.value,10):null};
+    var val=inputEl.value!==''?parseFloat(inputEl.value):null;
+    var payload={estate:estate,year:year,month:month,ffb_mt:val};
+    try {
+        var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
+        if (resp.error) throw resp.error;
+        _ffbUpdateCache(payload); renderFfbHarvestTab();
+    } catch(e){alert('Error saving: '+e.message);}
+}
+async function ffbAutoSaveHarvesters(year, month, inputEl) {
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    if (!estate) return;
+    var val=inputEl.value!==''?parseInt(inputEl.value,10):null;
+    var payload={estate:estate,year:year,month:month,harvesters:val};
     try {
         var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
         if (resp.error) throw resp.error;
         _ffbUpdateCache(payload); renderFfbHarvestersTab();
     } catch(e){alert('Error saving: '+e.message);}
 }
-
-// ── FFB Grading ───────────────────────────────────────────────────────────
-function renderFfbGradingTab() {
-    _ffbPopulateYearSel('ffbGradingYearSel');
-    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate){var tb=document.getElementById('ffbGradingInputBody');if(tb)tb.innerHTML='<tr><td colspan="6" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
-    ffbLoadAllRows(estate).then(function(allRows){
-        var selYear=parseInt((document.getElementById('ffbGradingYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbGradingInput(selYear,allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbGradingSummary(allRows);
-    });
-}
-function renderFfbGradingInput() {
+async function ffbAutoSaveGrading(year, month, inputEl) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
-    ffbLoadAllRows(estate).then(function(allRows){
-        var selYear=parseInt((document.getElementById('ffbGradingYearSel')||{}).value||0,10)||new Date().getFullYear();
-        _renderFfbGradingInput(selYear,allRows.filter(function(r){return r.year===selYear;}));
-        _renderFfbGradingSummary(allRows);
-    });
-}
-function _renderFfbGradingInput(year, rows) {
-    var tbody=document.getElementById('ffbGradingInputBody');
-    if (!tbody) return;
-    var html='';
-    for (var m=1;m<=12;m++){
-        var row=rows.find(function(r){return r.month===m;})||{};
-        var ffb=row.ffb_mt!=null?row.ffb_mt:'';
-        var grad=row.grading_pct!=null?row.grading_pct:'';
-        var satMt=(ffb!==''&&grad!=='')?( parseFloat(ffb)*parseFloat(grad)/100).toFixed(2):'—';
-        var unsatMt=(ffb!==''&&grad!=='')?( parseFloat(ffb)*(100-parseFloat(grad))/100).toFixed(2):'—';
-        var ffbVal=(ffb!==''?parseFloat(ffb):null);
-        html+='<tr class="border-b border-gray-100 hover:bg-amber-50">'+
-            '<td class="px-3 py-2 font-medium text-amber-800 text-center border border-gray-200">'+MR_MONTH_NAMES[m-1]+'</td>'+
-            '<td class="px-3 py-2 text-center text-sm border border-gray-200 text-gray-500 bg-gray-50">'+(ffb!==''?parseFloat(ffb).toFixed(2):'—')+'</td>'+
-            '<td class="px-2 py-1 border border-gray-200"><input type="number" step="0.01" min="0" max="100" value="'+grad+'" placeholder="—"'+
-                ' id="ffbGradPct_'+year+'_'+m+'" onchange="ffbGradingCalc('+year+','+m+','+(ffbVal!==null?ffbVal:'null')+')" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-amber-400 rounded px-1"></td>'+
-            '<td class="px-3 py-1.5 text-center text-sm text-gray-600 border border-gray-200" id="ffbGradSat_'+year+'_'+m+'">'+satMt+'</td>'+
-            '<td class="px-3 py-1.5 text-center text-sm text-gray-600 border border-gray-200" id="ffbGradUnsat_'+year+'_'+m+'">'+unsatMt+'</td>'+
-            '<td class="px-2 py-1 text-center border border-gray-200">'+
-                '<button onclick="ffbSaveGradingRow('+year+','+m+')" class="text-xs bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700 mr-1">Save</button>'+
-                (grad!==''?'<button onclick="ffbClearField('+year+','+m+',\'grading_pct\')" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">×</button>':'')+
-            '</td></tr>';
-    }
-    tbody.innerHTML=html;
-}
-function ffbGradingCalc(year, month, ffbMt) {
-    var gradEl=document.getElementById('ffbGradPct_'+year+'_'+month);
-    var satEl=document.getElementById('ffbGradSat_'+year+'_'+month);
-    var unsatEl=document.getElementById('ffbGradUnsat_'+year+'_'+month);
-    if (!gradEl||!satEl||!unsatEl) return;
-    var grad=gradEl.value!==''?parseFloat(gradEl.value):NaN;
-    if (!isNaN(grad)&&ffbMt!=null){satEl.textContent=(ffbMt*grad/100).toFixed(2);unsatEl.textContent=(ffbMt*(100-grad)/100).toFixed(2);}
-    else {satEl.textContent='—';unsatEl.textContent='—';}
-}
-function _renderFfbGradingSummary(allRows) {
-    var tbody=document.getElementById('ffbGradingSummaryBody');
-    if (!tbody) return;
-    var years=[];
-    allRows.forEach(function(r){if(r.grading_pct!=null&&years.indexOf(r.year)===-1)years.push(r.year);});
-    years.sort(function(a,b){return b-a;});
-    if (!years.length){tbody.innerHTML='<tr><td colspan="7" class="text-center text-gray-400 py-4">No data yet.</td></tr>';return;}
-    var html='';
-    years.forEach(function(yr){
-        var yRows=allRows.filter(function(r){return r.year===yr&&r.grading_pct!=null&&r.ffb_mt!=null;});
-        if (!yRows.length) return;
-        var totalFfb=0,totalSat=0,firstM=null,lastM=null;
-        yRows.forEach(function(r){
-            var ffb=parseFloat(r.ffb_mt)||0,grad=parseFloat(r.grading_pct)||0;
-            totalFfb+=ffb;totalSat+=ffb*grad/100;
-            if(firstM===null||r.month<firstM)firstM=r.month;
-            if(lastM===null||r.month>lastM)lastM=r.month;
-        });
-        var totalUnsat=totalFfb-totalSat;
-        var satPct=totalFfb>0?(totalSat/totalFfb*100).toFixed(2):'—';
-        var unsatPct=totalFfb>0?(totalUnsat/totalFfb*100).toFixed(2):'—';
-        var period=(firstM!==null&&lastM!==null)?_ffbShortMo[firstM-1]+' - '+_ffbShortMo[lastM-1]:'—';
-        html+='<tr class="hover:bg-amber-50">'+
-            '<td class="px-3 py-2 font-bold text-center border border-gray-200">'+yr+'</td>'+
-            '<td class="px-3 py-2 text-center border border-gray-200">'+period+'</td>'+
-            '<td class="px-3 py-2 text-center border border-gray-200">'+totalSat.toFixed(2)+'</td>'+
-            '<td class="px-3 py-2 text-center border border-gray-200">'+satPct+'%</td>'+
-            '<td class="px-3 py-2 text-center border border-gray-200">'+totalUnsat.toFixed(2)+'</td>'+
-            '<td class="px-3 py-2 text-center border border-gray-200">'+unsatPct+'%</td>'+
-            '<td class="px-3 py-2 font-semibold text-center border border-gray-200 bg-amber-50">'+totalFfb.toFixed(2)+'</td></tr>';
-    });
-    tbody.innerHTML=html||'<tr><td colspan="7" class="text-center text-gray-400 py-4">No data yet.</td></tr>';
-}
-async function ffbSaveGradingRow(year, month) {
-    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate) return;
-    var el=document.getElementById('ffbGradPct_'+year+'_'+month);
-    var payload={estate:estate,year:year,month:month,grading_pct:el&&el.value!==''?parseFloat(el.value):null};
+    var val=inputEl.value!==''?parseFloat(inputEl.value):null;
+    var payload={estate:estate,year:year,month:month,grading_pct:val};
     try {
         var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
         if (resp.error) throw resp.error;
