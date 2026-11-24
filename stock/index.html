@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-13';
+var APP_BUILD = '20261124-14';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17032,6 +17032,8 @@ function mgmtReportFigures(estate, ym) {
     }
     // Harvesters from port_ffb_production (Summary No. of Harvesters)
     if (typeof _ffbAllRows !== 'undefined' && _ffbAllRows.loaded && _ffbAllRows.estate === estate) {
+        // Clear sample/placeholder data — FFB table is the authoritative source
+        delete series.penombak; delete series.penombak_prev;
         const ffbRows = _ffbAllRows.rows;
         const gotFfb = (y, field) => MR_MONTHS.map((m, i) => { const r = ffbRows.find((x) => x.year === y && x.month === i + 1); return r && r[field] != null ? Number(r[field]) : null; });
         put('penombak', gotFfb(year, 'harvesters')); put('penombak_prev', gotFfb(year - 1, 'harvesters'));
