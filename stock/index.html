@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-15';
+var APP_BUILD = '20261124-16';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17042,12 +17042,21 @@ function mgmtReportFigures(estate, ym) {
         put('ha_kum', perHa(cum(ffb))); put('ha_kum_prev', perHa(cum(ffbPrev)));
         put('grading', got(year, 'grading_pct')); put('grading_prev', got(year - 1, 'grading_pct'));
     }
-    // Harvesters from port_ffb_production (Summary No. of Harvesters)
+    // FFB, grading and harvesters from port_ffb_production — authoritative source
     if (typeof _ffbAllRows !== 'undefined' && _ffbAllRows.loaded && _ffbAllRows.estate === estate) {
-        // Clear sample/placeholder data — FFB table is the authoritative source
+        // Clear sample/placeholder data so only real entries show
+        delete series.ffb; delete series.ffb_prev;
+        delete series.ffb_kum; delete series.ffb_kum_prev;
+        delete series.ha_kum; delete series.ha_kum_prev;
+        delete series.grading; delete series.grading_prev;
         delete series.penombak; delete series.penombak_prev;
         const ffbRows = _ffbAllRows.rows;
         const gotFfb = (y, field) => MR_MONTHS.map((m, i) => { const r = ffbRows.find((x) => x.year === y && x.month === i + 1); return r && r[field] != null ? Number(r[field]) : null; });
+        const ffb = gotFfb(year, 'ffb_mt'), ffbPrev = gotFfb(year - 1, 'ffb_mt');
+        put('ffb', ffb); put('ffb_prev', ffbPrev);
+        put('ffb_kum', cum(ffb)); put('ffb_kum_prev', cum(ffbPrev));
+        put('ha_kum', perHa(cum(ffb))); put('ha_kum_prev', perHa(cum(ffbPrev)));
+        put('grading', gotFfb(year, 'grading_pct')); put('grading_prev', gotFfb(year - 1, 'grading_pct'));
         put('penombak', gotFfb(year, 'harvesters')); put('penombak_prev', gotFfb(year - 1, 'harvesters'));
     }
     // Field Planting — always pulled live from Oil Palm Seedling Out transactions
