@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-03';
+var APP_BUILD = '20261124-04';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -15055,7 +15055,7 @@ function saveRainfallTxn() {
             rainfallTxns[idx].picture = picture; // null when user cleared it
         }
     } else {
-        rainfallTxns.push({ id: Date.now(), date, mm, picture: picture || null, createdAt: new Date().toISOString().slice(0, 10) });
+        rainfallTxns.push({ id: Date.now(), date, mm, picture: picture || null, createdAt: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString() });
     }
     rainfallTxns.sort((a, b) => b.date.localeCompare(a.date));
     const _rfSaveBtn = document.getElementById('rfSaveBtn');
