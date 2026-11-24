@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-08';
+var APP_BUILD = '20261124-09';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -1329,7 +1329,6 @@ var APP_BUILD = '20261124-08';
             <button data-target="fertrecord"   class="nav-item">          <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_fertrecord">Fertilizer Application</span></button>
             <button data-target="chemrecord"   class="nav-item">          <span class="nav-icon">&#9879;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_chemrecord">Chemical Application</span></button>
             <button data-target="plantrecord"  class="nav-item">          <span class="nav-icon">&#127807;</span><span class="sb-label" data-i18n="sb_lbl_plantrecord">Field Planting Record</span></button>
-            <button data-target="ffbrecord" class="nav-item"><span class="nav-icon">🌴</span><span class="sb-label" data-i18n="sb_lbl_ffbrecord">FFB Production</span></button>
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;" data-i18n="sb_section_tools">Tools</p>
             <button data-target="tools" class="nav-item" onclick="navigateToSection('tools')">                  <span class="nav-icon">&#128295;</span><span class="sb-label" data-i18n="sb_lbl_tools">Tools / Peralatan</span></button>
             <button data-target="toolsrecord" class="nav-item" onclick="navigateToSection('toolsrecord')">            <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_toolsrecord">Tools Record</span></button>
@@ -2253,7 +2252,6 @@ var APP_BUILD = '20261124-08';
                 <button class="htab-btn active" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
-                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="nav_roundprogress">Fertilizer Issuance</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="progress_subtitle">Track fertilizer application progress across fertilizer issuance rounds and blocks. Compare actual quantities applied against the budgeted fertilizer requirement.</p>
@@ -2358,7 +2356,6 @@ var APP_BUILD = '20261124-08';
                 <button class="htab-btn" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn active" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
-                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="page_maintprogress">📊 Maintenance Progress</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="page_maintprogress_sub">Track field maintenance progress by round and block. Record claimed maintenance area and monitor completion against planned block coverage.</p>
@@ -2482,7 +2479,6 @@ var APP_BUILD = '20261124-08';
                 <button class="htab-btn" data-target="roundprogress" onclick="navigateToSection('roundprogress')" data-i18n="tab_fertilizer_issuance">Fertilizer Issuance</button>
                 <button class="htab-btn" data-target="maintprogress" onclick="navigateToSection('maintprogress')" data-i18n="tab_maintenance_progress">Maintenance Progress</button>
                 <button class="htab-btn active" data-target="chemusage" onclick="navigateToSection('chemusage')" data-i18n="tab_chemical_usage">Chemical Usage</button>
-                <button class="htab-btn" data-target="ffbrecord" onclick="navigateToSection('ffbrecord')" data-i18n="tab_ffb_record">FFB Production</button>
             </div>
             <h2 class="text-3xl font-bold mb-2" data-i18n="page_chemusage">&#x2697;&#xFE0F; Chemical Usage</h2>
             <p class="text-sm text-green-700 mb-6" data-i18n="page_chemusage_sub">View chemical usage per hectare by round and block. Manage active ingredient definitions and maximum dosage rates.</p>
