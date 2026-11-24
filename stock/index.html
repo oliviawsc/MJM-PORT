@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-23';
+var APP_BUILD = '20261124-24';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -4468,11 +4468,13 @@ async function _executeSyncForEstate(key, estate, data) {
         }
 
         if (data.length > 0) {
-            // Strip picture blobs from sync payload — base64 images can make the
-            // request too large for Supabase; pictures are retained in localStorage.
+            // Strip picture blobs (payload size) and null created_at (explicit null
+            // overrides the DB DEFAULT, causing a not-null constraint violation for
+            // old records that never had created_at set in localStorage).
             const tagged = data.map(function(r) {
                 var rec = Object.assign({}, r, { estate: estate });
                 delete rec.picture;
+                if (rec.created_at == null) delete rec.created_at;
                 return rec;
             });
             const { error: upErr } = await supabaseClient
