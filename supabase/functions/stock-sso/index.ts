@@ -32,7 +32,7 @@ export const ALL_SECTION_IDS = [
 interface CheckResult {
   allowed: boolean;
   module_code?: string;
-  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null };
+  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null; is_super_admin?: boolean };
   error?: string;
 }
 
@@ -104,8 +104,9 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow, companies: PortCompany[], avatar = '') {
-  const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL ? 'superadmin' : roleOf(row);
+function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranetSuper = false) {
+  // The Intranet Super Admin is the Super Admin here too
+  const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL || intranetSuper ? 'superadmin' : roleOf(row);
   return {
     id: row.id,
     email: row.email,
@@ -176,5 +177,5 @@ Deno.serve(handler(async (_req, body) => {
   row = { ...row, estates };
 
   const auth = await issueSession(row);
-  return { session: toSession(row, companies, String(check.user.avatar_url ?? '')), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), check.user.is_super_admin === true), auth, module };
 }));

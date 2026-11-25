@@ -57,6 +57,8 @@
         .note { margin: 0 0 18px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
         .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
         .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .note.info { background: #fff; border: 1px solid #E2E8F0; color: #0F172A; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .note.info a { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 10px; background: #0F172A; color: #fff; text-decoration: none; font-weight: 600; font-size: 13px; }
         .hint { margin: 26px 0 0; text-align: center; font-size: 12px; color: #94A3B8; }
         .splash { position: fixed; inset: 0; display: grid; place-items: center; background: #F0FDF4; z-index: 10; font-weight: 600; color: #14532D; }
         .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
@@ -118,6 +120,8 @@
           icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
         { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
           icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
+        { module: 'workers',   title: 'Worker Manage',     bg: '#1D4ED8', href: 'https://mjmelon.github.io/Mantap/#/portal/workers', admin: true,
+          icon: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
         { module: 'access',    title: 'User Access',       bg: '#7C2D12', href: 'access/index.html', admin: true,
           icon: svg('<circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.65-8.65"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/>') },
     ];
@@ -185,6 +189,7 @@
     function appLink(module) {
         const m = MODULES.find((x) => x.module === module);
         const u = new URL((m && m.href) || APP, location.href);
+        if (m && /^https?:/.test(m.href || '')) return u.toString();
         if (!(m && m.href)) u.searchParams.set('module', module);
         Object.keys(ctx).forEach((k) => u.searchParams.set(k, ctx[k]));
         return u.pathname + u.search;
@@ -272,11 +277,11 @@
             pick.style.display = '';
             sel.innerHTML = (cur ? '' : '<option value="">— Choose company —</option>') +
                 companies.map((c) => '<option value="' + esc(c.id) + '"' + (cur && c.id === cur.id ? ' selected' : '') + '>' +
-                    esc((c.code ? c.code + ' · ' : '') + c.name) + '</option>').join('');
+                    esc(c.name) + '</option>').join('');
         } else pick.style.display = 'none';
         if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. Please open Plantation Operation from MJM Intranet again.</p>');
         else if (!session && fromIntranetNoToken) notes.push('<p class="note err">You came from MJM Intranet but no sign-in token arrived, so the Intranet is still opening an old address. In Intranet Admin → Modules → Plantation Operation, set Address (URL) to <b>' + esc(location.origin + location.pathname) + '</b>.</p>');
-        else if (!session) notes.push('<p class="note warn">You are not signed in. Please open Plantation Operation from MJM Intranet.</p>');
+        else if (!session) notes.push('<p class="note info"><span>Please sign in from MJM Intranet to open Plantation Operation.</span><a href="' + esc(INTRANET_URL) + '">Sign in from MJM Intranet &rsaquo;</a></p>');
         // No company from the Intranet → the modules stay closed; otherwise only
         // the modules this person has pages in (PORT → User Access)
         const mine = companies.length ? orderedModules().filter((m) => canOpen(session, m)) : [];
