@@ -37,7 +37,9 @@ export function handler(fn: (req: Request, body: Record<string, unknown>) => Pro
     } catch (e) {
       if (e instanceof ApiError) return new Response(JSON.stringify({ error: e.code }), { status: e.status, headers });
       console.error(e);
-      return new Response(JSON.stringify({ error: 'err_network' }), { status: 500, headers });
+      // The message names the cause (e.g. a table from a migration not run yet)
+      const detail = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message).slice(0, 300) : String(e).slice(0, 300);
+      return new Response(JSON.stringify({ error: 'err_network', detail }), { status: 500, headers });
     }
   };
 }

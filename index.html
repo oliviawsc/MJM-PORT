@@ -293,7 +293,7 @@
     async function signInFromIntranet(token, module) {
         const splash = document.getElementById('splash');
         splash.style.display = '';
-        let code = 'err_network';
+        let code = 'err_network', detail = '';
         try {
             const res = await fetch(SUPABASE_URL + '/functions/v1/stock-sso', {
                 method: 'POST',
@@ -313,12 +313,13 @@
                 return { session: data.session };
             }
             code = (data && data.error) || ('http_' + res.status);
+            if (data && data.detail) detail = String(data.detail);
         } catch (e) {
             console.warn('[SSO] sign-in from Intranet failed', e);
         }
         splash.style.display = 'none';
         localStorage.removeItem(SESSION_KEY);
-        return { error: SSO_ERRORS[code] || code };
+        return { error: (SSO_ERRORS[code] || code) + (detail ? ' (' + detail + ')' : '') };
     }
 
     // The Stock app used to live at this address with a service worker; drop that
