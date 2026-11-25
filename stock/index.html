@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-52';
+var APP_BUILD = '20261125-53';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -18067,16 +18067,19 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     });
     var mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var monthLabel = mn[month - 1] + ' ' + year;
-    var html = '<table class="min-w-full text-xs" style="border-collapse:collapse;white-space:nowrap;">';
-    html += '<thead class="bg-teal-100 text-teal-800" style="position:sticky;top:0;z-index:1;"><tr>';
-    html += '<th class="px-3 py-2 text-left border border-teal-200 font-semibold min-w-[100px]">' + _ffbEscHtml(monthLabel) + '</th>';
-    blocks.forEach(function(b) { html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]">' + _ffbEscHtml(b.block_name) + '</th>'; });
-    html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]">Total</th>';
+    var stickyTh = 'position:sticky;top:0;z-index:2;background:#ccfbf1;';
+    var stickyThCorner = 'position:sticky;top:0;left:0;z-index:3;background:#ccfbf1;';
+    var stickyFirstCol = 'position:sticky;left:0;z-index:1;';
+    var html = '<table class="min-w-full text-xs" style="border-collapse:separate;border-spacing:0;white-space:nowrap;">';
+    html += '<thead class="bg-teal-100 text-teal-800"><tr>';
+    html += '<th class="px-3 py-2 text-left border border-teal-200 font-semibold min-w-[110px]" style="' + stickyThCorner + '">' + _ffbEscHtml(monthLabel) + '</th>';
+    blocks.forEach(function(b) { html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]" style="' + stickyTh + '">' + _ffbEscHtml(b.block_name) + '</th>'; });
+    html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]" style="' + stickyTh + '">Total</th>';
     html += '</tr></thead><tbody>';
     // Area row
     var totalHa = 0;
-    html += '<tr class="bg-teal-50" style="position:sticky;top:33px;z-index:1;">';
-    html += '<td class="px-3 py-1.5 border border-teal-200 text-teal-700 font-semibold text-xs bg-teal-50">Area (Ha)</td>';
+    html += '<tr class="bg-teal-50">';
+    html += '<td class="px-3 py-1.5 border border-teal-200 text-teal-700 font-semibold text-xs" style="' + stickyFirstCol + 'background:#f0fdfa;">Area (Ha)</td>';
     blocks.forEach(function(b) {
         var ha = parseFloat(b.hectares) || 0;
         totalHa += ha;
@@ -18087,7 +18090,7 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     // Day rows
     for (var d = 1; d <= daysInMonth; d++) {
         html += '<tr class="hover:bg-gray-50">';
-        html += '<td class="px-3 py-0.5 border border-gray-200 text-center font-medium text-gray-600 text-xs">' + d + '</td>';
+        html += '<td class="px-3 py-0.5 border border-gray-200 text-center font-medium text-gray-600 text-xs" style="' + stickyFirstCol + 'background:#fff;">' + d + '</td>';
         blocks.forEach(function(b) {
             var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
             var val = (lookup[d] && lookup[d][b.block_name] != null) ? lookup[d][b.block_name] : '';
@@ -18100,7 +18103,7 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     }
     // Jumlah row
     html += '<tr class="bg-teal-50">';
-    html += '<td class="px-3 py-2 border border-teal-200 text-teal-800 font-bold text-xs">Total (MT)</td>';
+    html += '<td class="px-3 py-2 border border-teal-200 text-teal-800 font-bold text-xs" style="position:sticky;left:0;z-index:1;background:#f0fdfa;">Total (MT)</td>';
     blocks.forEach(function(b) {
         var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
         html += '<td id="ffbBYColTotal_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-teal-800 font-semibold">0.00</td>';
@@ -18109,7 +18112,7 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     html += '</tr>';
     // Yield/Ha row
     html += '<tr class="bg-orange-50">';
-    html += '<td class="px-3 py-2 border border-teal-200 text-orange-700 font-bold text-xs">Yield/Ha</td>';
+    html += '<td class="px-3 py-2 border border-teal-200 text-orange-700 font-bold text-xs" style="position:sticky;left:0;z-index:1;background:#fff7ed;">Yield/Ha</td>';
     blocks.forEach(function(b) {
         var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
         html += '<td id="ffbBYYieldHa_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-orange-700 font-semibold">0.00</td>';
