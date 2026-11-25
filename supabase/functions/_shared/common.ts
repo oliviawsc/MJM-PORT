@@ -44,9 +44,18 @@ export function handler(fn: (req: Request, body: Record<string, unknown>) => Pro
   };
 }
 
+/** The key that acts as the service role. Projects created with the new API
+ *  keys may have the legacy service_role JWT disabled: then the sb_secret_ key
+ *  (SUPABASE_SECRET_KEYS, injected by Supabase) is the one that works. */
+export function serviceKey(): string {
+  const raw = Deno.env.get('SUPABASE_SECRET_KEYS') ?? '';
+  const secret = raw.split(/[^A-Za-z0-9_-]+/).find((k) => k.startsWith('sb_secret_'));
+  return secret || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+}
+
 /** Service-role client: bypasses RLS. Only ever used inside these functions. */
 export function serviceClient(): SupabaseClient {
-  return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+  return createClient(Deno.env.get('SUPABASE_URL')!, serviceKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
