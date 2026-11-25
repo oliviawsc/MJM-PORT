@@ -116,6 +116,8 @@ function toSession(row: UserRow, companies: string[], avatar = '') {
     companies,
     // The person's Intranet profile photo (public storage URL), shown in the portal
     avatar,
+    // Signed in through MJM Intranet (not the module's own password login)
+    via: 'intranet',
   };
 }
 
@@ -132,6 +134,11 @@ Deno.serve(handler(async (_req, body) => {
   let row = await findUser(email);
   if (!row) row = await createUser(email, fullName, module);
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
+  // The person is who the Intranet says they are: keep the name in step with the Intranet profile
+  if (check.user.full_name && (check.user.full_name ?? '').trim() && row.name !== fullName) {
+    await serviceClient().from(USERS_TABLE).update({ name: fullName }).eq('id', row.id);
+    row = { ...row, name: fullName };
+  }
 
   const auth = await issueSession(row);
   // The companies the Intranet gives this person for the Stock icon; remembered on the user row
