@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-55';
+var APP_BUILD = '20261125-56';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2778,16 +2778,30 @@ var APP_BUILD = '20261125-55';
 
             <!-- Panel: FFB Yield by Block -->
             <div id="ffbPanel_blockyield" class="pt-4" style="display:none;">
-                <div class="flex items-center gap-2 mb-4">
-                    <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
-                    <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
-                    <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
-                </div>
-                <div class="flex justify-end mb-3">
-                    <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
+                        <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
+                        <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <button onclick="ffbOpenBlockYieldSummaryPage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold text-sm shadow">📊 Summary Yield by Block</button>
+                        <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-1.5 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                    </div>
                 </div>
                 <div id="ffbBlockYieldTableContainer" class="overflow-auto bg-white rounded-xl shadow p-4 mb-4" style="max-height:65vh;">
                     <p class="text-gray-400 py-4 text-center text-sm">Select an estate to load data.</p>
+                </div>
+            </div>
+
+            <!-- Panel: Block Yield Summary (sub-page of Yield by Block) -->
+            <div id="ffbPanel_blockYieldSummary" class="pt-4" style="display:none;">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="ffbCloseBlockYieldSummaryPage()" class="flex items-center gap-1 text-sm font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg">← Back</button>
+                    <h2 class="text-xl font-bold text-blue-700">📊 Summary Yield by Block</h2>
+                </div>
+                <div id="ffbBlockYieldSummaryContainer" class="overflow-auto bg-white rounded-xl shadow p-4" style="max-height:72vh;">
+                    <p class="text-gray-400 py-4 text-center text-sm">Loading...</p>
                 </div>
             </div>
 
@@ -17966,6 +17980,8 @@ function switchFfbTab(tab) {
     if (targetPanel) targetPanel.style.display = 'none';
     var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
     if (harvTgtPanel) harvTgtPanel.style.display = 'none';
+    var bysSumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (bysSumPanel) bysSumPanel.style.display = 'none';
     ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
         var btn = document.getElementById('ffbTabBtn_' + t);
         var panel = document.getElementById('ffbPanel_' + t);
@@ -18208,6 +18224,207 @@ function ffbBlockYieldNextMonth() {
     if (_ffbBlockYieldMonth > 12) { _ffbBlockYieldMonth = 1; _ffbBlockYieldYear++; }
     _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
     renderFfbBlockYieldTab();
+}
+
+// ── Block Yield Summary sub-page ─────────────────────────────────────────────
+function ffbOpenBlockYieldSummaryPage() {
+    var byPanel = document.getElementById('ffbPanel_blockyield');
+    if (byPanel) byPanel.style.display = 'none';
+    var tabBar = document.getElementById('ffbTabBar');
+    if (tabBar) tabBar.style.display = 'none';
+    var sumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (sumPanel) sumPanel.style.display = '';
+    renderFfbBlockYieldSummary();
+}
+
+function ffbCloseBlockYieldSummaryPage() {
+    var sumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (sumPanel) sumPanel.style.display = 'none';
+    switchFfbTab('blockyield');
+}
+
+async function renderFfbBlockYieldSummary() {
+    var container = document.getElementById('ffbBlockYieldSummaryContainer');
+    if (!container) return;
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">Please select an estate.</p>';
+        return;
+    }
+    container.innerHTML = '<p class="text-gray-400 py-4 text-center text-sm">Loading...</p>';
+    var blocks = await ffbLoadBlocks(estate);
+    if (!blocks || !blocks.length) {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">No locations found for this estate.</p>';
+        return;
+    }
+    if (typeof supabaseClient === 'undefined') {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">Not connected to database.</p>';
+        return;
+    }
+    try {
+        var resp = await supabaseClient.from('port_ffb_block_yield')
+            .select('year, month, day, block_name, ffb_mt')
+            .eq('estate', estate)
+            .order('year', {ascending:true})
+            .order('month', {ascending:true})
+            .order('day', {ascending:true});
+        if (resp.error) throw resp.error;
+        var rows = resp.data || [];
+        // Aggregate: { year: { month: { blockName: total_mt } } }
+        var data = {};
+        rows.forEach(function(r) {
+            var y = r.year, m = r.month, bn = r.block_name, v = parseFloat(r.ffb_mt) || 0;
+            if (!data[y]) data[y] = {};
+            if (!data[y][m]) data[y][m] = {};
+            data[y][m][bn] = (data[y][m][bn] || 0) + v;
+        });
+        var years = Object.keys(data).map(Number).sort(function(a,b){return a-b;});
+        var totalArea = 0;
+        blocks.forEach(function(b) { totalArea += parseFloat(b.hectares) || 0; });
+        if (!years.length) {
+            container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">No yield data recorded yet.</p>';
+            return;
+        }
+        _renderFfbBlockYieldSummaryTable(blocks, data, years, totalArea, container);
+    } catch(e) {
+        container.innerHTML = '<p class="text-red-500 py-4 text-center text-sm">Error loading data: ' + _ffbEscHtml(e.message) + '</p>';
+    }
+}
+
+function _renderFfbBlockYieldSummaryTable(blocks, data, years, totalArea, container) {
+    var mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var hdrBg = '#dbeafe'; var areaBg = '#eff6ff'; var grandBg = '#bfdbfe';
+    var yearHdrBg = '#eff6ff'; var yearSumBg = '#dbeafe';
+
+    function getVal(year, month, blockName) {
+        return (data[year] && data[year][month] && data[year][month][blockName] != null) ? (parseFloat(data[year][month][blockName]) || 0) : 0;
+    }
+
+    // Grand totals
+    var grandBlockTotal = {};
+    var grandTotalMT = 0;
+    blocks.forEach(function(b) { grandBlockTotal[b.block_name] = 0; });
+    years.forEach(function(year) {
+        blocks.forEach(function(b) {
+            for (var m = 1; m <= 12; m++) {
+                grandBlockTotal[b.block_name] += getVal(year, m, b.block_name);
+            }
+        });
+    });
+    blocks.forEach(function(b) { grandTotalMT += grandBlockTotal[b.block_name]; });
+
+    var sY0 = 'position:sticky;left:0;min-width:55px;';
+    var sM55 = 'position:sticky;left:55px;min-width:72px;';
+
+    var html = '<table class="min-w-full text-xs" style="border-collapse:separate;border-spacing:0;white-space:nowrap;">';
+
+    // ── thead ──
+    html += '<thead style="position:relative;z-index:3;">';
+    html += '<tr>';
+    html += '<th style="' + sY0 + 'position:sticky;top:0;left:0;z-index:5;background:' + hdrBg + ';" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Year</th>';
+    html += '<th style="' + sM55 + 'position:sticky;top:0;left:55px;z-index:4;background:' + hdrBg + ';" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Month</th>';
+    blocks.forEach(function(b) {
+        html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:80px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">' + _ffbEscHtml(b.block_name) + '</th>';
+    });
+    html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:90px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Total (MT)</th>';
+    html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:75px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Yield/Ha</th>';
+    html += '</tr>';
+    // Area row sticky at top:33px
+    html += '<tr>';
+    html += '<td style="position:sticky;top:33px;left:0;z-index:3;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '<td style="position:sticky;top:33px;left:55px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-700 font-semibold text-xs">Area (Ha)</td>';
+    blocks.forEach(function(b) {
+        var ha = parseFloat(b.hectares) || 0;
+        html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-center text-blue-700 text-xs">' + ha.toFixed(2) + '</td>';
+    });
+    html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-center text-blue-700 font-semibold text-xs">' + totalArea.toFixed(2) + '</td>';
+    html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '</tr>';
+    html += '</thead>';
+
+    // ── tbody ──
+    html += '<tbody style="position:relative;z-index:1;">';
+
+    // Grand Total row
+    html += '<tr style="background:' + grandBg + ';">';
+    html += '<td style="' + sY0 + 'position:sticky;left:0;background:' + grandBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs text-center"></td>';
+    html += '<td style="' + sM55 + 'position:sticky;left:55px;background:' + grandBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Total</td>';
+    blocks.forEach(function(b) {
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + (grandBlockTotal[b.block_name] || 0).toFixed(2) + '</td>';
+    });
+    html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + grandTotalMT.toFixed(2) + '</td>';
+    html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '</tr>';
+
+    // Grand Yield/Ha row
+    var grandYieldHa = totalArea > 0 ? grandTotalMT / totalArea : 0;
+    html += '<tr style="background:' + grandBg + ';">';
+    html += '<td style="' + sY0 + 'position:sticky;left:0;background:' + grandBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs text-center"></td>';
+    html += '<td style="' + sM55 + 'position:sticky;left:55px;background:' + grandBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Yield/Ha</td>';
+    blocks.forEach(function(b) {
+        var ha = parseFloat(b.hectares) || 0;
+        var yh = ha > 0 ? (grandBlockTotal[b.block_name] || 0) / ha : 0;
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + yh.toFixed(2) + '</td>';
+    });
+    html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + grandYieldHa.toFixed(2) + '</td>';
+    html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '</tr>';
+
+    // Per-year sections
+    years.forEach(function(year) {
+        var yearBlockTotal = {};
+        var yearTotalMT = 0;
+        blocks.forEach(function(b) { yearBlockTotal[b.block_name] = 0; });
+
+        for (var m = 1; m <= 12; m++) {
+            var monthTotalMT = 0;
+            var cells = '';
+            blocks.forEach(function(b) {
+                var v = getVal(year, m, b.block_name);
+                yearBlockTotal[b.block_name] += v;
+                monthTotalMT += v;
+                cells += '<td class="px-2 py-1 border border-gray-200 text-center text-gray-700 text-xs">' + v.toFixed(2) + '</td>';
+            });
+            yearTotalMT += monthTotalMT;
+            var monthYieldHa = totalArea > 0 ? monthTotalMT / totalArea : 0;
+
+            html += '<tr class="hover:bg-blue-50">';
+            if (m === 1) {
+                html += '<td rowspan="14" style="position:sticky;left:0;z-index:1;background:' + yearHdrBg + ';vertical-align:middle;min-width:55px;" class="px-2 py-1 border border-blue-200 text-blue-800 font-bold text-xs text-center">' + year + '</td>';
+            }
+            html += '<td style="position:sticky;left:55px;z-index:1;background:#fff;min-width:72px;" class="px-2 py-1 border border-gray-200 text-blue-700 font-medium text-xs">' + mn[m-1] + '</td>';
+            html += cells;
+            html += '<td class="px-2 py-1 border border-gray-200 text-center font-semibold text-gray-800 text-xs">' + monthTotalMT.toFixed(2) + '</td>';
+            html += '<td class="px-2 py-1 border border-gray-200 text-center text-gray-700 text-xs">' + monthYieldHa.toFixed(2) + '</td>';
+            html += '</tr>';
+        }
+
+        // Year Total row
+        html += '<tr style="background:' + yearSumBg + ';">';
+        html += '<td style="position:sticky;left:55px;z-index:1;background:' + yearSumBg + ';min-width:72px;" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Total</td>';
+        blocks.forEach(function(b) {
+            html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + (yearBlockTotal[b.block_name] || 0).toFixed(2) + '</td>';
+        });
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + yearTotalMT.toFixed(2) + '</td>';
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+        html += '</tr>';
+
+        // Year Yield/Ha row
+        var yearYieldHa = totalArea > 0 ? yearTotalMT / totalArea : 0;
+        html += '<tr style="background:' + yearSumBg + ';">';
+        html += '<td style="position:sticky;left:55px;z-index:1;background:' + yearSumBg + ';min-width:72px;" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Yield/Ha</td>';
+        blocks.forEach(function(b) {
+            var ha = parseFloat(b.hectares) || 0;
+            var yh = ha > 0 ? (yearBlockTotal[b.block_name] || 0) / ha : 0;
+            html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + yh.toFixed(2) + '</td>';
+        });
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + yearYieldHa.toFixed(2) + '</td>';
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 function renderFfbModule() {
