@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-47';
+var APP_BUILD = '20261125-48';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2612,6 +2612,8 @@ var APP_BUILD = '20261125-47';
                     class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700 relative" style="margin-bottom:-2px;">No. of Harvesters</button>
                 <button id="ffbTabBtn_grading" onclick="switchFfbTab('grading')"
                     class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700 relative" style="margin-bottom:-2px;">FFB Grading</button>
+                <button id="ffbTabBtn_blockyield" onclick="switchFfbTab('blockyield')"
+                    class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-teal-50 hover:text-teal-700 relative" style="margin-bottom:-2px;">Yield by Block</button>
             </div>
 
             <!-- Panel: Harvesting Report -->
@@ -2770,6 +2772,54 @@ var APP_BUILD = '20261125-47';
                     <div class="mt-3 flex items-center gap-2">
                         <input type="number" id="ffbAddYearInput_grading" min="2010" max="2100" placeholder="Year e.g. 2024" class="border border-gray-300 rounded px-2 py-1 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-amber-400">
                         <button onclick="ffbAddYear('grading')" class="text-xs bg-amber-600 text-white px-3 py-1.5 rounded hover:bg-amber-700 font-semibold">+ Add Year</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: FFB Yield by Block -->
+            <div id="ffbPanel_blockyield" class="pt-4" style="display:none;">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
+                        <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
+                        <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
+                    </div>
+                    <button onclick="ffbOpenBlockSetupPage()" class="flex items-center gap-1.5 text-sm font-semibold bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-lg shadow-sm">⚙ Block Setup</button>
+                </div>
+                <div id="ffbBlockYieldTableContainer" class="overflow-x-auto bg-white rounded-xl shadow p-4 mb-4">
+                    <p class="text-gray-400 py-4 text-center text-sm">Select an estate to load data.</p>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                </div>
+            </div>
+
+            <!-- Panel: Block Setup (sub-page) -->
+            <div id="ffbPanel_blockSetup" class="pt-4" style="display:none;">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="ffbCloseBlockSetupPage()" class="flex items-center gap-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300">← Back</button>
+                    <h2 class="text-xl font-bold text-teal-700">⚙ Block Setup</h2>
+                </div>
+                <p class="text-xs text-teal-700 mb-3">Define blocks and their planted areas (Ha) for this estate. These are used to calculate Yield/Ha in the Yield by Block table.</p>
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm mb-4" style="border-collapse:collapse;">
+                            <thead class="bg-teal-100 text-teal-800">
+                                <tr>
+                                    <th class="px-3 py-2 text-left border border-teal-200">Block Name</th>
+                                    <th class="px-3 py-2 text-center border border-teal-200 w-32">Area (Ha)</th>
+                                    <th class="px-2 py-2 text-center border border-teal-200 w-36">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ffbBlockSetupBody">
+                                <tr><td colspan="3" class="text-center text-gray-400 py-4 text-sm">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-2 pt-3 border-t border-gray-200">
+                        <input type="text" id="ffbNewBlockName" placeholder="Block name e.g. Block 1" class="border border-gray-300 rounded px-2 py-1.5 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-teal-400">
+                        <input type="number" id="ffbNewBlockHa" placeholder="Area (Ha)" min="0" step="0.01" class="border border-gray-300 rounded px-2 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-teal-400">
+                        <button onclick="ffbAddBlock()" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:bg-teal-700 font-semibold">+ Add Block</button>
                     </div>
                 </div>
             </div>
@@ -17846,6 +17896,10 @@ var _ffbActiveTab = 'harvest';
 var _ffbAllRows = { estate: '', rows: [], loaded: false };
 // Cache for port_ffb_production rows (ffb_target, harvester_target)
 var _ffbProdRows = { estate: '', rows: [], loaded: false };
+var _ffbBlockYieldYear = new Date().getFullYear();
+var _ffbBlockYieldMonth = new Date().getMonth() + 1;
+var _ffbBlocks = { estate: '', blocks: [], loaded: false };
+var _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
 
 async function ffbLoadProdRows(estate) {
     if (_ffbProdRows.estate === estate && _ffbProdRows.loaded) return _ffbProdRows.rows;
@@ -17937,14 +17991,17 @@ function switchFfbTab(tab) {
     var styles = {
         harvest:    { on: 'border-green-700 bg-green-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-700' },
         harvesters: { on: 'border-blue-700 bg-blue-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700' },
-        grading:    { on: 'border-amber-700 bg-amber-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700' }
+        grading:    { on: 'border-amber-700 bg-amber-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700' },
+        blockyield: { on: 'border-teal-700 bg-teal-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-teal-50 hover:text-teal-700' }
     };
     // Hide any sub-pages whenever a real tab is clicked
     var targetPanel = document.getElementById('ffbPanel_target');
     if (targetPanel) targetPanel.style.display = 'none';
     var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
     if (harvTgtPanel) harvTgtPanel.style.display = 'none';
-    ['harvest','harvesters','grading'].forEach(function(t) {
+    var blockSetupPanel = document.getElementById('ffbPanel_blockSetup');
+    if (blockSetupPanel) blockSetupPanel.style.display = 'none';
+    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
         var btn = document.getElementById('ffbTabBtn_' + t);
         var panel = document.getElementById('ffbPanel_' + t);
         var on = (t === tab);
@@ -17956,11 +18013,12 @@ function switchFfbTab(tab) {
     if (tab === 'harvest')    renderFfbHarvestTab();
     if (tab === 'harvesters') renderFfbHarvestersTab();
     if (tab === 'grading')    renderFfbGradingTab();
+    if (tab === 'blockyield') renderFfbBlockYieldTab();
 }
 
 function ffbOpenTargetPage() {
     // Hide tab panels and tab bar; show the target sub-page
-    ['harvest','harvesters','grading'].forEach(function(t) {
+    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
         var p = document.getElementById('ffbPanel_' + t);
         if (p) p.style.display = 'none';
     });
@@ -17977,15 +18035,317 @@ function ffbCloseTargetPage() {
     switchFfbTab(_ffbActiveTab || 'harvest');
 }
 
+// ── FFB Yield by Block ─────────────────────────────────────────────────────
+function _ffbEscHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function ffbLoadBlocks(estate) {
+    if (_ffbBlocks.estate === estate && _ffbBlocks.loaded) return _ffbBlocks.blocks;
+    _ffbBlocks = { estate: estate, blocks: [], loaded: false };
+    if (!estate || typeof supabaseClient === 'undefined') { _ffbBlocks.loaded = true; return []; }
+    try {
+        var resp = await supabaseClient.from('port_ffb_blocks').select('*')
+            .eq('estate', estate).order('sort_order', {ascending:true}).order('id', {ascending:true});
+        if (resp.error) throw resp.error;
+        _ffbBlocks.blocks = resp.data || [];
+    } catch(e) { console.error('ffbLoadBlocks error:', e); }
+    _ffbBlocks.loaded = true;
+    return _ffbBlocks.blocks;
+}
+
+async function ffbLoadBlockYieldData(estate, year, month) {
+    if (_ffbBlockYieldData.estate===estate && _ffbBlockYieldData.year===year && _ffbBlockYieldData.month===month && _ffbBlockYieldData.loaded) return _ffbBlockYieldData.rows;
+    _ffbBlockYieldData = { estate: estate, year: year, month: month, rows: [], loaded: false };
+    if (!estate || typeof supabaseClient === 'undefined') { _ffbBlockYieldData.loaded = true; return []; }
+    try {
+        var resp = await supabaseClient.from('port_ffb_block_yield').select('*').eq('estate',estate).eq('year',year).eq('month',month);
+        if (resp.error) throw resp.error;
+        _ffbBlockYieldData.rows = resp.data || [];
+    } catch(e) { console.error('ffbLoadBlockYieldData error:', e); }
+    _ffbBlockYieldData.loaded = true;
+    return _ffbBlockYieldData.rows;
+}
+
+function renderFfbBlockYieldTab() {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    var container = document.getElementById('ffbBlockYieldTableContainer');
+    var label = document.getElementById('ffbBlockYieldMonthLabel');
+    var mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (label) label.textContent = mn[_ffbBlockYieldMonth - 1] + ' ' + _ffbBlockYieldYear;
+    if (!container) return;
+    if (!estate) {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center">Please select an estate.</p>';
+        return;
+    }
+    container.innerHTML = '<p class="text-gray-400 py-4 text-center text-sm">Loading...</p>';
+    Promise.all([
+        ffbLoadBlocks(estate),
+        ffbLoadBlockYieldData(estate, _ffbBlockYieldYear, _ffbBlockYieldMonth)
+    ]).then(function(results) {
+        _renderFfbBlockYieldTable(results[0], results[1], _ffbBlockYieldYear, _ffbBlockYieldMonth);
+    });
+}
+
+function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
+    var container = document.getElementById('ffbBlockYieldTableContainer');
+    if (!container) return;
+    if (!blocks || !blocks.length) {
+        container.innerHTML = '<div class="text-center py-8 text-gray-400"><p class="mb-3">No blocks defined yet.</p><button onclick="ffbOpenBlockSetupPage()" class="text-sm bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 font-semibold">⚙ Setup Blocks</button></div>';
+        return;
+    }
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var lookup = {};
+    yieldRows.forEach(function(r) {
+        if (!lookup[r.day]) lookup[r.day] = {};
+        lookup[r.day][r.block_name] = r.ffb_mt;
+    });
+    var mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var monthLabel = mn[month - 1] + ' ' + year;
+    var html = '<table class="min-w-full text-xs" style="border-collapse:collapse;white-space:nowrap;">';
+    html += '<thead class="bg-teal-100 text-teal-800"><tr>';
+    html += '<th class="px-3 py-2 text-left border border-teal-200 font-semibold min-w-[100px]">' + _ffbEscHtml(monthLabel) + '</th>';
+    blocks.forEach(function(b) { html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]">' + _ffbEscHtml(b.block_name) + '</th>'; });
+    html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold min-w-[80px]">Total</th>';
+    html += '</tr></thead><tbody>';
+    // Area row
+    var totalHa = 0;
+    html += '<tr class="bg-teal-50">';
+    html += '<td class="px-3 py-1.5 border border-teal-200 text-teal-700 font-semibold text-xs">Area (Ha)</td>';
+    blocks.forEach(function(b) {
+        var ha = parseFloat(b.hectares) || 0;
+        totalHa += ha;
+        html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700">' + ha.toFixed(2) + '</td>';
+    });
+    html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700 font-semibold">' + totalHa.toFixed(2) + '</td>';
+    html += '</tr>';
+    // Day rows
+    for (var d = 1; d <= daysInMonth; d++) {
+        html += '<tr class="hover:bg-gray-50">';
+        html += '<td class="px-3 py-0.5 border border-gray-200 text-center font-medium text-gray-600 text-xs">' + d + '</td>';
+        blocks.forEach(function(b) {
+            var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
+            var val = (lookup[d] && lookup[d][b.block_name] != null) ? lookup[d][b.block_name] : '';
+            html += '<td class="border border-gray-200 p-0">';
+            html += '<input type="number" min="0" step="0.01" id="ffbBY_' + d + '_' + colKey + '" data-day="' + d + '" value="' + (val !== '' ? val : '') + '" oninput="ffbBlockYieldRowChanged(' + d + ')" class="w-full px-1 py-0.5 text-center text-xs border-0 focus:outline-none focus:bg-teal-50 bg-transparent min-w-[72px]">';
+            html += '</td>';
+        });
+        html += '<td id="ffbBYRowTotal_' + d + '" class="px-2 py-1 border border-gray-200 text-center text-gray-700 font-medium">0.00</td>';
+        html += '</tr>';
+    }
+    // Jumlah row
+    html += '<tr class="bg-teal-50">';
+    html += '<td class="px-3 py-2 border border-teal-200 text-teal-800 font-bold text-xs">Jumlah (MT)</td>';
+    blocks.forEach(function(b) {
+        var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
+        html += '<td id="ffbBYColTotal_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-teal-800 font-semibold">0.00</td>';
+    });
+    html += '<td id="ffbBYGrandTotal" class="px-2 py-2 border border-teal-200 text-center text-teal-900 font-bold">0.00</td>';
+    html += '</tr>';
+    // Yield/Ha row
+    html += '<tr class="bg-orange-50">';
+    html += '<td class="px-3 py-2 border border-teal-200 text-orange-700 font-bold text-xs">Yield/Ha</td>';
+    blocks.forEach(function(b) {
+        var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
+        html += '<td id="ffbBYYieldHa_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-orange-700 font-semibold">0.00</td>';
+    });
+    html += '<td id="ffbBYGrandYieldHa" class="px-2 py-2 border border-teal-200 text-center text-orange-900 font-bold">0.00</td>';
+    html += '</tr></tbody></table>';
+    container.innerHTML = html;
+    _ffbBlockYieldUpdateAll(blocks, daysInMonth);
+}
+
+function ffbBlockYieldRowChanged(day) {
+    var rowSum = 0;
+    var inputs = document.querySelectorAll('[data-day="' + day + '"]');
+    inputs.forEach(function(inp) { var v = parseFloat(inp.value); if (!isNaN(v)) rowSum += v; });
+    var rowTotalEl = document.getElementById('ffbBYRowTotal_' + day);
+    if (rowTotalEl) rowTotalEl.textContent = rowSum.toFixed(2);
+    clearTimeout(ffbBlockYieldRowChanged._t);
+    ffbBlockYieldRowChanged._t = setTimeout(function() {
+        if (!_ffbBlocks.loaded || !_ffbBlocks.blocks.length) return;
+        var daysInMonth = new Date(_ffbBlockYieldYear, _ffbBlockYieldMonth, 0).getDate();
+        _ffbBlockYieldUpdateAll(_ffbBlocks.blocks, daysInMonth);
+    }, 250);
+}
+ffbBlockYieldRowChanged._t = null;
+
+function _ffbBlockYieldUpdateAll(blocks, daysInMonth) {
+    if (!blocks || !blocks.length) return;
+    var totalHa = 0;
+    blocks.forEach(function(b) { totalHa += parseFloat(b.hectares) || 0; });
+    var grandTotal = 0;
+    blocks.forEach(function(b) {
+        var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
+        var colSum = 0;
+        for (var d = 1; d <= daysInMonth; d++) {
+            var el = document.getElementById('ffbBY_' + d + '_' + colKey);
+            if (el && el.value !== '') { var v = parseFloat(el.value); if (!isNaN(v)) colSum += v; }
+        }
+        grandTotal += colSum;
+        var ctEl = document.getElementById('ffbBYColTotal_' + colKey);
+        if (ctEl) ctEl.textContent = colSum.toFixed(2);
+        var ha = parseFloat(b.hectares) || 0;
+        var yhEl = document.getElementById('ffbBYYieldHa_' + colKey);
+        if (yhEl) yhEl.textContent = ha > 0 ? (colSum / ha).toFixed(2) : '0.00';
+    });
+    var gtEl = document.getElementById('ffbBYGrandTotal');
+    if (gtEl) gtEl.textContent = grandTotal.toFixed(2);
+    var gyEl = document.getElementById('ffbBYGrandYieldHa');
+    if (gyEl) gyEl.textContent = totalHa > 0 ? (grandTotal / totalHa).toFixed(2) : '0.00';
+}
+
+async function ffbSaveBlockYieldMonth() {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) return;
+    if (typeof supabaseClient === 'undefined') { alert('Not connected to database.'); return; }
+    var year = _ffbBlockYieldYear, month = _ffbBlockYieldMonth;
+    var blocks = await ffbLoadBlocks(estate);
+    if (!blocks || !blocks.length) { alert('No blocks defined. Please set up blocks first.'); return; }
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var toUpsert = [];
+    for (var d = 1; d <= daysInMonth; d++) {
+        blocks.forEach(function(b) {
+            var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
+            var el = document.getElementById('ffbBY_' + d + '_' + colKey);
+            if (!el || el.value === '') return;
+            var v = parseFloat(el.value);
+            if (!isNaN(v)) toUpsert.push({ estate: estate, year: year, month: month, day: d, block_name: b.block_name, ffb_mt: v });
+        });
+    }
+    try {
+        if (toUpsert.length > 0) {
+            var resp = await supabaseClient.from('port_ffb_block_yield').upsert(toUpsert, { onConflict: 'estate,year,month,day,block_name' });
+            if (resp.error) throw resp.error;
+        }
+        _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
+        var mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        showSyncSuccess('Block Yield for ' + mn[month - 1] + ' ' + year + ' saved.');
+    } catch(e) { alert('Error saving block yield: ' + e.message); }
+}
+
+function ffbBlockYieldPrevMonth() {
+    _ffbBlockYieldMonth--;
+    if (_ffbBlockYieldMonth < 1) { _ffbBlockYieldMonth = 12; _ffbBlockYieldYear--; }
+    _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
+    renderFfbBlockYieldTab();
+}
+
+function ffbBlockYieldNextMonth() {
+    _ffbBlockYieldMonth++;
+    if (_ffbBlockYieldMonth > 12) { _ffbBlockYieldMonth = 1; _ffbBlockYieldYear++; }
+    _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
+    renderFfbBlockYieldTab();
+}
+
+function ffbOpenBlockSetupPage() {
+    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
+        var p = document.getElementById('ffbPanel_' + t); if (p) p.style.display = 'none';
+    });
+    ['ffbPanel_target','ffbPanel_harvesterTarget'].forEach(function(id) {
+        var p = document.getElementById(id); if (p) p.style.display = 'none';
+    });
+    var tabBar = document.getElementById('ffbTabBar'); if (tabBar) tabBar.style.display = 'none';
+    var setupPanel = document.getElementById('ffbPanel_blockSetup'); if (setupPanel) setupPanel.style.display = '';
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (estate) ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
+    else ffbRenderBlockSetup([]);
+}
+
+function ffbCloseBlockSetupPage() {
+    var setupPanel = document.getElementById('ffbPanel_blockSetup'); if (setupPanel) setupPanel.style.display = 'none';
+    _ffbBlocks = { estate: '', blocks: [], loaded: false };
+    switchFfbTab('blockyield');
+}
+
+function ffbRenderBlockSetup(blocks) {
+    var tbody = document.getElementById('ffbBlockSetupBody');
+    if (!tbody) return;
+    if (!blocks || !blocks.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-400 py-4 text-sm">No blocks defined. Add blocks below.</td></tr>';
+        return;
+    }
+    var html = '';
+    blocks.forEach(function(b) {
+        html += '<tr>';
+        html += '<td class="px-3 py-2 border border-teal-200"><input type="text" id="ffbBlkName_' + b.id + '" value="' + _ffbEscHtml(b.block_name) + '" class="border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-teal-400"></td>';
+        html += '<td class="px-3 py-2 border border-teal-200 text-center"><input type="number" min="0" step="0.01" id="ffbBlkHa_' + b.id + '" value="' + (parseFloat(b.hectares)||0) + '" class="border border-gray-200 rounded px-2 py-1 text-sm w-24 text-center focus:outline-none focus:ring-1 focus:ring-teal-400"></td>';
+        html += '<td class="px-2 py-2 border border-teal-200 text-center whitespace-nowrap">';
+        html += '<button onclick="ffbSaveBlockEdit(' + b.id + ')" class="text-xs bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 mr-1">Save</button>';
+        html += '<button onclick="ffbDeleteBlock(' + b.id + ')" class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>';
+        html += '</td></tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+async function ffbAddBlock() {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) { alert('Please select an estate first.'); return; }
+    var nameEl = document.getElementById('ffbNewBlockName');
+    var haEl = document.getElementById('ffbNewBlockHa');
+    if (!nameEl || !haEl) return;
+    var name = nameEl.value.trim();
+    var ha = parseFloat(haEl.value) || 0;
+    if (!name) { alert('Please enter a block name.'); nameEl.focus(); return; }
+    if (typeof supabaseClient === 'undefined') { alert('Not connected.'); return; }
+    var currentBlocks = _ffbBlocks.loaded ? _ffbBlocks.blocks : [];
+    var maxOrder = currentBlocks.length ? Math.max.apply(null, currentBlocks.map(function(b){return b.sort_order||0;})) : 0;
+    try {
+        var resp = await supabaseClient.from('port_ffb_blocks').insert({ estate: estate, block_name: name, hectares: ha, sort_order: maxOrder + 1 }).select();
+        if (resp.error) throw resp.error;
+        nameEl.value = ''; haEl.value = '';
+        _ffbBlocks = { estate: '', blocks: [], loaded: false };
+        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
+    } catch(e) { alert('Error adding block: ' + e.message); }
+}
+
+async function ffbSaveBlockEdit(id) {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    var nameEl = document.getElementById('ffbBlkName_' + id);
+    var haEl = document.getElementById('ffbBlkHa_' + id);
+    if (!nameEl || !haEl) return;
+    var name = nameEl.value.trim();
+    var ha = parseFloat(haEl.value) || 0;
+    if (!name) { alert('Block name cannot be empty.'); nameEl.focus(); return; }
+    if (typeof supabaseClient === 'undefined') return;
+    try {
+        var resp = await supabaseClient.from('port_ffb_blocks').update({ block_name: name, hectares: ha }).eq('id', id).eq('estate', estate);
+        if (resp.error) throw resp.error;
+        _ffbBlocks = { estate: '', blocks: [], loaded: false };
+        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
+        showSyncSuccess('Block saved.');
+    } catch(e) { alert('Error updating block: ' + e.message); }
+}
+
+async function ffbDeleteBlock(id) {
+    if (!confirm('Delete this block? All yield data for this block will also be deleted.')) return;
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (typeof supabaseClient === 'undefined') return;
+    var blockName = '';
+    if (_ffbBlocks.loaded) { var bx = _ffbBlocks.blocks.find(function(x){return x.id===id;}); if (bx) blockName = bx.block_name; }
+    try {
+        if (blockName) {
+            var r2 = await supabaseClient.from('port_ffb_block_yield').delete().eq('estate',estate).eq('block_name',blockName);
+            if (r2.error) console.warn('Delete yield error:', r2.error);
+        }
+        var resp = await supabaseClient.from('port_ffb_blocks').delete().eq('id',id).eq('estate',estate);
+        if (resp.error) throw resp.error;
+        _ffbBlocks = { estate: '', blocks: [], loaded: false };
+        _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
+        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
+    } catch(e) { alert('Error deleting block: ' + e.message); }
+}
+
 function renderFfbModule() {
     var sec = document.getElementById('ffbrecord');
     if (!sec || !sec.classList.contains('active')) return;
     var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
     if (_ffbAllRows.estate !== estate) _ffbAllRows = { estate: '', rows: [], loaded: false };
     if (_ffbProdRows.estate !== estate) _ffbProdRows = { estate: '', rows: [], loaded: false };
+    if (_ffbBlocks.estate !== estate) _ffbBlocks = { estate: '', blocks: [], loaded: false };
+    if (_ffbBlockYieldData.estate !== estate) _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
     if (_ffbActiveTab === 'harvest')    renderFfbHarvestTab();
     else if (_ffbActiveTab === 'harvesters') renderFfbHarvestersTab();
     else if (_ffbActiveTab === 'grading')    renderFfbGradingTab();
+    else if (_ffbActiveTab === 'blockyield') renderFfbBlockYieldTab();
 }
 
 // ── Harvesting Report ──────────────────────────────────────────────────────
@@ -18043,7 +18403,7 @@ function renderFfbHarvestersTab() {
     ffbLoadAllRows(estate).then(function(allRows){ _renderFfbHarvestersSummary(allRows); });
 }
 function ffbOpenHarvesterTargetPage() {
-    ['harvest','harvesters','grading'].forEach(function(t){
+    ['harvest','harvesters','grading','blockyield'].forEach(function(t){
         var p=document.getElementById('ffbPanel_'+t); if(p)p.style.display='none';
     });
     var tabBar=document.getElementById('ffbTabBar'); if(tabBar)tabBar.style.display='none';
