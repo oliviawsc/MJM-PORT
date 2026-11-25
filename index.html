@@ -26,6 +26,8 @@
         h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.01em; }
         .sub { margin: 0 0 8px; color: #475569; font-size: 14.5px; }
         .ctx { display: inline-flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 26px; }
+        .co-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; }
+        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 60vw; }
         .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
         .card { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: #fff; border: 1px solid #E2E8F0;
@@ -53,7 +55,11 @@
     <main>
         <h1>Plantation Operation</h1>
         <p class="sub">Choose a module.</p>
-        <div class="ctx" id="ctx"></div>
+        <div class="ctx" id="ctx">
+            <label class="co-pick" id="coPick" style="display:none;"><span>Company</span>
+                <select id="coSelect"></select></label>
+            <span id="ctxChips"></span>
+        </div>
         <div id="note"></div>
         <div class="grid" id="grid"></div>
     </main>
@@ -94,6 +100,29 @@
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
     function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
+
+    // Company list = the MJM Intranet companies, as synced into port_estates by
+    // stock-master-sync (one row per estate; company_name groups them). Estates
+    // of a company are handled inside each module later.
+    const COMPANY_KEY = 'port_company';
+    let companies = [];
+    async function loadCompanies() {
+        try {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/port_estates?select=name,company_name,is_active,sort_order&order=sort_order.asc,name.asc',
+                { headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
+            if (!res.ok) return [];
+            const rows = (await res.json()).filter((r) => r.is_active !== false);
+            const seen = new Set(), out = [];
+            rows.forEach((r) => { const c = (r.company_name || r.name || '').trim(); if (c && !seen.has(c)) { seen.add(c); out.push(c); } });
+            return out;
+        } catch (e) { return []; }
+    }
+    function pickCompany(name) {
+        if (!name) return;
+        ctx.gw_company = name; ctx.gw_company_name = name;
+        delete ctx.gw_company_short; delete ctx.gw_estate; delete ctx.gw_estate_short;
+        try { localStorage.setItem(COMPANY_KEY, name); } catch (e) {}
+    }
     function appLink(module) {
         const u = new URL(APP, location.href);
         u.searchParams.set('module', module);
@@ -111,9 +140,18 @@
         const who = document.getElementById('who');
         who.innerHTML = session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '';
         const chips = [];
-        if (ctx.gw_company_name || ctx.gw_company) chips.push('&#127970; ' + esc(ctx.gw_company_name || ctx.gw_company));
+        const current = ctx.gw_company_name || ctx.gw_company || '';
+        const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
+        if (companies.length) {
+            pick.style.display = '';
+            sel.innerHTML = (companies.includes(current) ? '' : '<option value="">— Choose company —</option>') +
+                companies.map((c) => '<option value="' + esc(c) + '"' + (c === current ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
+        } else {
+            pick.style.display = 'none';
+            if (current) chips.push('&#127970; ' + esc(current));
+        }
         if (ctx.gw_estate) chips.push('&#128205; ' + esc(ctx.gw_estate));
-        document.getElementById('ctx').innerHTML = chips.map((c) => '<span class="chip">' + c + '</span>').join('');
+        document.getElementById('ctxChips').innerHTML = chips.map((c) => '<span class="chip">' + c + '</span>').join('');
         const note = document.getElementById('note');
         if (errorText) note.innerHTML = '<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>';
         else if (!session) note.innerHTML = '<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>';
@@ -175,8 +213,17 @@
             error = r.error || '';
         }
         cleanUrl();
+        // Company: the one the Intranet sent, else the one chosen here last time
+        companies = await loadCompanies();
+        if (!ctx.gw_company_name && !ctx.gw_company) {
+            let last = ''; try { last = localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
+            if (last && companies.includes(last)) pickCompany(last);
+        } else if (ctx.gw_company_name || ctx.gw_company) {
+            try { localStorage.setItem(COMPANY_KEY, ctx.gw_company_name || ctx.gw_company); } catch (e) {}
+        }
         if (session && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
         draw(session, error);
+        document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });
     })();
 })();
 </script>

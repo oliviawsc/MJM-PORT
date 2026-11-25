@@ -10932,13 +10932,20 @@ function mrToast(text) {
     clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 9000);
 }
 // After boot: switch the estate selector to the company the Intranet sent us.
-function applyIntranetCompany(hints) {
+async function applyIntranetCompany(hints) {
     if (!hints || !hints.length) return;
     const sel = document.getElementById('sidebarEstate');
     if (!sel) return;
     const estates = [...sel.options].map((o) => o.value).filter(Boolean);
     const m = matchEstateForCompany(hints, estates);
-    const estate = m.estate;
+    let estate = m.estate;
+    if (!estate) {
+        // The synced estate list knows which company each estate belongs to:
+        // a company with several estates opens its first one.
+        if (!GLOBAL_ESTATE_ROWS.length) await loadEstatesFromSupabase();
+        const byCompany = GLOBAL_ESTATE_ROWS.find((r) => hints.some((h) => (r.company_name || '').toLowerCase() === h.toLowerCase()) && estates.includes(r.name));
+        if (byCompany) estate = byCompany.name;
+    }
     if (!estate) {
         console.warn('[SSO] no estate matches the Intranet company', hints, m.ambiguous);
         const d = (typeof I18N !== 'undefined' && I18N[currentLang]) || {};
