@@ -28,6 +28,8 @@
         .ctx { display: inline-flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 26px; }
         .co-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; }
         .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 60vw; }
+        .who .intranet { display: block; margin-top: 4px; font-size: 12.5px; font-weight: 600; color: #166534; text-decoration: none; }
+        .who .intranet:hover { text-decoration: underline; }
         .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
         .card { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: #fff; border: 1px solid #E2E8F0;
@@ -84,6 +86,8 @@
 
     // The modules of this system. `module` is the deep link the classic app understands.
     const MODULES = [
+        { module: 'estate',    title: 'Estate Info',       icon: '&#127796;', bg: '#3F6212', href: 'estate/index.html',
+          desc: 'Planted area by division, phase and block: area, palm count, density, year planted.' },
         { module: 'stock',     title: 'Stock',             icon: '&#128230;', bg: '#166534',
           desc: 'Fertiliser, chemical and seedling stock, transactions, ledger and records.' },
         { module: 'report',    title: 'Management Report', icon: '&#128202;', bg: '#0F766E',
@@ -123,9 +127,17 @@
         delete ctx.gw_company_short; delete ctx.gw_estate; delete ctx.gw_estate_short;
         try { localStorage.setItem(COMPANY_KEY, name); } catch (e) {}
     }
+    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+    // Back to the Intranet with the company chosen here, so its business box
+    // switches to the same company (the Intranet reads gw_company on arrival).
+    function intranetLink() {
+        const c = ctx.gw_company_name || ctx.gw_company || '';
+        return INTRANET_URL + (c ? '?gw_company=' + encodeURIComponent(c) : '');
+    }
     function appLink(module) {
-        const u = new URL(APP, location.href);
-        u.searchParams.set('module', module);
+        const m = MODULES.find((x) => x.module === module);
+        const u = new URL((m && m.href) || APP, location.href);
+        if (!(m && m.href)) u.searchParams.set('module', module);
         Object.keys(ctx).forEach((k) => u.searchParams.set(k, ctx[k]));
         return u.pathname + u.search;
     }
@@ -138,7 +150,8 @@
     }
     function draw(session, errorText) {
         const who = document.getElementById('who');
-        who.innerHTML = session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '';
+        who.innerHTML = (session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '') +
+            '<a class="intranet" href="' + esc(intranetLink()) + '">&#8592; MJM Intranet</a>';
         const chips = [];
         const current = ctx.gw_company_name || ctx.gw_company || '';
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');

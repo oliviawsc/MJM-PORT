@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Estate Info · Plantation Operation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B4%3C/text%3E%3C/svg%3E">
+    <style>
+        :root { --ink: #0F172A; --mute: #64748B; --line: #E2E8F0; --brand: #166534; --soft: #F0FDF4; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: #F8FAFC; }
+        a { color: inherit; }
+        .top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .brand .leaf { width: 32px; height: 32px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 17px; }
+        .brand a { text-decoration: none; color: var(--mute); font-weight: 600; font-size: 13px; }
+        .who { font-size: 13px; color: var(--mute); text-align: right; }
+        .who b { display: block; color: var(--ink); }
+        main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
+        h1 { font-size: 24px; margin: 0 0 4px; }
+        .sub { margin: 0 0 16px; color: var(--mute); font-size: 14px; }
+        .ctx { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--mute); }
+        .pick select, .input, .btn { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; background: #fff; font: inherit; font-size: 14px; }
+        .pick select { padding: 0 10px; font-weight: 600; color: var(--ink); max-width: 70vw; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+        .card .k { font-size: 12px; color: var(--mute); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+        .card .v { font-size: 22px; font-weight: 700; margin-top: 2px; }
+        .card .v small { font-size: 12px; color: var(--mute); font-weight: 600; margin-left: 3px; }
+        .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .bar .sp { flex: 1; }
+        .btn { padding: 0 14px; font-weight: 600; cursor: pointer; color: var(--ink); }
+        .btn:hover { background: #F1F5F9; }
+        .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .btn.primary:hover { background: #14532D; }
+        .btn.sm { height: 28px; padding: 0 9px; font-size: 12.5px; border-radius: 8px; }
+        .btn.danger { color: #B91C1C; }
+        .input { padding: 0 10px; }
+        .wrap { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; white-space: nowrap; }
+        th { background: #F8FAFC; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--mute); position: sticky; top: 0; }
+        td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        td.grp { font-weight: 700; background: #FAFAF9; border-right: 1px solid var(--line); }
+        tr.sub td { background: var(--soft); font-weight: 600; color: #14532D; }
+        tr.total td { background: #ECFDF5; font-weight: 700; border-top: 2px solid #A7F3D0; }
+        td .acts { display: flex; gap: 6px; }
+        .muted { color: var(--mute); }
+        .note { padding: 12px 14px; border-radius: 12px; font-size: 14px; margin-bottom: 14px; }
+        .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+        .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .empty { padding: 40px 20px; text-align: center; color: var(--mute); }
+        .modal { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; place-items: center; z-index: 20; padding: 16px; }
+        .modal.open { display: grid; }
+        .dlg { width: 100%; max-width: 560px; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); max-height: 92vh; overflow: auto; }
+        .dlg h2 { margin: 0 0 12px; font-size: 18px; }
+        .form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+        .form label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--mute); }
+        .form label.full { grid-column: 1 / -1; }
+        .form input, .form textarea { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); }
+        .form textarea { height: 160px; padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: pre; }
+        .dlg .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+        .hint { font-size: 12.5px; color: var(--mute); margin: 6px 0 0; }
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #0F172A; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; display: none; z-index: 30; }
+        @media (max-width: 640px) { .form { grid-template-columns: 1fr; } .who span { display: none; } }
+    </style>
+</head>
+<body>
+    <header class="top">
+        <div class="brand"><span class="leaf">&#127796;</span> Estate Info <a href="../">&lsaquo; Plantation Operation</a></div>
+        <div class="who" id="who"></div>
+    </header>
+    <main>
+        <h1>Estate Info</h1>
+        <p class="sub">Planted area by division, phase and block.</p>
+        <div class="ctx" id="ctx"></div>
+        <div id="note"></div>
+        <div class="cards" id="cards"></div>
+        <div class="bar" id="bar"></div>
+        <div class="wrap"><div id="table"></div></div>
+    </main>
+
+    <div class="modal" id="blockModal"><div class="dlg">
+        <h2 id="blockTitle">Add block</h2>
+        <form id="blockForm" class="form" autocomplete="off">
+            <label>Division <input name="division" placeholder="e.g. Division 1 (leave empty if none)"></label>
+            <label>Phase <input name="phase" placeholder="e.g. Phase 2 (leave empty if none)"></label>
+            <label>Block * <input name="block" required placeholder="e.g. B12"></label>
+            <label>Area (ha) <input name="area_ha" type="number" step="0.01" min="0"></label>
+            <label>Palm count <input name="palm_count" type="number" step="1" min="0"></label>
+            <label>Density (palms/ha) <input name="density" type="number" step="0.01" min="0" placeholder="auto = palms ÷ area"></label>
+            <label>Year planted <input name="year_planted" type="number" step="1" min="1950" max="2100"></label>
+            <label>Remark <input name="remark"></label>
+        </form>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="blockSave">Save</button></div>
+    </div></div>
+
+    <div class="modal" id="pasteModal"><div class="dlg">
+        <h2>Paste from Excel</h2>
+        <p class="hint" style="margin:0 0 10px">Copy the rows from Excel including the header row, then paste here. Header names understood: Division, Phase, Block, Area / Ha, Palms / Palm count / Stand, Density, Year / Year planted, Remark. Existing blocks with the same division, phase and block are updated.</p>
+        <form class="form"><label class="full"><textarea id="pasteText" placeholder="Division&#9;Phase&#9;Block&#9;Area (ha)&#9;Palms&#9;Year planted&#10;Div 1&#9;Phase 1&#9;B01&#9;25.40&#9;3480&#9;2012"></textarea></label></form>
+        <p class="hint" id="pastePreview"></p>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="pasteSave">Import</button></div>
+    </div></div>
+    <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+    const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
+    const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
+    const SESSION_KEY = 'opp_auth_session';
+    const COMPANY_KEY = 'port_company';
+    const ESTATE_KEY = 'port_estate_info_estate';
+    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+    const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const num = (v, d) => (v == null || v === '' || isNaN(+v)) ? '—' : (+v).toLocaleString('en-MY', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const $ = (id) => document.getElementById(id);
+
+    let session = null, companies = [], estateRows = [], company = '', estate = '', rows = [], editing = null;
+    try { session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) {}
+    const canEdit = () => !!session && (session.role === 'superadmin' || session.role === 'admin');
+
+    // Company: from the Intranet link (gw_company*), else the portal's choice
+    const params = new URLSearchParams(location.search);
+    const ctxCompany = (params.get('gw_company_name') || params.get('gw_company') || '').trim();
+    const ctxEstate = (params.get('gw_estate') || '').trim();
+    (function cleanUrl() { try { const u = new URL(location.href); ['gw_token', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} })();
+
+    async function api(path, opt) {
+        const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({ headers: H }, opt || {}));
+        if (!res.ok) { let m = 'HTTP ' + res.status; try { const j = await res.json(); m = j.message || j.hint || m; } catch (e) {} throw new Error(m); }
+        return res.status === 204 ? null : res.json();
+    }
+    function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => { t.style.display = 'none'; }, 2600); }
+
+    async function loadEstates() {
+        estateRows = (await api('port_estates?select=name,company_name,is_active,sort_order&order=sort_order.asc,name.asc')).filter((r) => r.is_active !== false);
+        const all = [], seen = new Set();
+        estateRows.forEach((r) => { const c = (r.company_name || r.name || '').trim(); if (c && !seen.has(c)) { seen.add(c); all.push(c); } });
+        const mine = (session && Array.isArray(session.companies) && session.companies.length) ? session.companies : (session && session.role === 'superadmin') ? all : [];
+        companies = mine.filter((c) => all.includes(c)).concat(mine.filter((c) => !all.includes(c)));
+    }
+    const estatesOf = (c) => estateRows.filter((r) => (r.company_name || r.name) === c).map((r) => r.name);
+
+    function setCompany(c) {
+        company = c || '';
+        try { if (company) localStorage.setItem(COMPANY_KEY, company); } catch (e) {}
+        const list = estatesOf(company);
+        let want = ctxEstate || ''; try { want = want || localStorage.getItem(ESTATE_KEY + ':' + company) || ''; } catch (e) {}
+        setEstate(list.includes(want) ? want : list[0] || '', false);
+    }
+    function setEstate(e, redraw) {
+        estate = e || '';
+        try { if (estate) localStorage.setItem(ESTATE_KEY + ':' + company, estate); } catch (e2) {}
+        if (redraw !== false) load();
+    }
+
+    async function load() {
+        rows = [];
+        if (estate) {
+            try { rows = await api('port_estate_blocks?select=*&estate=eq.' + encodeURIComponent(estate) + '&order=division.asc,phase.asc,sort_order.asc,block.asc'); }
+            catch (e) { $('note').innerHTML = '<p class="note err">Could not load blocks: ' + esc(e.message) + (/port_estate_blocks/.test(e.message) ? '. The table has not been created yet (run the Estate Info SQL in Supabase).' : '') + '</p>'; }
+        }
+        draw();
+    }
+
+    const dens = (r) => r.density != null && r.density !== '' ? +r.density : (r.area_ha > 0 && r.palm_count != null ? r.palm_count / r.area_ha : null);
+    const sum = (list, k) => list.reduce((a, r) => a + (r[k] == null || r[k] === '' ? 0 : +r[k]), 0);
+    const avgDens = (list) => { const a = sum(list, 'area_ha'), p = sum(list.filter((r) => r.area_ha > 0 || r.palm_count), 'palm_count'); return a > 0 && p ? p / a : null; };
+
+    function draw() {
+        const who = $('who');
+        const back = INTRANET_URL + (company ? '?gw_company=' + encodeURIComponent(company) : '');
+        who.innerHTML = (session ? '<b>' + esc(session.name || session.email) + '</b>' : '') + '<a href="' + esc(back) + '"><span>MJM Intranet</span> &#8599;</a>';
+
+        // Context: company and estate pickers
+        const ctx = [];
+        if (companies.length > 1) ctx.push('<label class="pick">Company <select id="coSel">' + (companies.includes(company) ? '' : '<option value="">— Choose company —</option>') + companies.map((c) => '<option' + (c === company ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></label>');
+        else if (company) ctx.push('<span class="chip">&#127970; ' + esc(company) + '</span>');
+        const list = estatesOf(company);
+        if (list.length > 1) ctx.push('<label class="pick">Estate <select id="esSel">' + list.map((n) => '<option' + (n === estate ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>');
+        else if (estate && estate !== company) ctx.push('<span class="chip">&#128205; ' + esc(estate) + '</span>');
+        $('ctx').innerHTML = ctx.join('');
+        const co = $('coSel'); if (co) co.onchange = (e) => { setCompany(e.target.value); load(); };
+        const es = $('esSel'); if (es) es.onchange = (e) => setEstate(e.target.value);
+
+        if (!session) { $('note').innerHTML = '<p class="note warn">You are not signed in. Open this page from <a href="../">Plantation Operation</a> or MJM Intranet.</p>'; }
+        else if (!companies.length) { $('note').innerHTML = '<p class="note warn">&#9888;&#65039; No company has been given to you for this module in MJM Intranet.</p>'; }
+        else if (!estate) { $('note').innerHTML = '<p class="note warn">Choose a company.</p>'; }
+        else if (!/Could not load/.test($('note').textContent)) $('note').innerHTML = '';
+
+        // Summary cards
+        const hasDiv = rows.some((r) => r.division), hasPhase = rows.some((r) => r.phase);
+        const years = rows.map((r) => r.year_planted).filter(Boolean);
+        $('cards').innerHTML = !estate ? '' : [
+            ['Planted area', num(sum(rows, 'area_ha'), 2) + '<small>ha</small>'],
+            ['Blocks', rows.length.toLocaleString()],
+            ['Palms', num(sum(rows, 'palm_count'), 0)],
+            ['Avg density', num(avgDens(rows), 1) + '<small>palms/ha</small>'],
+            hasDiv ? ['Divisions', new Set(rows.map((r) => r.division).filter(Boolean)).size] : null,
+            hasPhase ? ['Phases', new Set(rows.map((r) => r.division + '|' + r.phase).filter((x) => x !== '|')).size] : null,
+            years.length ? ['Year planted', Math.min(...years) + (Math.max(...years) !== Math.min(...years) ? ' – ' + Math.max(...years) : '')] : null,
+        ].filter(Boolean).map((c) => '<div class="card"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
+
+        // Toolbar
+        $('bar').innerHTML = !estate ? '' :
+            '<span class="muted" style="font-size:13px">' + esc(estate) + ' · ' + rows.length + ' block' + (rows.length === 1 ? '' : 's') + '</span><span class="sp"></span>' +
+            (canEdit() ? '<button class="btn sm" id="pasteBtn">&#128203; Paste from Excel</button><button class="btn sm primary" id="addBtn">+ Add block</button>' :
+                '<span class="chip">View only</span>');
+        if ($('addBtn')) $('addBtn').onclick = () => openBlock(null);
+        if ($('pasteBtn')) $('pasteBtn').onclick = () => { $('pasteText').value = ''; $('pastePreview').textContent = ''; $('pasteModal').classList.add('open'); };
+
+        // Table: Division | Phase | Block ..., columns only when the estate uses them
+        if (!estate) { $('table').innerHTML = ''; return; }
+        if (!rows.length) { $('table').innerHTML = '<div class="empty">No blocks recorded for ' + esc(estate) + ' yet.' + (canEdit() ? '<br>Use <b>Add block</b> or <b>Paste from Excel</b> to fill in the estate.' : '') + '</div>'; return; }
+        const cols = (hasDiv ? '<th>Division</th>' : '') + (hasPhase ? '<th>Phase</th>' : '') + '<th>Block</th><th class="num">Area (ha)</th><th class="num">Palm count</th><th class="num">Density</th><th class="num">Year planted</th><th>Remark</th>' + (canEdit() ? '<th></th>' : '');
+        const cell = (r) => '<td>' + esc(r.block) + '</td><td class="num">' + num(r.area_ha, 2) + '</td><td class="num">' + num(r.palm_count, 0) + '</td><td class="num">' + num(dens(r), 1) + '</td><td class="num">' + (r.year_planted || '—') + '</td><td class="muted">' + esc(r.remark) + '</td>' +
+            (canEdit() ? '<td><div class="acts"><button class="btn sm" data-edit="' + r.id + '">Edit</button><button class="btn sm danger" data-del="' + r.id + '">Delete</button></div></td>' : '');
+        const subtotal = (label, list, span) => '<tr class="sub"><td colspan="' + span + '">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td><td class="num">' + num(sum(list, 'area_ha'), 2) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(list), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
+        let html = '<table><thead><tr>' + cols + '</tr></thead><tbody>';
+        const divs = [...new Set(rows.map((r) => r.division || ''))];
+        divs.forEach((d) => {
+            const dr = rows.filter((r) => (r.division || '') === d);
+            const phases = [...new Set(dr.map((r) => r.phase || ''))];
+            let firstOfDiv = true;
+            phases.forEach((p) => {
+                const pr = dr.filter((r) => (r.phase || '') === p);
+                pr.forEach((r, i) => {
+                    html += '<tr>';
+                    if (hasDiv && firstOfDiv) { html += '<td class="grp" rowspan="' + dr.length + '">' + (d ? esc(d) : '<span class="muted">—</span>') + '</td>'; firstOfDiv = false; }
+                    if (hasPhase && i === 0) html += '<td class="grp" rowspan="' + pr.length + '">' + (p ? esc(p) : '<span class="muted">—</span>') + '</td>';
+                    html += cell(r) + '</tr>';
+                });
+            });
+            if (hasDiv && divs.length > 1) html += subtotal(d || 'No division', dr, (hasPhase ? 2 : 1) + 1);
+        });
+        html += '<tr class="total"><td colspan="' + ((hasDiv ? 1 : 0) + (hasPhase ? 1 : 0) + 1) + '">Total · ' + esc(estate) + '</td><td class="num">' + num(sum(rows, 'area_ha'), 2) + '</td><td class="num">' + num(sum(rows, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(rows), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
+        $('table').innerHTML = html + '</tbody></table>';
+        $('table').querySelectorAll('[data-edit]').forEach((b) => { b.onclick = () => openBlock(rows.find((r) => String(r.id) === b.dataset.edit)); });
+        $('table').querySelectorAll('[data-del]').forEach((b) => { b.onclick = () => delBlock(rows.find((r) => String(r.id) === b.dataset.del)); });
+    }
+
+    // ---- Add / edit one block
+    function openBlock(r) {
+        editing = r || null;
+        $('blockTitle').textContent = r ? 'Edit block ' + r.block : 'Add block';
+        const f = $('blockForm');
+        ['division', 'phase', 'block', 'area_ha', 'palm_count', 'density', 'year_planted', 'remark'].forEach((k) => { f.elements[k].value = r && r[k] != null ? r[k] : (k === 'division' || k === 'phase') && !r ? lastLevel(k) : ''; });
+        $('blockModal').classList.add('open');
+        f.elements.block.focus();
+    }
+    const lastLevel = (k) => rows.length ? (rows[rows.length - 1][k] || '') : '';
+    function readForm() {
+        const f = $('blockForm'), v = (k) => f.elements[k].value.trim();
+        const n = (k) => v(k) === '' ? null : +v(k);
+        if (!v('block')) { toast('Block is required'); return null; }
+        return { estate, division: v('division'), phase: v('phase'), block: v('block'), area_ha: n('area_ha'), palm_count: n('palm_count'), density: n('density'), year_planted: n('year_planted'), remark: v('remark'), updated_by: session.email || '', updated_at: new Date().toISOString() };
+    }
+    $('blockSave').onclick = async () => {
+        const body = readForm(); if (!body) return;
+        try {
+            if (editing) await api('port_estate_blocks?id=eq.' + editing.id, { method: 'PATCH', body: JSON.stringify(body) });
+            else await api('port_estate_blocks', { method: 'POST', body: JSON.stringify(body) });
+            $('blockModal').classList.remove('open'); toast('Saved'); load();
+        } catch (e) { toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : 'Save failed: ' + e.message); }
+    };
+    async function delBlock(r) {
+        if (!r || !confirm('Delete block ' + r.block + '?')) return;
+        try { await api('port_estate_blocks?id=eq.' + r.id, { method: 'DELETE' }); toast('Deleted'); load(); } catch (e) { toast('Delete failed: ' + e.message); }
+    }
+
+    // ---- Paste from Excel (tab separated, header row names the columns)
+    const COLS = [['division', /^(division|div|bahagian)/i], ['phase', /^(phase|fasa|ph)/i], ['block', /^(block|blok|field)/i], ['area_ha', /^(area|ha|hect|luas|planted)/i], ['palm_count', /^(palm|palms|stand|pokok|count|no\.? ?of)/i], ['density', /^(dens|kepadatan|sph)/i], ['year_planted', /^(year|yop|tahun|planted)/i], ['remark', /^(remark|note|catatan)/i]];
+    function parsePaste(text) {
+        const lines = text.split(/\r?\n/).map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim());
+        if (lines.length < 2) return { error: 'Paste the header row and at least one block row.' };
+        const split = (l) => (l.includes('\t') ? l.split('\t') : l.split(/\s*[,;]\s*/)).map((x) => x.trim().replace(/^"|"$/g, ''));
+        const head = split(lines[0]), map = {};
+        head.forEach((h, i) => { const c = COLS.find((x) => x[1].test(h) && !(x[0] in map)); if (c && !(c[0] === 'area_ha' && /planted/i.test(h) && /year/i.test(h))) map[c[0]] = i; });
+        if (map.block == null) return { error: 'No "Block" column found in the header row.' };
+        const clean = (x) => (x == null ? '' : x).replace(/[,\s]/g, '');
+        const n = (x) => { const v = clean(x); return v === '' || v === '-' || isNaN(+v) ? null : +v; };
+        const out = [], bad = [];
+        lines.slice(1).forEach((l, i) => {
+            const c = split(l), g = (k) => map[k] == null ? '' : (c[map[k]] || '');
+            if (!g('block')) { bad.push(i + 2); return; }
+            if (/^total/i.test(g('block')) || /^total/i.test(g('division'))) return;
+            out.push({ estate, division: g('division'), phase: g('phase'), block: g('block'), area_ha: n(g('area_ha')), palm_count: n(g('palm_count')), density: n(g('density')), year_planted: n(g('year_planted')), remark: g('remark'), updated_by: session.email || '', updated_at: new Date().toISOString() });
+        });
+        return { rows: out, bad, cols: Object.keys(map) };
+    }
+    $('pasteText').oninput = () => { const p = parsePaste($('pasteText').value); $('pastePreview').textContent = p.error ? p.error : p.rows.length + ' block(s) found · columns: ' + p.cols.join(', ') + (p.bad.length ? ' · skipped rows without a block: ' + p.bad.join(', ') : ''); };
+    $('pasteSave').onclick = async () => {
+        const p = parsePaste($('pasteText').value);
+        if (p.error) { toast(p.error); return; }
+        if (!p.rows.length) { toast('Nothing to import'); return; }
+        try {
+            await api('port_estate_blocks?on_conflict=estate,division,phase,block', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'resolution=merge-duplicates' }), body: JSON.stringify(p.rows) });
+            $('pasteModal').classList.remove('open'); toast(p.rows.length + ' block(s) imported'); load();
+        } catch (e) { toast('Import failed: ' + e.message); }
+    };
+    document.querySelectorAll('[data-close]').forEach((b) => { b.onclick = () => b.closest('.modal').classList.remove('open'); });
+    document.querySelectorAll('.modal').forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); }); });
+
+    (async () => {
+        try { await loadEstates(); } catch (e) { $('note').innerHTML = '<p class="note err">Could not load the estate list: ' + esc(e.message) + '</p>'; }
+        let c = ctxCompany; try { c = c || localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
+        if (!companies.includes(c)) c = companies.length === 1 ? companies[0] : (companies.includes(c) ? c : '');
+        setCompany(c);
+        load();
+    })();
+})();
+</script>
+</body>
+</html>
