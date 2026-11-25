@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-35';
+var APP_BUILD = '20261124-36';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -2591,7 +2591,7 @@ var APP_BUILD = '20261124-35';
             <p class="text-sm text-green-700 mb-5" data-i18n="page_ffbrecord_sub">Record monthly FFB production, number of harvesters and FFB grading. Figures link directly to the Management Report charts.</p>
 
             <!-- Sub-module tabs -->
-            <div class="flex gap-1 border-b-2 border-green-200 mb-0">
+            <div id="ffbTabBar" class="flex gap-1 border-b-2 border-green-200 mb-0">
                 <button id="ffbTabBtn_harvest" onclick="switchFfbTab('harvest')"
                     class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-green-700 bg-green-700 text-white relative" style="margin-bottom:-2px;">Harvesting Report</button>
                 <button id="ffbTabBtn_harvesters" onclick="switchFfbTab('harvesters')"
@@ -2660,7 +2660,10 @@ var APP_BUILD = '20261124-35';
                         class="text-sm text-blue-800 bg-white border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-blue-800 mb-3">Monthly Harvesters Input</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-blue-800">Monthly Harvesters Input</h3>
+                        <button onclick="ffbOpenHarvesterTargetPage()" class="flex items-center gap-1.5 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg shadow-sm">🎯 Harvester Target</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm" style="border-collapse:collapse;">
                             <thead class="bg-blue-100 text-blue-800">
@@ -2698,6 +2701,26 @@ var APP_BUILD = '20261124-35';
                             </thead>
                             <tbody id="ffbHarvestersSummaryBody"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: Harvester Target (sub-page, hidden by default) -->
+            <div id="ffbPanel_harvesterTarget" class="pt-4" style="display:none;">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="ffbCloseHarvesterTargetPage()" class="flex items-center gap-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300">← Back</button>
+                    <h2 class="text-xl font-bold text-blue-700">🎯 Harvester Target</h2>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <div id="ffbHarvesterTargetBody"></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <h3 class="text-sm font-bold text-blue-700 mb-3">Add / Edit Year</h3>
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-semibold text-blue-800">Year</label>
+                        <input type="number" id="ffbHarvesterTargetNewYear" placeholder="e.g. 2026" min="2000" max="2100"
+                            class="w-28 text-sm border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <button onclick="ffbAddHarvesterTargetYear()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold">Add Year</button>
                     </div>
                 </div>
             </div>
@@ -17779,6 +17802,11 @@ function _ffbPopulateYearSel(selId) {
 
 function switchFfbTab(tab) {
     _ffbActiveTab = tab;
+    // Hide any sub-pages and show the tab bar
+    var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
+    if (harvTgtPanel) harvTgtPanel.style.display = 'none';
+    var tabBar = document.getElementById('ffbTabBar');
+    if (tabBar) tabBar.style.display = '';
     var styles = {
         harvest:    { on: 'border-green-700 bg-green-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-700' },
         harvesters: { on: 'border-blue-700 bg-blue-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700' },
@@ -17967,6 +17995,88 @@ async function ffbSaveHarvestersRow(year, month) {
         if (resp.error) throw resp.error;
         _ffbUpdateCache(payload); renderFfbHarvestersTab();
     } catch(e){alert('Error saving: '+e.message);}
+}
+
+// ── Harvester Target sub-page ─────────────────────────────────────────────
+function ffbOpenHarvesterTargetPage() {
+    ['harvest','harvesters','grading'].forEach(function(t){
+        var p=document.getElementById('ffbPanel_'+t); if(p)p.style.display='none';
+    });
+    var tabBar=document.getElementById('ffbTabBar'); if(tabBar)tabBar.style.display='none';
+    var panel=document.getElementById('ffbPanel_harvesterTarget'); if(panel)panel.style.display='';
+    renderFfbHarvesterTargetTab();
+}
+function ffbCloseHarvesterTargetPage() {
+    var panel=document.getElementById('ffbPanel_harvesterTarget'); if(panel)panel.style.display='none';
+    switchFfbTab(_ffbActiveTab||'harvesters');
+}
+function renderFfbHarvesterTargetTab() {
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    if(!estate){document.getElementById('ffbHarvesterTargetBody').innerHTML='<p class="text-gray-400 text-sm py-4 text-center">Please select an estate.</p>';return;}
+    ffbLoadAllRows(estate).then(function(allRows){_renderFfbHarvesterTargetSummary(allRows);});
+}
+function _renderFfbHarvesterTargetSummary(allRows) {
+    var body=document.getElementById('ffbHarvesterTargetBody');
+    if(!body)return;
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var years=[];
+    allRows.forEach(function(r){if(years.indexOf(r.year)===-1)years.push(r.year);});
+    years.sort(function(a,b){return b-a;});
+    if(!years.length){body.innerHTML='<p class="text-gray-400 text-sm py-4 text-center">No years yet. Add a year below.</p>';return;}
+    var html='';
+    years.forEach(function(yr){
+        html+='<div class="mb-6">';
+        html+='<div class="flex items-center justify-between mb-2">';
+        html+='<h4 class="font-bold text-blue-700 text-base">'+yr+'</h4>';
+        html+='<button onclick="ffbSaveHarvesterTargetYear('+yr+')" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold">Save '+yr+'</button>';
+        html+='</div>';
+        html+='<div class="overflow-x-auto"><table class="min-w-full text-sm" style="border-collapse:collapse;">';
+        html+='<thead class="bg-blue-100 text-blue-800"><tr>';
+        html+='<th class="px-3 py-2 text-center border border-blue-200">Month</th>';
+        html+='<th class="px-3 py-2 text-center border border-blue-200">Harvester Target (persons)</th>';
+        html+='</tr></thead><tbody>';
+        var yRows=allRows.filter(function(r){return r.year===yr;});
+        for(var m=1;m<=12;m++){
+            var row=yRows.find(function(r){return r.month===m;})||{};
+            var val=row.harvester_target!=null?row.harvester_target:'';
+            html+='<tr class="border-b border-gray-100 hover:bg-blue-50">';
+            html+='<td class="px-3 py-2 font-medium text-blue-800 text-center border border-gray-200">'+months[m-1]+'</td>';
+            html+='<td class="px-2 py-1 border border-gray-200"><input type="number" step="1" min="0" value="'+val+'" placeholder="—"'+
+                ' id="ffbHarvTgt_'+yr+'_'+m+'" class="w-full text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"></td>';
+            html+='</tr>';
+        }
+        html+='</tbody></table></div></div>';
+    });
+    body.innerHTML=html;
+}
+async function ffbSaveHarvesterTargetYear(year) {
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    if(!estate)return;
+    for(var m=1;m<=12;m++){
+        var el=document.getElementById('ffbHarvTgt_'+year+'_'+m);
+        if(!el)continue;
+        var val=el.value!==''?parseInt(el.value,10):null;
+        var payload={estate:estate,year:year,month:m,harvester_target:val};
+        try{
+            var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
+            if(resp.error)throw resp.error;
+            _ffbUpdateCache(payload);
+        }catch(e){alert('Error saving '+year+' month '+m+': '+e.message);return;}
+    }
+    alert('Harvester Target for '+year+' saved.');
+    ffbLoadAllRows(estate).then(function(allRows){_renderFfbHarvesterTargetSummary(allRows);});
+}
+function ffbAddHarvesterTargetYear() {
+    var input=document.getElementById('ffbHarvesterTargetNewYear');
+    var yr=parseInt(input&&input.value,10);
+    if(!yr||yr<2000||yr>2100){alert('Enter a valid year (2000-2100).');return;}
+    input.value='';
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    ffbLoadAllRows(estate).then(function(allRows){
+        var exists=allRows.some(function(r){return r.year===yr;});
+        if(!exists){_ffbAllRows.rows.push({estate:estate,year:yr,month:1});_ffbAllRows.rows.sort(function(a,b){return a.year!==b.year?a.year-b.year:a.month-b.month;});}
+        _renderFfbHarvesterTargetSummary(_ffbAllRows.rows);
+    });
 }
 
 // ── FFB Grading ───────────────────────────────────────────────────────────
