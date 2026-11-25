@@ -9,7 +9,7 @@
 import {
   ApiError, anonClient, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, toAuthEmail, USERS_TABLE, type UserRow,
 } from '../_shared/common.ts';
-import { companiesForUser, intranetMasterData, syncEstatesFromIntranet } from '../_shared/masterSync.ts';
+import { allCompaniesWithIcon, companiesForUser, intranetMasterData, syncEstatesFromIntranet } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
 
@@ -137,6 +137,9 @@ Deno.serve(handler(async (_req, body) => {
   try {
     const md = await intranetMasterData();
     companies = await companiesForUser(email, md);
+    // The PORT Super Admin may open every company: give them the Intranet's full
+    // company list (companies only, no estates / locations) when HR gave them none.
+    if (!companies.length && email === SUPER_ADMIN_EMAIL) companies = allCompaniesWithIcon(md);
     await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString(), companies }).eq('id', row.id);
   } catch (e) {
     console.warn('[stock-sso] companies skipped:', e instanceof Error ? e.message : e);

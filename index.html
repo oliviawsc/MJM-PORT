@@ -112,12 +112,14 @@
     let companies = [];
     async function loadCompanies() {
         try {
-            const res = await fetch(SUPABASE_URL + '/rest/v1/port_estates?select=name,company_name,is_active,sort_order&order=sort_order.asc,name.asc',
+            const res = await fetch(SUPABASE_URL + '/rest/v1/port_estates?select=name,company_name,intranet_id,is_active,sort_order&order=sort_order.asc,name.asc',
                 { headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
             if (!res.ok) return [];
-            const rows = (await res.json()).filter((r) => r.is_active !== false);
+            // Only rows linked to an Intranet company, listed by that company's name:
+            // the old estate rows (e.g. "Mega Jutamas (Suai)") are never shown as companies.
+            const rows = (await res.json()).filter((r) => r.is_active !== false && r.intranet_id && r.company_name);
             const seen = new Set(), out = [];
-            rows.forEach((r) => { const c = (r.company_name || r.name || '').trim(); if (c && !seen.has(c)) { seen.add(c); out.push(c); } });
+            rows.forEach((r) => { const c = r.company_name.trim(); if (c && !seen.has(c)) { seen.add(c); out.push(c); } });
             return out;
         } catch (e) { return []; }
     }

@@ -96,6 +96,17 @@ export async function companiesForUser(email: string, m?: MasterData): Promise<s
     .map((c) => c.name.trim());
 }
 
+/** Every active Intranet company carrying the Stock icon, by name, in the
+ *  Intranet's order — companies only, never their estates or locations.
+ *  Used for the PORT Super Admin, who may open every company. */
+export function allCompaniesWithIcon(m: MasterData): string[] {
+  const withIcon = companiesWithIcon(m);
+  return (m.companies ?? [])
+    .filter((c) => c.is_active !== false && withIcon.has(c.id))
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+    .map((c) => c.name.trim());
+}
+
 /** The estate list the Intranet wants Stock to have. */
 async function wantedFromIntranet(): Promise<Wanted[]> {
   const m = await intranetMasterData();
