@@ -64,7 +64,7 @@ interface MasterData {
 
 /** The Intranet's master data for the Stock icon (gw-master-data, with this module's API key). */
 export async function intranetMasterData(): Promise<MasterData> {
-  const key = Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
+  const key = Deno.env.get('INTRANET_PORT_API_KEY') || Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
   if (!key) throw new Error('err_sso_not_set_up');
   const res = await fetch(`${INTRANET_URL}/functions/v1/gw-master-data`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-gw-api-key': key }, body: '{}',
