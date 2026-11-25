@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-55';
+var APP_BUILD = '20261125-58';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2573,6 +2573,8 @@ var APP_BUILD = '20261125-55';
                     class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700 relative" style="margin-bottom:-2px;">FFB Grading</button>
                 <button id="ffbTabBtn_blockyield" onclick="switchFfbTab('blockyield')"
                     class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-teal-50 hover:text-teal-700 relative" style="margin-bottom:-2px;">Yield by Block</button>
+                <button id="ffbTabBtn_penalty" onclick="switchFfbTab('penalty')"
+                    class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 text-gray-600 hover:bg-rose-50 hover:text-rose-700 relative" style="margin-bottom:-2px;">FFB Penalty</button>
             </div>
 
             <!-- Panel: Harvesting Report -->
@@ -2737,16 +2739,69 @@ var APP_BUILD = '20261125-55';
 
             <!-- Panel: FFB Yield by Block -->
             <div id="ffbPanel_blockyield" class="pt-4" style="display:none;">
-                <div class="flex items-center gap-2 mb-4">
-                    <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
-                    <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
-                    <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
-                </div>
-                <div class="flex justify-end mb-3">
-                    <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
+                        <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
+                        <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <button onclick="ffbOpenBlockYieldSummaryPage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-semibold text-sm shadow">📊 Summary Yield by Block</button>
+                        <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-1.5 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                    </div>
                 </div>
                 <div id="ffbBlockYieldTableContainer" class="overflow-auto bg-white rounded-xl shadow p-4 mb-4" style="max-height:65vh;">
                     <p class="text-gray-400 py-4 text-center text-sm">Select an estate to load data.</p>
+                </div>
+            </div>
+
+            <!-- Panel: FFB Penalty -->
+            <div id="ffbPanel_penalty" class="pt-4" style="display:none;">
+                <div class="bg-white p-4 rounded-xl shadow mb-6">
+                    <h3 class="text-base font-bold text-rose-800 mb-1">FFB Penalty by Month</h3>
+                    <p class="text-xs text-rose-600 mb-3">Record Total Downgraded FFB (Bunch) and Total Penalty (RM) per month.</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm" style="border-collapse:collapse;white-space:nowrap;">
+                            <thead class="bg-rose-100 text-rose-800">
+                                <tr>
+                                    <th class="px-3 py-2 text-center border border-rose-200">Year</th>
+                                    <th class="px-3 py-2 text-left border border-rose-200">Metric</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Jan</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Feb</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Mar</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Apr</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">May</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Jun</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Jul</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Aug</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Sep</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Oct</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Nov</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Dec</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Total</th>
+                                    <th class="px-2 py-2 text-center border border-rose-200">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ffbPenaltySummaryBody">
+                                <tr><td colspan="16" class="text-center text-gray-400 py-6">Select an estate to load data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <input type="number" id="ffbAddYearInput_penalty" min="2010" max="2100" placeholder="Year e.g. 2024" class="border border-gray-300 rounded px-2 py-1 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-rose-400">
+                        <button onclick="ffbAddPenaltyYear()" class="text-xs bg-rose-600 text-white px-3 py-1.5 rounded hover:bg-rose-700 font-semibold">+ Add Year</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: Block Yield Summary (sub-page of Yield by Block) -->
+            <div id="ffbPanel_blockYieldSummary" class="pt-4" style="display:none;">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="ffbCloseBlockYieldSummaryPage()" class="flex items-center gap-1 text-sm font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-lg">← Back</button>
+                    <h2 class="text-xl font-bold text-blue-700">📊 Summary Yield by Block</h2>
+                </div>
+                <div id="ffbBlockYieldSummaryContainer" class="overflow-auto bg-white rounded-xl shadow p-4" style="max-height:72vh;">
+                    <p class="text-gray-400 py-4 text-center text-sm">Loading...</p>
                 </div>
             </div>
 
@@ -17928,14 +17983,17 @@ function switchFfbTab(tab) {
         harvest:    { on: 'border-green-700 bg-green-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-700' },
         harvesters: { on: 'border-blue-700 bg-blue-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700' },
         grading:    { on: 'border-amber-700 bg-amber-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700' },
-        blockyield: { on: 'border-teal-700 bg-teal-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-teal-50 hover:text-teal-700' }
+        blockyield: { on: 'border-teal-700 bg-teal-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-teal-50 hover:text-teal-700' },
+        penalty:    { on: 'border-rose-700 bg-rose-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-rose-50 hover:text-rose-700' }
     };
     // Hide any sub-pages whenever a real tab is clicked
     var targetPanel = document.getElementById('ffbPanel_target');
     if (targetPanel) targetPanel.style.display = 'none';
     var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
     if (harvTgtPanel) harvTgtPanel.style.display = 'none';
-    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
+    var bysSumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (bysSumPanel) bysSumPanel.style.display = 'none';
+    ['harvest','harvesters','grading','blockyield','penalty'].forEach(function(t) {
         var btn = document.getElementById('ffbTabBtn_' + t);
         var panel = document.getElementById('ffbPanel_' + t);
         var on = (t === tab);
@@ -17948,11 +18006,12 @@ function switchFfbTab(tab) {
     if (tab === 'harvesters') renderFfbHarvestersTab();
     if (tab === 'grading')    renderFfbGradingTab();
     if (tab === 'blockyield') renderFfbBlockYieldTab();
+    if (tab === 'penalty')    renderFfbPenaltyTab();
 }
 
 function ffbOpenTargetPage() {
     // Hide tab panels and tab bar; show the target sub-page
-    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
+    ['harvest','harvesters','grading','blockyield','penalty'].forEach(function(t) {
         var p = document.getElementById('ffbPanel_' + t);
         if (p) p.style.display = 'none';
     });
@@ -18179,6 +18238,299 @@ function ffbBlockYieldNextMonth() {
     renderFfbBlockYieldTab();
 }
 
+// ── Block Yield Summary sub-page ─────────────────────────────────────────────
+function ffbOpenBlockYieldSummaryPage() {
+    var byPanel = document.getElementById('ffbPanel_blockyield');
+    if (byPanel) byPanel.style.display = 'none';
+    var penPanel = document.getElementById('ffbPanel_penalty');
+    if (penPanel) penPanel.style.display = 'none';
+    var tabBar = document.getElementById('ffbTabBar');
+    if (tabBar) tabBar.style.display = 'none';
+    var sumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (sumPanel) sumPanel.style.display = '';
+    renderFfbBlockYieldSummary();
+}
+
+function ffbCloseBlockYieldSummaryPage() {
+    var sumPanel = document.getElementById('ffbPanel_blockYieldSummary');
+    if (sumPanel) sumPanel.style.display = 'none';
+    switchFfbTab('blockyield');
+}
+
+async function renderFfbBlockYieldSummary() {
+    var container = document.getElementById('ffbBlockYieldSummaryContainer');
+    if (!container) return;
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">Please select an estate.</p>';
+        return;
+    }
+    container.innerHTML = '<p class="text-gray-400 py-4 text-center text-sm">Loading...</p>';
+    var blocks = await ffbLoadBlocks(estate);
+    if (!blocks || !blocks.length) {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">No locations found for this estate.</p>';
+        return;
+    }
+    if (typeof supabaseClient === 'undefined') {
+        container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">Not connected to database.</p>';
+        return;
+    }
+    try {
+        var resp = await supabaseClient.from('port_ffb_block_yield')
+            .select('year, month, day, block_name, ffb_mt')
+            .eq('estate', estate)
+            .order('year', {ascending:true})
+            .order('month', {ascending:true})
+            .order('day', {ascending:true});
+        if (resp.error) throw resp.error;
+        var rows = resp.data || [];
+        // Aggregate: { year: { month: { blockName: total_mt } } }
+        var data = {};
+        rows.forEach(function(r) {
+            var y = r.year, m = r.month, bn = r.block_name, v = parseFloat(r.ffb_mt) || 0;
+            if (!data[y]) data[y] = {};
+            if (!data[y][m]) data[y][m] = {};
+            data[y][m][bn] = (data[y][m][bn] || 0) + v;
+        });
+        var years = Object.keys(data).map(Number).sort(function(a,b){return a-b;});
+        var totalArea = 0;
+        blocks.forEach(function(b) { totalArea += parseFloat(b.hectares) || 0; });
+        if (!years.length) {
+            container.innerHTML = '<p class="text-gray-400 py-6 text-center text-sm">No yield data recorded yet.</p>';
+            return;
+        }
+        _renderFfbBlockYieldSummaryTable(blocks, data, years, totalArea, container);
+    } catch(e) {
+        container.innerHTML = '<p class="text-red-500 py-4 text-center text-sm">Error loading data: ' + _ffbEscHtml(e.message) + '</p>';
+    }
+}
+
+function _renderFfbBlockYieldSummaryTable(blocks, data, years, totalArea, container) {
+    var mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var hdrBg = '#dbeafe'; var areaBg = '#eff6ff'; var grandBg = '#bfdbfe';
+    var yearHdrBg = '#eff6ff'; var yearSumBg = '#dbeafe';
+
+    function getVal(year, month, blockName) {
+        return (data[year] && data[year][month] && data[year][month][blockName] != null) ? (parseFloat(data[year][month][blockName]) || 0) : 0;
+    }
+
+    // Grand totals
+    var grandBlockTotal = {};
+    var grandTotalMT = 0;
+    blocks.forEach(function(b) { grandBlockTotal[b.block_name] = 0; });
+    years.forEach(function(year) {
+        blocks.forEach(function(b) {
+            for (var m = 1; m <= 12; m++) {
+                grandBlockTotal[b.block_name] += getVal(year, m, b.block_name);
+            }
+        });
+    });
+    blocks.forEach(function(b) { grandTotalMT += grandBlockTotal[b.block_name]; });
+
+    var sY0 = 'position:sticky;left:0;min-width:55px;';
+    var sM55 = 'position:sticky;left:55px;min-width:72px;';
+
+    var html = '<table class="min-w-full text-xs" style="border-collapse:separate;border-spacing:0;white-space:nowrap;">';
+
+    // ── thead ──
+    html += '<thead style="position:relative;z-index:3;">';
+    html += '<tr>';
+    html += '<th style="' + sY0 + 'position:sticky;top:0;left:0;z-index:5;background:' + hdrBg + ';" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Year</th>';
+    html += '<th style="' + sM55 + 'position:sticky;top:0;left:55px;z-index:4;background:' + hdrBg + ';" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Month</th>';
+    blocks.forEach(function(b) {
+        html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:80px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">' + _ffbEscHtml(b.block_name) + '</th>';
+    });
+    html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:90px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Total (MT)</th>';
+    html += '<th style="position:sticky;top:0;z-index:4;background:' + hdrBg + ';min-width:75px;" class="px-2 py-2 border border-blue-200 text-blue-800 font-semibold text-center">Yield/Ha</th>';
+    html += '</tr>';
+    // Area row sticky at top:33px
+    html += '<tr>';
+    html += '<td style="position:sticky;top:33px;left:0;z-index:3;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '<td style="position:sticky;top:33px;left:55px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-blue-700 font-semibold text-xs">Area (Ha)</td>';
+    blocks.forEach(function(b) {
+        var ha = parseFloat(b.hectares) || 0;
+        html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-center text-blue-700 text-xs">' + ha.toFixed(2) + '</td>';
+    });
+    html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-center text-blue-700 font-semibold text-xs">' + totalArea.toFixed(2) + '</td>';
+    html += '<td style="position:sticky;top:33px;z-index:2;background:' + areaBg + ';" class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+    html += '</tr>';
+    html += '</thead>';
+
+    // ── tbody ──
+    html += '<tbody style="position:relative;z-index:1;">';
+
+    // Per-year sections
+    years.forEach(function(year) {
+        var yearBlockTotal = {};
+        var yearTotalMT = 0;
+        blocks.forEach(function(b) { yearBlockTotal[b.block_name] = 0; });
+
+        for (var m = 1; m <= 12; m++) {
+            var monthTotalMT = 0;
+            var cells = '';
+            blocks.forEach(function(b) {
+                var v = getVal(year, m, b.block_name);
+                yearBlockTotal[b.block_name] += v;
+                monthTotalMT += v;
+                cells += '<td class="px-2 py-1 border border-gray-200 text-center text-gray-700 text-xs">' + v.toFixed(2) + '</td>';
+            });
+            yearTotalMT += monthTotalMT;
+            var monthYieldHa = totalArea > 0 ? monthTotalMT / totalArea : 0;
+
+            html += '<tr class="hover:bg-blue-50">';
+            if (m === 1) {
+                html += '<td rowspan="14" style="position:sticky;left:0;z-index:1;background:' + yearHdrBg + ';vertical-align:middle;min-width:55px;" class="px-2 py-1 border border-blue-200 text-blue-800 font-bold text-xs text-center">' + year + '</td>';
+            }
+            html += '<td style="position:sticky;left:55px;z-index:1;background:#fff;min-width:72px;" class="px-2 py-1 border border-gray-200 text-blue-700 font-medium text-xs">' + mn[m-1] + '</td>';
+            html += cells;
+            html += '<td class="px-2 py-1 border border-gray-200 text-center font-semibold text-gray-800 text-xs">' + monthTotalMT.toFixed(2) + '</td>';
+            html += '<td class="px-2 py-1 border border-gray-200 text-center text-gray-700 text-xs">' + monthYieldHa.toFixed(2) + '</td>';
+            html += '</tr>';
+        }
+
+        // Year Total row
+        html += '<tr style="background:' + yearSumBg + ';">';
+        html += '<td style="position:sticky;left:55px;z-index:1;background:' + yearSumBg + ';min-width:72px;" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Total</td>';
+        blocks.forEach(function(b) {
+            html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + (yearBlockTotal[b.block_name] || 0).toFixed(2) + '</td>';
+        });
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + yearTotalMT.toFixed(2) + '</td>';
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+        html += '</tr>';
+
+        // Year Yield/Ha row
+        var yearYieldHa = totalArea > 0 ? yearTotalMT / totalArea : 0;
+        html += '<tr style="background:' + yearSumBg + ';">';
+        html += '<td style="position:sticky;left:55px;z-index:1;background:' + yearSumBg + ';min-width:72px;" class="px-2 py-1.5 border border-blue-200 text-blue-800 font-bold text-xs">Yield/Ha</td>';
+        blocks.forEach(function(b) {
+            var ha = parseFloat(b.hectares) || 0;
+            var yh = ha > 0 ? (yearBlockTotal[b.block_name] || 0) / ha : 0;
+            html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-800 font-semibold text-xs">' + yh.toFixed(2) + '</td>';
+        });
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-center text-blue-900 font-bold text-xs">' + yearYieldHa.toFixed(2) + '</td>';
+        html += '<td class="px-2 py-1.5 border border-blue-200 text-xs"></td>';
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// ── FFB Penalty ───────────────────────────────────────────────────────────
+var _ffbPenaltyRows = { estate: '', rows: [], loaded: false };
+var _ffbPenaltyExtraYears = [];
+
+async function ffbLoadPenaltyRows(estate) {
+    if (_ffbPenaltyRows.estate === estate && _ffbPenaltyRows.loaded) return _ffbPenaltyRows.rows;
+    _ffbPenaltyRows = { estate: estate, rows: [], loaded: false };
+    if (!estate || typeof supabaseClient === 'undefined') { _ffbPenaltyRows.loaded = true; return []; }
+    try {
+        var resp = await supabaseClient.from('port_ffb_penalty').select('*')
+            .eq('estate', estate)
+            .order('year', {ascending: false})
+            .order('month', {ascending: true});
+        if (resp.error) console.warn('[FFB penalty] load', resp.error);
+        _ffbPenaltyRows.rows = resp.data || [];
+    } catch(e) {}
+    _ffbPenaltyRows.loaded = true;
+    return _ffbPenaltyRows.rows;
+}
+
+function renderFfbPenaltyTab() {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    var tbody = document.getElementById('ffbPenaltySummaryBody');
+    if (!estate) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
+        return;
+    }
+    ffbLoadPenaltyRows(estate).then(function(rows) { _renderFfbPenaltySummary(rows); });
+}
+
+function _renderFfbPenaltySummary(rows) {
+    var tbody = document.getElementById('ffbPenaltySummaryBody');
+    if (!tbody) return;
+    var curYear = new Date().getFullYear();
+    var years = [];
+    rows.forEach(function(r) { if (years.indexOf(r.year) === -1) years.push(r.year); });
+    if (years.indexOf(curYear) === -1) years.push(curYear);
+    _ffbPenaltyExtraYears.forEach(function(y) { if (years.indexOf(y) === -1) years.push(y); });
+    years.sort(function(a, b) { return b - a; });
+    if (!years.length) { tbody.innerHTML = '<tr><td colspan="16" class="text-center text-gray-400 py-6">No data yet. Add a year below.</td></tr>'; return; }
+    var html = '';
+    years.forEach(function(yr) {
+        var yRows = rows.filter(function(r) { return r.year === yr; });
+        var bunchCells = '', rmCells = '';
+        var bunchTotal = 0, rmTotal = 0, hasBunch = false, hasRm = false;
+        for (var m = 1; m <= 12; m++) {
+            var r = yRows.find(function(x) { return x.month === m; }) || {};
+            var bv = (r.downgraded_bunch != null && r.downgraded_bunch !== '') ? parseFloat(r.downgraded_bunch) : '';
+            var rv = (r.penalty_rm != null && r.penalty_rm !== '') ? parseFloat(r.penalty_rm) : '';
+            if (bv !== '') { bunchTotal += bv; hasBunch = true; }
+            if (rv !== '') { rmTotal += rv; hasRm = true; }
+            bunchCells += '<td class="px-1 py-0.5 border border-rose-200" style="min-width:60px;">' +
+                '<input type="number" step="1" min="0" value="' + (bv !== '' ? bv : '') + '" placeholder="—"' +
+                ' id="ffbPenBunch_' + yr + '_' + m + '"' +
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-rose-400 rounded px-1 py-0.5"></td>';
+            rmCells += '<td class="px-1 py-0.5 border border-rose-200" style="min-width:65px;">' +
+                '<input type="number" step="0.01" min="0" value="' + (rv !== '' ? rv : '') + '" placeholder="—"' +
+                ' id="ffbPenRm_' + yr + '_' + m + '"' +
+                ' class="w-full text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-rose-400 rounded px-1 py-0.5"></td>';
+        }
+        html += '<tr class="border-t-2 border-rose-300 hover:bg-rose-50">' +
+            '<td rowspan="2" class="px-3 py-1.5 font-bold text-center border border-rose-200 bg-rose-50 align-middle">' + yr + '</td>' +
+            '<td class="px-3 py-1.5 font-semibold text-rose-700 border border-rose-200 bg-rose-50 text-xs whitespace-nowrap">Downgraded FFB (Bunch)</td>' +
+            bunchCells +
+            '<td class="px-3 py-1.5 font-semibold text-center border border-rose-200 bg-rose-50">' + (hasBunch ? Math.round(bunchTotal).toLocaleString() : '—') + '</td>' +
+            '<td rowspan="2" class="px-2 py-1 text-center border border-rose-200 align-middle">' +
+            '<button id="ffbSavePenBtn_' + yr + '" onclick="ffbSavePenaltyYear(' + yr + ')" class="text-xs bg-rose-600 text-white px-3 py-1 rounded hover:bg-rose-700 font-semibold">Save</button></td></tr>';
+        html += '<tr class="hover:bg-rose-50">' +
+            '<td class="px-3 py-1.5 font-semibold text-rose-700 border border-rose-200 bg-rose-50 text-xs whitespace-nowrap">Penalty (RM)</td>' +
+            rmCells +
+            '<td class="px-3 py-1.5 font-semibold text-center border border-rose-200 bg-rose-50">' + (hasRm ? 'RM ' + rmTotal.toFixed(2) : '—') + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function ffbAddPenaltyYear() {
+    var inp = document.getElementById('ffbAddYearInput_penalty');
+    if (!inp) return;
+    var yr = parseInt(inp.value, 10);
+    if (!yr || yr < 2010 || yr > 2100) { alert('Please enter a valid year (2010–2100).'); return; }
+    if (_ffbPenaltyExtraYears.indexOf(yr) === -1) _ffbPenaltyExtraYears.push(yr);
+    inp.value = '';
+    renderFfbPenaltyTab();
+}
+
+async function ffbSavePenaltyYear(year) {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) return;
+    if (typeof supabaseClient === 'undefined') { alert('Not connected to database.'); return; }
+    var btn = document.getElementById('ffbSavePenBtn_' + year);
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    var toUpsert = [];
+    for (var m = 1; m <= 12; m++) {
+        var elB = document.getElementById('ffbPenBunch_' + year + '_' + m);
+        var elR = document.getElementById('ffbPenRm_' + year + '_' + m);
+        var bv = elB && elB.value !== '' ? parseFloat(elB.value) : null;
+        var rv = elR && elR.value !== '' ? parseFloat(elR.value) : null;
+        if (bv !== null || rv !== null) {
+            toUpsert.push({ estate: estate, year: year, month: m, downgraded_bunch: bv, penalty_rm: rv });
+        }
+    }
+    try {
+        if (toUpsert.length > 0) {
+            var resp = await supabaseClient.from('port_ffb_penalty').upsert(toUpsert, { onConflict: 'estate,year,month' });
+            if (resp.error) throw resp.error;
+            _ffbPenaltyRows = { estate: '', rows: [], loaded: false };
+        }
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Saved'; setTimeout(function() { if (btn) btn.textContent = 'Save'; }, 2000); }
+        showSyncSuccess('FFB Penalty for ' + year + ' saved.');
+    } catch(e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+        alert('Error saving: ' + e.message);
+    }
+}
+
 function renderFfbModule() {
     var sec = document.getElementById('ffbrecord');
     if (!sec || !sec.classList.contains('active')) return;
@@ -18187,10 +18539,12 @@ function renderFfbModule() {
     if (_ffbProdRows.estate !== estate) _ffbProdRows = { estate: '', rows: [], loaded: false };
     if (_ffbBlocks.estate !== estate) _ffbBlocks = { estate: '', blocks: [], loaded: false };
     if (_ffbBlockYieldData.estate !== estate) _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
+    if (_ffbPenaltyRows.estate !== estate) _ffbPenaltyRows = { estate: '', rows: [], loaded: false };
     if (_ffbActiveTab === 'harvest')    renderFfbHarvestTab();
     else if (_ffbActiveTab === 'harvesters') renderFfbHarvestersTab();
     else if (_ffbActiveTab === 'grading')    renderFfbGradingTab();
     else if (_ffbActiveTab === 'blockyield') renderFfbBlockYieldTab();
+    else if (_ffbActiveTab === 'penalty')    renderFfbPenaltyTab();
 }
 
 // ── Harvesting Report ──────────────────────────────────────────────────────

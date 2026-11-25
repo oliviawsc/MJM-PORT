@@ -32,7 +32,7 @@ export const ALL_SECTION_IDS = [
 interface CheckResult {
   allowed: boolean;
   module_code?: string;
-  user?: { id: string; email: string; full_name?: string | null };
+  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null };
   error?: string;
 }
 
@@ -104,7 +104,7 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow, companies: PortCompany[]) {
+function toSession(row: UserRow, companies: PortCompany[], avatar = '') {
   const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL ? 'superadmin' : roleOf(row);
   return {
     id: row.id,
@@ -114,11 +114,13 @@ function toSession(row: UserRow, companies: PortCompany[]) {
     estate: '',
     role,
     permissions: role === 'superadmin' ? ALL_SECTION_IDS : (row.permissions ?? {}),
-    // The pages open only with a session that came from here (MJM Intranet)
-    via: 'intranet',
     // Companies this person was given for this module's icon in the Intranet
     // (business + company), in Intranet company code order: { id, code, name, short_name }
     companies,
+    // The person's Intranet profile photo (public storage URL), shown in the portal
+    avatar,
+    // Signed in through MJM Intranet: the pages open only with such a session
+    via: 'intranet',
   };
 }
 
@@ -147,6 +149,17 @@ Deno.serve(handler(async (_req, body) => {
   let row = await findUser(email);
   if (!row) row = await createUser(email, fullName, module);
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
+  // The person is who the Intranet says they are: the row carries the Intranet
+  // email and profile name. A row found by the legacy "<user id>@psms.app" form
+  // is adopted (its rights stay) and takes the real email.
+  const fix: Record<string, string> = {};
+  if ((row.email ?? '').toLowerCase() !== email && /@psms\.app$/i.test(row.email ?? '')) fix.email = email;
+  if ((check.user.full_name ?? '').trim() && row.name !== fullName) fix.name = fullName;
+  if (Object.keys(fix).length) {
+    const { error } = await serviceClient().from(USERS_TABLE).update(fix).eq('id', row.id);
+    if (error) console.warn('[stock-sso] profile update skipped:', error.message);
+    else row = { ...row, ...fix };
+  }
 
   // Keep PORT's company list and this person's access equal to the Intranet
   await saveCompanies(md);
@@ -163,5 +176,5 @@ Deno.serve(handler(async (_req, body) => {
   row = { ...row, estates };
 
   const auth = await issueSession(row);
-  return { session: toSession(row, companies), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? '')), auth, module };
 }));
