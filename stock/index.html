@@ -10241,6 +10241,7 @@ async function sha256Hex(str) {
 // 'estate_user'= Estate User — mobile interface only, custom permissions.
 const ROLES = [
     { value: 'superadmin',  label: 'Super Admin',  icon: '⭐', badgeClass: 'bg-purple-100 text-purple-800', fullLabel: 'Super Admin — full access to everything' },
+    { value: 'admin',       label: 'Admin',        icon: '🛡️', badgeClass: 'bg-orange-100 text-orange-800', fullLabel: 'Admin — website interface, custom permissions, manages users of their companies' },
     { value: 'hq_user',     label: 'HQ User',      icon: '🏢', badgeClass: 'bg-blue-100 text-blue-800',    fullLabel: 'HQ User — website interface, custom permissions' },
     { value: 'estate_user', label: 'Estate User',  icon: '🌿', badgeClass: 'bg-green-100 text-green-800',  fullLabel: 'Estate User — mobile interface only, custom permissions' },
 ];
@@ -11326,6 +11327,9 @@ function bootApp(session) {
 function syncEstateBackBtn() { /* no-op: back button removed, bottom nav used instead */ }
 
 function navToSection(sectionId) {
+    // User Management moved to PORT → User Access (roles and page access;
+    // users and companies come from MJM Intranet)
+    if (sectionId === 'useradmin') { window.location.href = '../access/index.html'; return; }
     // Hard guard: estate_hub is ONLY for estate-mobile users.
     // Any other caller (stale link, direct call, etc.) is silently redirected to dashboard.
     if (sectionId === 'estate_hub' && !document.body.classList.contains('estate-mobile')) {
@@ -12052,7 +12056,7 @@ function getSectionAccess(session, sectionId) {
     // user can at least see data after being assigned an estate.
     // Once an admin saves the user's permissions (even as all-none),
     // __configured is set and the explicit values take over.
-    if (session.role === 'hq_user') {
+    if (session.role === 'hq_user' || session.role === 'admin') { // Admin = HQ User who also manages access (PORT → User Access)
         const rawPerms = session.permissions || {};
         if (!rawPerms.__configured) return 'view';
     }
@@ -17580,6 +17584,7 @@ function printMgmtReport() {
 }
 
 function navigateToSection(target) {
+    if (target === 'useradmin') { window.location.href = '../access/index.html'; return; }
     if (target === 'toolsrecord') {
         const _trSession = loadSession();
         if (_trSession && _trSession.role !== 'superadmin') {

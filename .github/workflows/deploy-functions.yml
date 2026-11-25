@@ -41,3 +41,4 @@ jobs:
       - run: supabase functions deploy stock-auth --no-verify-jwt --project-ref "$PROJECT_REF" --yes
       - run: supabase functions deploy stock-sso --no-verify-jwt --project-ref "$PROJECT_REF" --yes
       - run: supabase functions deploy stock-master-sync --project-ref "$PROJECT_REF" --yes
+      - run: supabase functions deploy port-user-access --project-ref "$PROJECT_REF" --yes

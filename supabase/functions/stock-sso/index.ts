@@ -151,9 +151,16 @@ Deno.serve(handler(async (_req, body) => {
   // Keep PORT's company list and this person's access equal to the Intranet
   await saveCompanies(md);
   await saveUserCompanies(email, module, companies);
-  await serviceClient().from(USERS_TABLE)
-    .update({ last_active: new Date().toISOString(), companies: companies.map((c) => c.id) }).eq('id', row.id);
   try { await linkEstates(); } catch (e) { console.warn('[stock-sso] estate link skipped:', e instanceof Error ? e.message : e); }
+  // The estates (old data names) of this person's Intranet companies: the Stock
+  // app still filters by estate, so it follows the Intranet company access too.
+  const { data: est, error: estErr } = await serviceClient().from('port_estate_company')
+    .select('estate').in('company_id', companies.map((c) => c.id)).order('estate');
+  if (estErr) throw estErr;
+  const estates = ((est ?? []) as { estate: string }[]).map((r) => r.estate);
+  await serviceClient().from(USERS_TABLE)
+    .update({ last_active: new Date().toISOString(), companies: companies.map((c) => c.id), estates }).eq('id', row.id);
+  row = { ...row, estates };
 
   const auth = await issueSession(row);
   return { session: toSession(row, companies), auth, module };

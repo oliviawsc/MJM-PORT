@@ -123,7 +123,15 @@
     let session = null, companies = [], estateRows = [], company = '', estate = '', rows = [], editing = null;
     try { session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) {}
     if (session && session.via !== 'intranet') session = null; // MJM Intranet sign-in only
-    const canEdit = () => !!session && (session.role === 'superadmin' || session.role === 'admin');
+    // Edit: Super Admin, or Estate Info = Edit in PORT → User Access
+    // (an Admin whose access was never set keeps the old Admin edit right)
+    const canEdit = () => {
+        if (!session) return false;
+        if (session.role === 'superadmin') return true;
+        const p = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+        if (p.__configured) return p.estateinfo === 'edit';
+        return session.role === 'admin';
+    };
 
     // Company: from the Intranet link (gw_company*), else the portal's choice
     const params = new URLSearchParams(location.search);

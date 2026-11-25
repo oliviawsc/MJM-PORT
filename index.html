@@ -98,7 +98,29 @@
           desc: 'Record monthly FFB production, harvesters and grading. Links to Management Report.' },
         { module: 'rainfall',  title: 'Rainfall',          icon: '&#127783;&#65039;', bg: '#0C4A6E',
           desc: 'Record daily rainfall transactions and view monthly and yearly rainfall reports.' },
+        { module: 'access',    title: 'User Access',       icon: '&#128273;', bg: '#7C2D12', href: 'access/index.html', admin: true,
+          desc: 'Set each person\'s role and None / View / Edit per page. Who can enter and which companies come from MJM Intranet.' },
     ];
+    // The pages (User Access section ids) behind each module card
+    const MODULE_SECTIONS = {
+        estate:    ['estateinfo'],
+        stock:     ['dashboard', 'transactions', 'summary', 'ledger', 'roundprogress', 'maintprogress', 'chemusage',
+                    'fertrecord', 'chemrecord', 'plantrecord', 'tools', 'toolsrecord'],
+        report:    ['mgmtreport'],
+        ffbrecord: ['ffbrecord'],
+        rainfall:  ['rainfall', 'rainfallreport', 'rainfallsummary'],
+    };
+    // May this person open this module card? (set in PORT → User Access)
+    function canOpen(session, m) {
+        if (!session) return false;
+        if (session.role === 'superadmin') return true;
+        if (m.admin) return session.role === 'admin';
+        const p = session.permissions;
+        if (!p || Array.isArray(p)) return true;
+        if ((session.role === 'hq_user' || session.role === 'admin') && !p.__configured) return true; // not set yet: view everything
+        if (session.role === 'estate_user') return true; // the Stock app sends estate users to the Worker Portal
+        return (MODULE_SECTIONS[m.module] || []).some((id) => p[id] === 'view' || p[id] === 'edit');
+    }
 
     const params = new URLSearchParams(location.search);
     const ctx = {};
@@ -178,7 +200,9 @@
         else note.innerHTML = '';
         // No company from the Intranet → the modules stay closed
         if (!companies.length) { document.getElementById('grid').innerHTML = ''; return; }
-        document.getElementById('grid').innerHTML = MODULES.map((m) =>
+        const mine = MODULES.filter((m) => canOpen(session, m));
+        if (!mine.length) note.innerHTML = '<p class="note warn">You have no page access in Plantation Operation yet. Ask your PORT Admin to set it in User Access.</p>';
+        document.getElementById('grid').innerHTML = mine.map((m) =>
             '<a class="card" href="' + esc(appLink(m.module)) + '">' +
             '<div class="ic" style="background:' + m.bg + '">' + m.icon + '</div>' +
             '<h2>' + esc(m.title) + '</h2><p>' + esc(m.desc) + '</p>' +
