@@ -4,46 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#166534">
     <title>Estate Info · Plantation Operation</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B4%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/png" href="../public/palm-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Same look as the Plantation Operation front page (../index.html) */
         :root { --ink: #0F172A; --mute: #64748B; --line: #E2E8F0; --brand: #166534; --soft: #F0FDF4; }
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: #F8FAFC; }
+        body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #F8FAFC; position: relative; overflow-x: hidden; }
         a { color: inherit; }
-        .top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
-        .brand .leaf { width: 32px; height: 32px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 17px; }
-        .brand a { text-decoration: none; color: var(--mute); font-weight: 600; font-size: 13px; }
-        .who { font-size: 13px; color: var(--mute); text-align: right; }
-        .who b { display: block; color: var(--ink); }
-        main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
-        h1 { font-size: 24px; margin: 0 0 4px; }
-        .sub { margin: 0 0 16px; color: var(--mute); font-size: 14px; }
-        .ctx { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .bg { position: fixed; inset: 0; z-index: -1; background: #F6F8FB; overflow: hidden; }
+        .bg::before, .bg::after { content: ''; position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+        .bg::before { width: 60vw; height: 60vw; left: -18vw; top: -22vw; background: #BBF7D0; }
+        .bg::after { width: 55vw; height: 55vw; right: -20vw; bottom: -25vw; background: #BAE6FD; }
+        .top { position: sticky; top: 0; z-index: 15; background: linear-gradient(90deg, rgba(224,242,254,.85), rgba(240,253,244,.85)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,.8); }
+        .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px 0 8px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+        .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .back-slot { position: relative; height: 36px; flex: none; }
+        .back { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
+                color: #334155; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; transition: background .15s; }
+        .back svg { width: 18px; height: 18px; flex: none; }
+        .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
+        .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
+        .back:hover span, .back:focus-visible span { max-width: 200px; opacity: 1; margin-left: 6px; }
+        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; }
+        .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; }
+        .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+        .who .me { text-align: right; line-height: 1.25; min-width: 0; }
+        .who .me b { display: block; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .who .me small { display: block; font-size: 12px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .who .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; display: grid; place-items: center; font-size: 14px; font-weight: 600; flex: none; overflow: hidden; }
+        .who .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 60px; }
+        .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; padding: 4px; background: rgba(255,255,255,.7); border: 1px solid var(--line); border-radius: 14px; width: fit-content; max-width: 100%; }
+        .tab { height: 34px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--mute); cursor: pointer; white-space: nowrap; }
+        .tab:hover { color: var(--ink); background: #F1F5F9; }
+        .tab.on { background: var(--brand); color: #fff; }
+        .ctx { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
         .pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--mute); }
-        .pick select, .input, .btn { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; background: #fff; font: inherit; font-size: 14px; }
-        .pick select { padding: 0 10px; font-weight: 600; color: var(--ink); max-width: 70vw; }
+        .pick select, .input, .btn, .dlg select { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; background: #fff; font: inherit; font-size: 14px; color: var(--ink); }
+        .pick select, .dlg select { padding: 0 10px; font-weight: 600; max-width: 70vw; }
         .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
-        .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+        .card { background: rgba(255,255,255,.9); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
         .card .k { font-size: 12px; color: var(--mute); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
         .card .v { font-size: 22px; font-weight: 700; margin-top: 2px; }
         .card .v small { font-size: 12px; color: var(--mute); font-weight: 600; margin-left: 3px; }
         .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
         .bar .sp { flex: 1; }
-        .btn { padding: 0 14px; font-weight: 600; cursor: pointer; color: var(--ink); }
+        .btn { padding: 0 14px; font-weight: 600; cursor: pointer; }
         .btn:hover { background: #F1F5F9; }
         .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
         .btn.primary:hover { background: #14532D; }
         .btn.sm { height: 28px; padding: 0 9px; font-size: 12.5px; border-radius: 8px; }
         .btn.danger { color: #B91C1C; }
+        .btn:disabled { opacity: .5; cursor: default; }
         .input { padding: 0 10px; }
         .wrap { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; white-space: nowrap; }
         th { background: #F8FAFC; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--mute); position: sticky; top: 0; }
         td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        td.wrapcell { white-space: normal; min-width: 160px; }
         td.grp { font-weight: 700; background: #FAFAF9; border-right: 1px solid var(--line); }
         tr.sub td { background: var(--soft); font-weight: 600; color: #14532D; }
         tr.total td { background: #ECFDF5; font-weight: 700; border-top: 2px solid #A7F3D0; }
@@ -52,37 +78,63 @@
         .note { padding: 12px 14px; border-radius: 12px; font-size: 14px; margin-bottom: 14px; }
         .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
         .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .note.info { background: #F0F9FF; border: 1px solid #BAE6FD; color: #075985; }
         .empty { padding: 40px 20px; text-align: center; color: var(--mute); }
         .modal { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; place-items: center; z-index: 20; padding: 16px; }
         .modal.open { display: grid; }
         .dlg { width: 100%; max-width: 560px; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); max-height: 92vh; overflow: auto; }
+        .dlg.wide { max-width: 760px; }
         .dlg h2 { margin: 0 0 12px; font-size: 18px; }
         .form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
         .form label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--mute); }
         .form label.full { grid-column: 1 / -1; }
-        .form input, .form textarea { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); }
+        .form label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
+        .form input, .form textarea, .form select { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); background: #fff; }
+        .form input[type=checkbox] { height: 18px; width: 18px; }
         .form textarea { height: 160px; padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: pre; }
+        .form textarea.plain { height: 70px; font-family: inherit; font-size: 14px; white-space: normal; }
         .dlg .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
         .hint { font-size: 12.5px; color: var(--mute); margin: 6px 0 0; }
         .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #0F172A; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; display: none; z-index: 30; }
-        @media (max-width: 640px) { .form { grid-template-columns: 1fr; } .who span { display: none; } }
+        /* Settings */
+        .tlist { display: grid; gap: 10px; }
+        .titem { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+        .titem .nm { font-weight: 700; }
+        .titem .ds { font-size: 12.5px; color: var(--mute); margin-top: 2px; }
+        .titem .sp { flex: 1; }
+        .cols { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 6px; }
+        .colrow { display: grid; grid-template-columns: 1fr 130px 1.1fr auto auto; gap: 8px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); }
+        .colrow:first-child { border-top: 0; }
+        .colrow input, .colrow select { height: 34px; border-radius: 9px; border: 1px solid #CBD5E1; padding: 0 8px; font: inherit; font-size: 13.5px; min-width: 0; background: #fff; }
+        .colrow .req { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mute); white-space: nowrap; }
+        .colrow .mv { display: flex; gap: 4px; }
+        .colhead { display: grid; grid-template-columns: 1fr 130px 1.1fr auto auto; gap: 8px; padding: 8px 10px; background: #F8FAFC; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--mute); }
+        @media (max-width: 640px) {
+            .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; }
+            .form { grid-template-columns: 1fr; } .colrow, .colhead { grid-template-columns: 1fr 1fr; } .colhead span:nth-child(n+3) { display: none; }
+        }
     </style>
 </head>
 <body>
-    <header class="top">
-        <div class="brand"><span class="leaf">&#127796;</span> Estate Info <a href="../">&lsaquo; Plantation Operation</a></div>
+    <div class="bg"></div>
+    <header class="top"><div class="in">
+        <div class="left">
+            <span class="back-slot"><a class="back" id="back" href="../" title="Back to Plantation Operation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Plantation Operation</span></a></span>
+            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect" aria-label="Company"></select></label>
+        </div>
+        <div class="title">Estate Info</div>
         <div class="who" id="who"></div>
-    </header>
+    </div></header>
+
     <main>
-        <h1>Estate Info</h1>
-        <p class="sub">Planted area by division, phase and block.</p>
-        <div class="ctx" id="ctx"></div>
+        <div class="tabs" id="tabs"></div>
         <div id="note"></div>
-        <div class="cards" id="cards"></div>
-        <div class="bar" id="bar"></div>
-        <div class="wrap"><div id="table"></div></div>
+        <div class="ctx" id="ctx"></div>
+        <div id="view"></div>
     </main>
 
+    <!-- Blocks: add / edit one block -->
     <div class="modal" id="blockModal"><div class="dlg">
         <h2 id="blockTitle">Add block</h2>
         <form id="blockForm" class="form" autocomplete="off">
@@ -98,6 +150,7 @@
         <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="blockSave">Save</button></div>
     </div></div>
 
+    <!-- Blocks: paste from Excel -->
     <div class="modal" id="pasteModal"><div class="dlg">
         <h2>Paste from Excel</h2>
         <p class="hint" style="margin:0 0 10px">Copy the rows from Excel including the header row, then paste here. Header names understood: Division, Phase, Block, Area / Ha, Palms / Palm count / Stand, Density, Year / Year planted, Remark. Existing blocks with the same division, phase and block are updated.</p>
@@ -105,6 +158,31 @@
         <p class="hint" id="pastePreview"></p>
         <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="pasteSave">Import</button></div>
     </div></div>
+
+    <!-- Your tables: add / edit one record -->
+    <div class="modal" id="recModal"><div class="dlg">
+        <h2 id="recTitle">Add record</h2>
+        <form id="recForm" class="form" autocomplete="off"></form>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="recSave">Save</button></div>
+    </div></div>
+
+    <!-- Settings: create / edit a table -->
+    <div class="modal" id="tblModal"><div class="dlg wide">
+        <h2 id="tblTitle">New table</h2>
+        <form id="tblForm" class="form" autocomplete="off">
+            <label class="full">Table name * <input name="name" maxlength="80" placeholder="e.g. Labour Force, Machinery, Housing, Land Title"></label>
+            <label class="full">Description <textarea name="description" class="plain" placeholder="What this table records (optional)"></textarea></label>
+            <label class="full check"><input type="checkbox" name="per_estate"> Keep records per location (e.g. Mega Jutamas → Sg Rait / Suai / Ulu Niah). Unticked = one list per company.</label>
+        </form>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+            <b style="font-size:14px">Columns</b>
+            <button class="btn sm" type="button" id="colAdd">+ Add column</button>
+        </div>
+        <div class="cols" id="colList"></div>
+        <p class="hint">Choice = a dropdown; type its options separated by commas. Renaming a column keeps the data already recorded under it.</p>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="tblSave">Save table</button></div>
+    </div></div>
+
     <div class="toast" id="toast"></div>
 
 <script>
@@ -112,100 +190,161 @@
     const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
     const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
     const SESSION_KEY = 'opp_auth_session';
-    const COMPANY_KEY = 'port_company';
+    const COMPANY_ID_KEY = 'port_company_id';   // shared with the front page
+    const COMPANY_KEY = 'port_company';         // company name, shared with the front page
     const ESTATE_KEY = 'port_estate_info_estate';
-    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+    const TAB_KEY = 'port_estate_info_tab';
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+    const TYPES = [['text', 'Text'], ['number', 'Number'], ['date', 'Date'], ['yesno', 'Yes / No'], ['choice', 'Choice (dropdown)']];
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const num = (v, d) => (v == null || v === '' || isNaN(+v)) ? '—' : (+v).toLocaleString('en-MY', { minimumFractionDigits: d, maximumFractionDigits: d });
     const $ = (id) => document.getElementById(id);
+    const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => { t.style.display = 'none'; }, 2600); };
 
-    let session = null, companies = [], estateRows = [], company = '', estate = '', rows = [], editing = null;
+    // ---- Who is here (MJM Intranet sign-in only)
+    let session = null;
     try { session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) {}
-    if (session && session.via !== 'intranet') session = null; // MJM Intranet sign-in only
-    // Edit: Super Admin, or Estate Info = Edit in PORT → User Access
-    // (an Admin whose access was never set keeps the old Admin edit right)
+    if (session && session.via !== 'intranet') session = null;
+    const perms = () => (session && session.permissions && !Array.isArray(session.permissions) ? session.permissions : {});
+    // Edit records: Super Admin, or Estate Info = Edit in PORT → User Access
+    // (an Admin whose access was never set keeps the Admin edit right)
     const canEdit = () => {
         if (!session) return false;
         if (session.role === 'superadmin') return true;
-        const p = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+        const p = perms();
         if (p.__configured) return p.estateinfo === 'edit';
         return session.role === 'admin';
     };
+    // Settings (designing tables): Super Admin and Admins
+    const canSet = () => !!session && (session.role === 'superadmin' || session.role === 'admin');
 
-    // Company: from the Intranet link (gw_company*), else the portal's choice
+    // ---- Companies: exactly the ones MJM Intranet gave this person (session, Intranet code order)
+    const companies = session && Array.isArray(session.companies) ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name) : [];
     const params = new URLSearchParams(location.search);
-    const ctxCompany = (params.get('gw_company_name') || params.get('gw_company') || '').trim();
+    const findCompany = (v) => {
+        const x = String(v || '').trim().toLowerCase();
+        if (!x) return null;
+        return companies.find((c) => c.id === v) || companies.find((c) => [c.code, c.short_name, c.name].some((k) => (k || '').toLowerCase() === x)) || null;
+    };
     const ctxEstate = (params.get('gw_estate') || '').trim();
-    (function cleanUrl() { try { const u = new URL(location.href); ['gw_token', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} })();
+    let company = findCompany(params.get('gw_company_id')) || findCompany(params.get('gw_company')) || findCompany(params.get('gw_company_name'));
+    (function cleanUrl() { try { const u = new URL(location.href); ['gw_token', 'gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} })();
+    if (!company) { try { company = findCompany(localStorage.getItem(COMPANY_ID_KEY)) || findCompany(localStorage.getItem(COMPANY_KEY)); } catch (e) {} }
+    if (!company && companies.length === 1) company = companies[0];
+
+    let estates = [], estate = '', tables = [], tab = 'blocks', rows = [], records = [], editing = null, editingRec = null, editingTbl = null, colDraft = [];
+    try { tab = localStorage.getItem(TAB_KEY) || 'blocks'; } catch (e) {}
 
     async function api(path, opt) {
         const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({ headers: H }, opt || {}));
         if (!res.ok) { let m = 'HTTP ' + res.status; try { const j = await res.json(); m = j.message || j.hint || m; } catch (e) {} throw new Error(m); }
         return res.status === 204 ? null : res.json();
     }
-    function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => { t.style.display = 'none'; }, 2600); }
+    const note = (html, kind) => { $('note').innerHTML = html ? '<p class="note ' + (kind || 'warn') + '">' + html + '</p>' : ''; };
 
+    // ---- Top bar (same as the front page)
+    function drawTop() {
+        const name = session ? (session.name || session.email || '') : '';
+        const photo = session && session.avatar && /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(session.avatar) ? session.avatar : '';
+        $('who').innerHTML = session ? '<div class="me"><b>' + esc(name) + '</b><small>' + esc(session.email || '') + '</small></div><span class="avatar">' +
+            (photo ? '<img src="' + esc(photo) + '" alt="">' : esc(name.trim().slice(0, 1).toUpperCase() || '?')) + '</span>' : '';
+        const pick = $('coPick'), sel = $('coSelect');
+        if (companies.length) {
+            pick.style.display = '';
+            sel.innerHTML = (company ? '' : '<option value="">— Choose company —</option>') +
+                companies.map((c) => '<option value="' + esc(c.id) + '"' + (company && c.id === company.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
+        } else pick.style.display = 'none';
+        const u = new URL('../', location.href);
+        if (company) u.searchParams.set('gw_company_id', company.id);
+        $('back').href = u.pathname + u.search;
+    }
+    $('coSelect').onchange = (e) => { setCompany(findCompany(e.target.value)); };
+
+    // ---- Locations (old estate names) of the chosen company
     async function loadEstates() {
-        estateRows = (await api('port_estates?select=name,company_name,is_active,sort_order&order=sort_order.asc,name.asc')).filter((r) => r.is_active !== false);
-        const all = [], seen = new Set();
-        estateRows.forEach((r) => { const c = (r.company_name || r.name || '').trim(); if (c && !seen.has(c)) { seen.add(c); all.push(c); } });
-        const mine = (session && Array.isArray(session.companies) && session.companies.length) ? session.companies : (session && session.role === 'superadmin') ? all : [];
-        companies = mine.filter((c) => all.includes(c)).concat(mine.filter((c) => !all.includes(c)));
+        estates = [];
+        if (!company) return;
+        try {
+            const r = await api('port_estate_company?select=estate&company_id=eq.' + encodeURIComponent(company.id) + '&order=estate.asc');
+            estates = r.map((x) => x.estate).filter(Boolean);
+        } catch (e) { /* list not readable yet: the company itself is the location */ }
+        if (!estates.length) estates = [company.name];
+        let want = ctxEstate; try { want = want || localStorage.getItem(ESTATE_KEY + ':' + company.id) || ''; } catch (e) {}
+        estate = estates.includes(want) ? want : estates[0];
     }
-    const estatesOf = (c) => estateRows.filter((r) => (r.company_name || r.name) === c).map((r) => r.name);
-
-    function setCompany(c) {
-        company = c || '';
-        try { if (company) localStorage.setItem(COMPANY_KEY, company); } catch (e) {}
-        const list = estatesOf(company);
-        let want = ctxEstate || ''; try { want = want || localStorage.getItem(ESTATE_KEY + ':' + company) || ''; } catch (e) {}
-        setEstate(list.includes(want) ? want : list[0] || '', false);
+    async function setCompany(c) {
+        company = c || null;
+        try { if (company) { localStorage.setItem(COMPANY_ID_KEY, company.id); localStorage.setItem(COMPANY_KEY, company.name); } } catch (e) {}
+        drawTop();
+        await loadEstates();
+        load();
     }
-    function setEstate(e, redraw) {
+    function setEstate(e) {
         estate = e || '';
-        try { if (estate) localStorage.setItem(ESTATE_KEY + ':' + company, estate); } catch (e2) {}
-        if (redraw !== false) load();
+        try { if (company && estate) localStorage.setItem(ESTATE_KEY + ':' + company.id, estate); } catch (e2) {}
+        load();
     }
 
+    // ---- Tabs: Blocks, one per table made in Settings, Settings
+    async function loadTables() {
+        try { tables = await api('port_estate_tables?select=*&is_active=eq.true&order=sort_order.asc,name.asc'); }
+        catch (e) { tables = []; if (/port_estate_tables/.test(e.message)) tables.missing = true; }
+    }
+    const curTable = () => tables.find((t) => 't' + t.id === tab);
+    function drawTabs() {
+        if (tab !== 'blocks' && tab !== 'settings' && !curTable()) tab = 'blocks';
+        if (tab === 'settings' && !canSet()) tab = 'blocks';
+        const list = [['blocks', 'Blocks']].concat(tables.map((t) => ['t' + t.id, t.name]));
+        if (canSet()) list.push(['settings', '⚙ Settings']);
+        $('tabs').innerHTML = list.map(([id, label]) => '<button class="tab' + (id === tab ? ' on' : '') + '" data-tab="' + esc(id) + '">' + esc(label) + '</button>').join('');
+    }
+    $('tabs').onclick = (e) => {
+        const b = e.target.closest('[data-tab]'); if (!b) return;
+        tab = b.dataset.tab; try { localStorage.setItem(TAB_KEY, tab); } catch (e2) {}
+        load();
+    };
+
+    // ---- Load and draw the current tab
     async function load() {
-        rows = [];
-        if (estate) {
-            try { rows = await api('port_estate_blocks?select=*&estate=eq.' + encodeURIComponent(estate) + '&order=division.asc,phase.asc,sort_order.asc,block.asc'); }
-            catch (e) { $('note').innerHTML = '<p class="note err">Could not load blocks: ' + esc(e.message) + (/port_estate_blocks/.test(e.message) ? '. The table has not been created yet (run the Estate Info SQL in Supabase).' : '') + '</p>'; }
+        drawTabs();
+        if (!session) { $('ctx').innerHTML = ''; $('view').innerHTML = ''; return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.'); }
+        if (!companies.length) { $('ctx').innerHTML = ''; $('view').innerHTML = ''; return note('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.'); }
+        if (tab === 'settings') { note(''); $('ctx').innerHTML = ''; return drawSettings(); }
+        if (!company) { $('ctx').innerHTML = ''; $('view').innerHTML = ''; return note('Choose a company in the top bar.'); }
+        note('');
+        const t = curTable();
+        if (t) {
+            records = [];
+            try {
+                records = await api('port_estate_records?select=*&table_id=eq.' + t.id + '&company_id=eq.' + encodeURIComponent(company.id) +
+                    (t.per_estate ? '&estate=eq.' + encodeURIComponent(estate) : '') + '&order=sort_order.asc,id.asc');
+            } catch (e) { note('Could not load records: ' + esc(e.message), 'err'); }
+            return drawTable(t);
         }
-        draw();
+        rows = [];
+        try { rows = await api('port_estate_blocks?select=*&estate=eq.' + encodeURIComponent(estate) + '&order=division.asc,phase.asc,sort_order.asc,block.asc'); }
+        catch (e) { note('Could not load blocks: ' + esc(e.message) + (/port_estate_blocks/.test(e.message) ? '. The table has not been created yet (run the Estate Info SQL in Supabase).' : ''), 'err'); }
+        drawBlocks();
+    }
+    function drawCtx(showEstate) {
+        $('ctx').innerHTML = showEstate && estates.length > 1
+            ? '<label class="pick">Location <select id="esSel">' + estates.map((n) => '<option' + (n === estate ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>'
+            : '';
+        const es = $('esSel'); if (es) es.onchange = (e) => setEstate(e.target.value);
     }
 
+    // =====================================================================
+    // Blocks
+    // =====================================================================
     const dens = (r) => r.density != null && r.density !== '' ? +r.density : (r.area_ha > 0 && r.palm_count != null ? r.palm_count / r.area_ha : null);
     const sum = (list, k) => list.reduce((a, r) => a + (r[k] == null || r[k] === '' ? 0 : +r[k]), 0);
     const avgDens = (list) => { const a = sum(list, 'area_ha'), p = sum(list.filter((r) => r.area_ha > 0 || r.palm_count), 'palm_count'); return a > 0 && p ? p / a : null; };
 
-    function draw() {
-        const who = $('who');
-        const back = INTRANET_URL + (company ? '?gw_company=' + encodeURIComponent(company) : '');
-        who.innerHTML = (session ? '<b>' + esc(session.name || session.email) + '</b>' : '') + '<a href="' + esc(back) + '"><span>MJM Intranet</span> &#8599;</a>';
-
-        // Context: company and estate pickers
-        const ctx = [];
-        if (companies.length > 1) ctx.push('<label class="pick">Company <select id="coSel">' + (companies.includes(company) ? '' : '<option value="">— Choose company —</option>') + companies.map((c) => '<option' + (c === company ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></label>');
-        else if (company) ctx.push('<span class="chip">&#127970; ' + esc(company) + '</span>');
-        const list = estatesOf(company);
-        if (list.length > 1) ctx.push('<label class="pick">Estate <select id="esSel">' + list.map((n) => '<option' + (n === estate ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>');
-        else if (estate && estate !== company) ctx.push('<span class="chip">&#128205; ' + esc(estate) + '</span>');
-        $('ctx').innerHTML = ctx.join('');
-        const co = $('coSel'); if (co) co.onchange = (e) => { setCompany(e.target.value); load(); };
-        const es = $('esSel'); if (es) es.onchange = (e) => setEstate(e.target.value);
-
-        if (!session) { $('note').innerHTML = '<p class="note warn">You are not signed in. Open this page from <a href="../">Plantation Operation</a> or MJM Intranet.</p>'; }
-        else if (!companies.length) { $('note').innerHTML = '<p class="note warn">&#9888;&#65039; No company has been given to you for this module in MJM Intranet.</p>'; }
-        else if (!estate) { $('note').innerHTML = '<p class="note warn">Choose a company.</p>'; }
-        else if (!/Could not load/.test($('note').textContent)) $('note').innerHTML = '';
-
-        // Summary cards
+    function drawBlocks() {
+        drawCtx(true);
         const hasDiv = rows.some((r) => r.division), hasPhase = rows.some((r) => r.phase);
         const years = rows.map((r) => r.year_planted).filter(Boolean);
-        $('cards').innerHTML = !estate ? '' : [
+        const cards = [
             ['Planted area', num(sum(rows, 'area_ha'), 2) + '<small>ha</small>'],
             ['Blocks', rows.length.toLocaleString()],
             ['Palms', num(sum(rows, 'palm_count'), 0)],
@@ -214,46 +353,42 @@
             hasPhase ? ['Phases', new Set(rows.map((r) => r.division + '|' + r.phase).filter((x) => x !== '|')).size] : null,
             years.length ? ['Year planted', Math.min(...years) + (Math.max(...years) !== Math.min(...years) ? ' – ' + Math.max(...years) : '')] : null,
         ].filter(Boolean).map((c) => '<div class="card"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
-
-        // Toolbar
-        $('bar').innerHTML = !estate ? '' :
-            '<span class="muted" style="font-size:13px">' + esc(estate) + ' · ' + rows.length + ' block' + (rows.length === 1 ? '' : 's') + '</span><span class="sp"></span>' +
-            (canEdit() ? '<button class="btn sm" id="pasteBtn">&#128203; Paste from Excel</button><button class="btn sm primary" id="addBtn">+ Add block</button>' :
-                '<span class="chip">View only</span>');
+        const bar = '<div class="bar"><span class="muted" style="font-size:13px">' + esc(estate) + ' · ' + rows.length + ' block' + (rows.length === 1 ? '' : 's') + '</span><span class="sp"></span>' +
+            (canEdit() ? '<button class="btn sm" id="pasteBtn">&#128203; Paste from Excel</button><button class="btn sm primary" id="addBtn">+ Add block</button>' : '<span class="chip">View only</span>') + '</div>';
+        let table;
+        if (!rows.length) table = '<div class="empty">No blocks recorded for ' + esc(estate) + ' yet.' + (canEdit() ? '<br>Use <b>Add block</b> or <b>Paste from Excel</b> to fill in the estate.' : '') + '</div>';
+        else {
+            const cols = (hasDiv ? '<th>Division</th>' : '') + (hasPhase ? '<th>Phase</th>' : '') + '<th>Block</th><th class="num">Area (ha)</th><th class="num">Palm count</th><th class="num">Density</th><th class="num">Year planted</th><th>Remark</th>' + (canEdit() ? '<th></th>' : '');
+            const cell = (r) => '<td>' + esc(r.block) + '</td><td class="num">' + num(r.area_ha, 2) + '</td><td class="num">' + num(r.palm_count, 0) + '</td><td class="num">' + num(dens(r), 1) + '</td><td class="num">' + (r.year_planted || '—') + '</td><td class="muted">' + esc(r.remark) + '</td>' +
+                (canEdit() ? '<td><div class="acts"><button class="btn sm" data-edit="' + r.id + '">Edit</button><button class="btn sm danger" data-del="' + r.id + '">Delete</button></div></td>' : '');
+            const subtotal = (label, list, span) => '<tr class="sub"><td colspan="' + span + '">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td><td class="num">' + num(sum(list, 'area_ha'), 2) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(list), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
+            let html = '<table><thead><tr>' + cols + '</tr></thead><tbody>';
+            const divs = [...new Set(rows.map((r) => r.division || ''))];
+            divs.forEach((d) => {
+                const dr = rows.filter((r) => (r.division || '') === d);
+                const phases = [...new Set(dr.map((r) => r.phase || ''))];
+                let firstOfDiv = true;
+                phases.forEach((p) => {
+                    const pr = dr.filter((r) => (r.phase || '') === p);
+                    pr.forEach((r, i) => {
+                        html += '<tr>';
+                        if (hasDiv && firstOfDiv) { html += '<td class="grp" rowspan="' + dr.length + '">' + (d ? esc(d) : '<span class="muted">—</span>') + '</td>'; firstOfDiv = false; }
+                        if (hasPhase && i === 0) html += '<td class="grp" rowspan="' + pr.length + '">' + (p ? esc(p) : '<span class="muted">—</span>') + '</td>';
+                        html += cell(r) + '</tr>';
+                    });
+                });
+                if (hasDiv && divs.length > 1) html += subtotal(d || 'No division', dr, (hasPhase ? 2 : 1) + 1);
+            });
+            html += '<tr class="total"><td colspan="' + ((hasDiv ? 1 : 0) + (hasPhase ? 1 : 0) + 1) + '">Total · ' + esc(estate) + '</td><td class="num">' + num(sum(rows, 'area_ha'), 2) + '</td><td class="num">' + num(sum(rows, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(rows), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
+            table = html + '</tbody></table>';
+        }
+        $('view').innerHTML = '<div class="cards">' + cards + '</div>' + bar + '<div class="wrap">' + table + '</div>';
         if ($('addBtn')) $('addBtn').onclick = () => openBlock(null);
         if ($('pasteBtn')) $('pasteBtn').onclick = () => { $('pasteText').value = ''; $('pastePreview').textContent = ''; $('pasteModal').classList.add('open'); };
-
-        // Table: Division | Phase | Block ..., columns only when the estate uses them
-        if (!estate) { $('table').innerHTML = ''; return; }
-        if (!rows.length) { $('table').innerHTML = '<div class="empty">No blocks recorded for ' + esc(estate) + ' yet.' + (canEdit() ? '<br>Use <b>Add block</b> or <b>Paste from Excel</b> to fill in the estate.' : '') + '</div>'; return; }
-        const cols = (hasDiv ? '<th>Division</th>' : '') + (hasPhase ? '<th>Phase</th>' : '') + '<th>Block</th><th class="num">Area (ha)</th><th class="num">Palm count</th><th class="num">Density</th><th class="num">Year planted</th><th>Remark</th>' + (canEdit() ? '<th></th>' : '');
-        const cell = (r) => '<td>' + esc(r.block) + '</td><td class="num">' + num(r.area_ha, 2) + '</td><td class="num">' + num(r.palm_count, 0) + '</td><td class="num">' + num(dens(r), 1) + '</td><td class="num">' + (r.year_planted || '—') + '</td><td class="muted">' + esc(r.remark) + '</td>' +
-            (canEdit() ? '<td><div class="acts"><button class="btn sm" data-edit="' + r.id + '">Edit</button><button class="btn sm danger" data-del="' + r.id + '">Delete</button></div></td>' : '');
-        const subtotal = (label, list, span) => '<tr class="sub"><td colspan="' + span + '">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td><td class="num">' + num(sum(list, 'area_ha'), 2) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(list), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
-        let html = '<table><thead><tr>' + cols + '</tr></thead><tbody>';
-        const divs = [...new Set(rows.map((r) => r.division || ''))];
-        divs.forEach((d) => {
-            const dr = rows.filter((r) => (r.division || '') === d);
-            const phases = [...new Set(dr.map((r) => r.phase || ''))];
-            let firstOfDiv = true;
-            phases.forEach((p) => {
-                const pr = dr.filter((r) => (r.phase || '') === p);
-                pr.forEach((r, i) => {
-                    html += '<tr>';
-                    if (hasDiv && firstOfDiv) { html += '<td class="grp" rowspan="' + dr.length + '">' + (d ? esc(d) : '<span class="muted">—</span>') + '</td>'; firstOfDiv = false; }
-                    if (hasPhase && i === 0) html += '<td class="grp" rowspan="' + pr.length + '">' + (p ? esc(p) : '<span class="muted">—</span>') + '</td>';
-                    html += cell(r) + '</tr>';
-                });
-            });
-            if (hasDiv && divs.length > 1) html += subtotal(d || 'No division', dr, (hasPhase ? 2 : 1) + 1);
-        });
-        html += '<tr class="total"><td colspan="' + ((hasDiv ? 1 : 0) + (hasPhase ? 1 : 0) + 1) + '">Total · ' + esc(estate) + '</td><td class="num">' + num(sum(rows, 'area_ha'), 2) + '</td><td class="num">' + num(sum(rows, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(rows), 1) + '</td><td></td><td></td>' + (canEdit() ? '<td></td>' : '') + '</tr>';
-        $('table').innerHTML = html + '</tbody></table>';
-        $('table').querySelectorAll('[data-edit]').forEach((b) => { b.onclick = () => openBlock(rows.find((r) => String(r.id) === b.dataset.edit)); });
-        $('table').querySelectorAll('[data-del]').forEach((b) => { b.onclick = () => delBlock(rows.find((r) => String(r.id) === b.dataset.del)); });
+        $('view').querySelectorAll('[data-edit]').forEach((b) => { b.onclick = () => openBlock(rows.find((r) => String(r.id) === b.dataset.edit)); });
+        $('view').querySelectorAll('[data-del]').forEach((b) => { b.onclick = () => delBlock(rows.find((r) => String(r.id) === b.dataset.del)); });
     }
 
-    // ---- Add / edit one block
     function openBlock(r) {
         editing = r || null;
         $('blockTitle').textContent = r ? 'Edit block ' + r.block : 'Add block';
@@ -263,26 +398,31 @@
         f.elements.block.focus();
     }
     const lastLevel = (k) => rows.length ? (rows[rows.length - 1][k] || '') : '';
-    function readForm() {
+    function readBlock() {
         const f = $('blockForm'), v = (k) => f.elements[k].value.trim();
         const n = (k) => v(k) === '' ? null : +v(k);
         if (!v('block')) { toast('Block is required'); return null; }
-        return { estate, division: v('division'), phase: v('phase'), block: v('block'), area_ha: n('area_ha'), palm_count: n('palm_count'), density: n('density'), year_planted: n('year_planted'), remark: v('remark'), updated_by: session.email || '', updated_at: new Date().toISOString() };
+        return { estate, company_id: company.id, division: v('division'), phase: v('phase'), block: v('block'), area_ha: n('area_ha'), palm_count: n('palm_count'), density: n('density'), year_planted: n('year_planted'), remark: v('remark'), updated_by: session.email || '', updated_at: new Date().toISOString() };
     }
     $('blockSave').onclick = async () => {
-        const body = readForm(); if (!body) return;
+        const body = readBlock(); if (!body) return;
         try {
             if (editing) await api('port_estate_blocks?id=eq.' + editing.id, { method: 'PATCH', body: JSON.stringify(body) });
             else await api('port_estate_blocks', { method: 'POST', body: JSON.stringify(body) });
             $('blockModal').classList.remove('open'); toast('Saved'); load();
-        } catch (e) { toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : 'Save failed: ' + e.message); }
+        } catch (e) {
+            if (/company_id/.test(e.message)) { // before the 20261127 SQL: save without the company link
+                try { delete body.company_id; if (editing) await api('port_estate_blocks?id=eq.' + editing.id, { method: 'PATCH', body: JSON.stringify(body) }); else await api('port_estate_blocks', { method: 'POST', body: JSON.stringify(body) }); $('blockModal').classList.remove('open'); toast('Saved'); load(); return; } catch (e2) { e = e2; }
+            }
+            toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : 'Save failed: ' + e.message);
+        }
     };
     async function delBlock(r) {
         if (!r || !confirm('Delete block ' + r.block + '?')) return;
         try { await api('port_estate_blocks?id=eq.' + r.id, { method: 'DELETE' }); toast('Deleted'); load(); } catch (e) { toast('Delete failed: ' + e.message); }
     }
 
-    // ---- Paste from Excel (tab separated, header row names the columns)
+    // Paste from Excel (tab separated, header row names the columns)
     const COLS = [['division', /^(division|div|bahagian)/i], ['phase', /^(phase|fasa|ph)/i], ['block', /^(block|blok|field)/i], ['area_ha', /^(area|ha|hect|luas|planted)/i], ['palm_count', /^(palm|palms|stand|pokok|count|no\.? ?of)/i], ['density', /^(dens|kepadatan|sph)/i], ['year_planted', /^(year|yop|tahun|planted)/i], ['remark', /^(remark|note|catatan)/i]];
     function parsePaste(text) {
         const lines = text.split(/\r?\n/).map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim());
@@ -312,15 +452,183 @@
             $('pasteModal').classList.remove('open'); toast(p.rows.length + ' block(s) imported'); load();
         } catch (e) { toast('Import failed: ' + e.message); }
     };
+
+    // =====================================================================
+    // Your tables (made in Settings)
+    // =====================================================================
+    const cellText = (c, v) => {
+        if (v == null || v === '') return '<span class="muted">—</span>';
+        if (c.type === 'number') return num(v, Number.isInteger(+v) ? 0 : 2);
+        if (c.type === 'yesno') return v === true || v === 'yes' ? 'Yes' : 'No';
+        if (c.type === 'date') { const d = new Date(v); return isNaN(d) ? esc(v) : d.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        return esc(v);
+    };
+    function drawTable(t) {
+        drawCtx(t.per_estate);
+        const cols = Array.isArray(t.columns) ? t.columns : [];
+        const where = t.per_estate ? estate : company.name;
+        const bar = '<div class="bar"><span class="muted" style="font-size:13px">' + esc(where) + ' · ' + records.length + ' record' + (records.length === 1 ? '' : 's') +
+            (t.description ? ' · ' + esc(t.description) : '') + '</span><span class="sp"></span>' +
+            (canEdit() && cols.length ? '<button class="btn sm primary" id="recAdd">+ Add record</button>' : canEdit() ? '' : '<span class="chip">View only</span>') + '</div>';
+        let body;
+        if (!cols.length) body = '<div class="empty">This table has no columns yet.' + (canSet() ? '<br>Add columns in <b>⚙ Settings</b>.' : '') + '</div>';
+        else if (!records.length) body = '<div class="empty">Nothing recorded for ' + esc(where) + ' yet.' + (canEdit() ? '<br>Use <b>+ Add record</b>.' : '') + '</div>';
+        else {
+            const numCols = cols.filter((c) => c.type === 'number');
+            body = '<table><thead><tr><th class="num" style="width:1%">#</th>' + cols.map((c) => '<th' + (c.type === 'number' ? ' class="num"' : '') + '>' + esc(c.label) + '</th>').join('') + (canEdit() ? '<th></th>' : '') + '</tr></thead><tbody>' +
+                records.map((r, i) => '<tr><td class="num muted">' + (i + 1) + '</td>' + cols.map((c) => '<td class="' + (c.type === 'number' ? 'num' : c.type === 'text' ? 'wrapcell' : '') + '">' + cellText(c, (r.data || {})[c.key]) + '</td>').join('') +
+                    (canEdit() ? '<td><div class="acts"><button class="btn sm" data-redit="' + r.id + '">Edit</button><button class="btn sm danger" data-rdel="' + r.id + '">Delete</button></div></td>' : '') + '</tr>').join('') +
+                (numCols.length ? '<tr class="total"><td>Total</td>' + cols.map((c) => c.type === 'number'
+                    ? (() => { const tot = records.reduce((a, r) => { const v = (r.data || {})[c.key]; return a + (v == null || v === '' || isNaN(+v) ? 0 : +v); }, 0); return '<td class="num">' + num(tot, Number.isInteger(tot) ? 0 : 2) + '</td>'; })() : '<td></td>').join('') + (canEdit() ? '<td></td>' : '') + '</tr>' : '') +
+                '</tbody></table>';
+        }
+        $('view').innerHTML = bar + '<div class="wrap">' + body + '</div>';
+        if ($('recAdd')) $('recAdd').onclick = () => openRec(t, null);
+        $('view').querySelectorAll('[data-redit]').forEach((b) => { b.onclick = () => openRec(t, records.find((r) => String(r.id) === b.dataset.redit)); });
+        $('view').querySelectorAll('[data-rdel]').forEach((b) => { b.onclick = () => delRec(records.find((r) => String(r.id) === b.dataset.rdel)); });
+    }
+    function openRec(t, r) {
+        editingRec = { table: t, row: r || null };
+        $('recTitle').textContent = (r ? 'Edit record · ' : 'Add record · ') + t.name;
+        const d = (r && r.data) || {};
+        $('recForm').innerHTML = (t.columns || []).map((c) => {
+            const name = 'f_' + c.key, v = d[c.key] == null ? '' : d[c.key], lab = esc(c.label) + (c.required ? ' *' : '');
+            if (c.type === 'yesno') return '<label class="check full"><input type="checkbox" name="' + name + '"' + (v === true || v === 'yes' ? ' checked' : '') + '> ' + lab + '</label>';
+            if (c.type === 'choice') return '<label>' + lab + ' <select name="' + name + '"><option value=""></option>' + (c.options || []).map((o) => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select></label>';
+            const type = c.type === 'number' ? 'number" step="any' : c.type === 'date' ? 'date' : 'text';
+            return '<label' + (c.type === 'text' ? ' class="full"' : '') + '>' + lab + ' <input type="' + type + '" name="' + name + '" value="' + esc(v) + '"></label>';
+        }).join('');
+        $('recModal').classList.add('open');
+        const first = $('recForm').querySelector('input,select'); if (first) first.focus();
+    }
+    $('recSave').onclick = async () => {
+        if (!editingRec) return;
+        const { table: t, row: r } = editingRec, f = $('recForm'), data = {};
+        for (const c of t.columns || []) {
+            const el = f.elements['f_' + c.key]; if (!el) continue;
+            let v = c.type === 'yesno' ? el.checked : el.value.trim();
+            if (c.type === 'number') v = v === '' ? null : +v;
+            if (c.required && (v === '' || v == null)) { toast(c.label + ' is required'); el.focus(); return; }
+            data[c.key] = v;
+        }
+        const body = { table_id: t.id, company_id: company.id, estate: t.per_estate ? estate : '', data, updated_by: session.email || '', updated_at: new Date().toISOString() };
+        try {
+            if (r) await api('port_estate_records?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify({ data, updated_by: body.updated_by, updated_at: body.updated_at }) });
+            else await api('port_estate_records', { method: 'POST', body: JSON.stringify(Object.assign(body, { sort_order: records.length })) });
+            $('recModal').classList.remove('open'); toast('Saved'); load();
+        } catch (e) { toast('Save failed: ' + e.message); }
+    };
+    async function delRec(r) {
+        if (!r || !confirm('Delete this record?')) return;
+        try { await api('port_estate_records?id=eq.' + r.id, { method: 'DELETE' }); toast('Deleted'); load(); } catch (e) { toast('Delete failed: ' + e.message); }
+    }
+
+    // =====================================================================
+    // Settings: design the tables (Super Admin / Admin)
+    // =====================================================================
+    function drawSettings() {
+        if (tables.missing) {
+            $('view').innerHTML = '<p class="note err">The Estate Info tables are not set up in the database yet. Run <b>supabase/migrations/20261127100000_port_estate_info_tables.sql</b> in the Supabase SQL Editor, then reload this page.</p>';
+            return;
+        }
+        $('view').innerHTML =
+            '<div class="bar"><div><b style="font-size:16px">Estate Info tables</b><div class="muted" style="font-size:13px;margin-top:2px">Make your own tables to record estate information. Each table becomes a tab, used by every company.</div></div><span class="sp"></span>' +
+            '<button class="btn primary" id="tblNew">+ New table</button></div>' +
+            '<div class="tlist">' + (tables.length ? tables.map((t, i) =>
+                '<div class="titem"><div><div class="nm">' + esc(t.name) + '</div><div class="ds">' + (t.columns || []).length + ' column' + ((t.columns || []).length === 1 ? '' : 's') +
+                ' · ' + (t.per_estate ? 'per location' : 'per company') + ((t.columns || []).length ? ' · ' + esc((t.columns || []).map((c) => c.label).join(', ')) : '') + '</div></div><span class="sp"></span>' +
+                '<div class="acts" style="display:flex;gap:6px"><button class="btn sm" data-up="' + t.id + '"' + (i === 0 ? ' disabled' : '') + ' title="Move left">&#8592;</button><button class="btn sm" data-down="' + t.id + '"' + (i === tables.length - 1 ? ' disabled' : '') + ' title="Move right">&#8594;</button>' +
+                '<button class="btn sm" data-tedit="' + t.id + '">Edit</button><button class="btn sm danger" data-tdel="' + t.id + '">Delete</button></div></div>').join('')
+                : '<div class="empty" style="background:#fff;border:1px solid var(--line);border-radius:14px">No tables yet. Press <b>+ New table</b> to make the first one, e.g. <i>Labour Force</i> with columns Category, Local, Foreign, Total.</div>') + '</div>';
+        $('tblNew').onclick = () => openTbl(null);
+        $('view').querySelectorAll('[data-tedit]').forEach((b) => { b.onclick = () => openTbl(tables.find((t) => String(t.id) === b.dataset.tedit)); });
+        $('view').querySelectorAll('[data-tdel]').forEach((b) => { b.onclick = () => delTbl(tables.find((t) => String(t.id) === b.dataset.tdel)); });
+        $('view').querySelectorAll('[data-up],[data-down]').forEach((b) => { b.onclick = () => moveTbl(b.dataset.up || b.dataset.down, b.dataset.up ? -1 : 1); });
+    }
+    const newKey = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    function openTbl(t) {
+        editingTbl = t || null;
+        $('tblTitle').textContent = t ? 'Edit table · ' + t.name : 'New table';
+        const f = $('tblForm');
+        f.elements.name.value = t ? t.name : '';
+        f.elements.description.value = t ? t.description || '' : '';
+        f.elements.per_estate.checked = !!(t && t.per_estate);
+        colDraft = t ? (t.columns || []).map((c) => Object.assign({}, c, { options: (c.options || []).slice() })) : [{ key: newKey(), label: '', type: 'text', options: [], required: false }];
+        drawCols();
+        $('tblModal').classList.add('open');
+        f.elements.name.focus();
+    }
+    function readCols() {
+        $('colList').querySelectorAll('.colrow').forEach((row, i) => {
+            const c = colDraft[i]; if (!c) return;
+            c.label = row.querySelector('[data-k=label]').value;
+            c.type = row.querySelector('[data-k=type]').value;
+            c.options = row.querySelector('[data-k=options]').value.split(',').map((x) => x.trim()).filter(Boolean);
+            c.required = row.querySelector('[data-k=required]').checked;
+        });
+    }
+    function drawCols() {
+        $('colList').innerHTML = '<div class="colhead"><span>Column name</span><span>Type</span><span>Choices (for a dropdown)</span><span>Required</span><span></span></div>' +
+            (colDraft.length ? colDraft.map((c, i) => '<div class="colrow">' +
+                '<input data-k="label" value="' + esc(c.label) + '" placeholder="e.g. Category" maxlength="60">' +
+                '<select data-k="type">' + TYPES.map(([v, l]) => '<option value="' + v + '"' + (c.type === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+                '<input data-k="options" value="' + esc((c.options || []).join(', ')) + '" placeholder="' + (c.type === 'choice' ? 'e.g. Local, Foreign' : '—') + '"' + (c.type === 'choice' ? '' : ' disabled') + '>' +
+                '<label class="req"><input type="checkbox" data-k="required"' + (c.required ? ' checked' : '') + '> Req.</label>' +
+                '<span class="mv"><button class="btn sm" type="button" data-cup="' + i + '"' + (i === 0 ? ' disabled' : '') + ' title="Move up">&#8593;</button><button class="btn sm" type="button" data-cdown="' + i + '"' + (i === colDraft.length - 1 ? ' disabled' : '') + ' title="Move down">&#8595;</button><button class="btn sm danger" type="button" data-cdel="' + i + '" title="Remove">&#10005;</button></span>' +
+                '</div>').join('') : '<div class="empty" style="padding:16px">No columns. Press <b>+ Add column</b>.</div>');
+    }
+    $('colAdd').onclick = () => { readCols(); colDraft.push({ key: newKey(), label: '', type: 'text', options: [], required: false }); drawCols(); const ins = $('colList').querySelectorAll('[data-k=label]'); if (ins.length) ins[ins.length - 1].focus(); };
+    $('colList').addEventListener('change', (e) => { if (e.target.dataset.k === 'type') { readCols(); drawCols(); } });
+    $('colList').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-cup],[data-cdown],[data-cdel]'); if (!b) return;
+        readCols();
+        if (b.dataset.cdel != null) {
+            const c = colDraft[+b.dataset.cdel];
+            if (editingTbl && (editingTbl.columns || []).some((x) => x.key === c.key) && !confirm('Remove column "' + (c.label || 'untitled') + '"? Values already recorded in it will no longer show.')) return;
+            colDraft.splice(+b.dataset.cdel, 1);
+        } else {
+            const i = +(b.dataset.cup != null ? b.dataset.cup : b.dataset.cdown), j = b.dataset.cup != null ? i - 1 : i + 1;
+            [colDraft[i], colDraft[j]] = [colDraft[j], colDraft[i]];
+        }
+        drawCols();
+    });
+    $('tblSave').onclick = async () => {
+        readCols();
+        const f = $('tblForm'), name = f.elements.name.value.trim();
+        if (!name) { toast('Give the table a name'); f.elements.name.focus(); return; }
+        const columns = colDraft.filter((c) => c.label.trim()).map((c) => ({ key: c.key, label: c.label.trim(), type: c.type, options: c.type === 'choice' ? c.options : [], required: !!c.required }));
+        if (!columns.length) { toast('Add at least one column with a name'); return; }
+        const labels = columns.map((c) => c.label.toLowerCase());
+        if (new Set(labels).size !== labels.length) { toast('Two columns have the same name'); return; }
+        const bad = columns.find((c) => c.type === 'choice' && !c.options.length);
+        if (bad) { toast('Type the choices for "' + bad.label + '"'); return; }
+        const body = { name, description: f.elements.description.value.trim(), per_estate: f.elements.per_estate.checked, columns, updated_by: session.email || '', updated_at: new Date().toISOString() };
+        if (editingTbl && editingTbl.per_estate !== body.per_estate && !confirm('Changing between "per company" and "per location" hides the records already made the other way. Continue?')) return;
+        try {
+            if (editingTbl) await api('port_estate_tables?id=eq.' + editingTbl.id, { method: 'PATCH', body: JSON.stringify(body) });
+            else await api('port_estate_tables', { method: 'POST', body: JSON.stringify(Object.assign(body, { created_by: body.updated_by, sort_order: tables.length })) });
+            $('tblModal').classList.remove('open'); toast('Table saved'); await loadTables(); load();
+        } catch (e) { toast('Save failed: ' + e.message); }
+    };
+    async function delTbl(t) {
+        if (!t || !confirm('Delete table "' + t.name + '"?\n\nIts tab and ALL records in it, for every company, are deleted. This cannot be undone.')) return;
+        try { await api('port_estate_tables?id=eq.' + t.id, { method: 'DELETE' }); toast('Table deleted'); await loadTables(); load(); } catch (e) { toast('Delete failed: ' + e.message); }
+    }
+    async function moveTbl(id, dir) {
+        const i = tables.findIndex((t) => String(t.id) === String(id)), j = i + dir;
+        if (i < 0 || j < 0 || j >= tables.length) return;
+        [tables[i], tables[j]] = [tables[j], tables[i]];
+        try { await Promise.all(tables.map((t, k) => api('port_estate_tables?id=eq.' + t.id, { method: 'PATCH', body: JSON.stringify({ sort_order: k }) }))); } catch (e) { toast('Could not reorder: ' + e.message); }
+        await loadTables(); load();
+    }
+
     document.querySelectorAll('[data-close]').forEach((b) => { b.onclick = () => b.closest('.modal').classList.remove('open'); });
     document.querySelectorAll('.modal').forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); }); });
 
     (async () => {
-        try { await loadEstates(); } catch (e) { $('note').innerHTML = '<p class="note err">Could not load the estate list: ' + esc(e.message) + '</p>'; }
-        let c = ctxCompany; try { c = c || localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
-        if (!companies.includes(c)) c = companies.length === 1 ? companies[0] : (companies.includes(c) ? c : '');
-        setCompany(c);
-        load();
+        drawTop();
+        await loadTables();
+        if (company) await setCompany(company); else load();
     })();
 })();
 </script>
