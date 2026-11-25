@@ -134,10 +134,16 @@ Deno.serve(handler(async (_req, body) => {
   let row = await findUser(email);
   if (!row) row = await createUser(email, fullName, module);
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
-  // The person is who the Intranet says they are: keep the name in step with the Intranet profile
-  if (check.user.full_name && (check.user.full_name ?? '').trim() && row.name !== fullName) {
-    await serviceClient().from(USERS_TABLE).update({ name: fullName }).eq('id', row.id);
-    row = { ...row, name: fullName };
+  // The person is who the Intranet says they are: the row carries the Intranet
+  // email and profile name. A row found by the legacy "<user id>@psms.app" form
+  // is adopted (its rights stay) and takes the real email.
+  const fix: Record<string, string> = {};
+  if ((row.email ?? '').toLowerCase() !== email && /@psms\.app$/i.test(row.email ?? '')) fix.email = email;
+  if ((check.user.full_name ?? '').trim() && row.name !== fullName) fix.name = fullName;
+  if (Object.keys(fix).length) {
+    const { error } = await serviceClient().from(USERS_TABLE).update(fix).eq('id', row.id);
+    if (error) console.warn('[stock-sso] profile update skipped:', error.message);
+    else row = { ...row, ...fix };
   }
 
   const auth = await issueSession(row);
