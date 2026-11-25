@@ -105,7 +105,8 @@
     CTX_KEYS.forEach((k) => { const v = (params.get(k) || '').trim(); if (v) ctx[k] = v; });
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
+    // Only a session that came from MJM Intranet (stock-sso, via: 'intranet') counts
+    function loadSession() { try { const s = JSON.parse(localStorage.getItem(SESSION_KEY)); return s && s.via === 'intranet' ? s : null; } catch (e) { return null; } }
 
     // Company list = exactly the companies MJM Intranet gives this person for
     // this module (stock-sso puts them in the session at sign-in), in Intranet
@@ -130,7 +131,7 @@
         ctx.gw_company_id = c.id; ctx.gw_company = c.name; ctx.gw_company_name = c.name;
         if (c.short_name) ctx.gw_company_short = c.short_name; else delete ctx.gw_company_short;
         delete ctx.gw_estate; delete ctx.gw_estate_short;
-        try { localStorage.setItem(COMPANY_KEY, c.id); } catch (e) {}
+        try { localStorage.setItem(COMPANY_KEY, c.id); localStorage.setItem('port_company', c.name); } catch (e) {} // port_company: name, read by Estate Info
     }
     const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
     // Back to the Intranet with the company chosen here, so its business box

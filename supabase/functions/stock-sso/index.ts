@@ -114,6 +114,8 @@ function toSession(row: UserRow, companies: PortCompany[]) {
     estate: '',
     role,
     permissions: role === 'superadmin' ? ALL_SECTION_IDS : (row.permissions ?? {}),
+    // The pages open only with a session that came from here (MJM Intranet)
+    via: 'intranet',
     // Companies this person was given for this module's icon in the Intranet
     // (business + company), in Intranet company code order: { id, code, name, short_name }
     companies,

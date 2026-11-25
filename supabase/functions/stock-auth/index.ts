@@ -1,7 +1,7 @@
-// Sign-in for HQ users of the Plantation Stock app.
-//   { action: 'sign_in', userId, password }           → { session, profile }
-//   { action: 'me' }               (caller's JWT)     → { profile }
-//   { action: 'change_password', current, next } (JWT) → { ok: true }
+// Profile of the signed-in user of Plantation Operation.
+//   { action: 'me' }  (caller's JWT) → { profile }
+// Sign-in is ONLY through MJM Intranet (stock-sso). The old password actions
+// ('sign_in', 'change_password') are switched off and answer err_intranet_only.
 // The password hash never leaves the server. After 5 wrong passwords the
 // User ID is locked for 15 minutes. The Super Admin signs in with Supabase
 // Auth directly; estate workers are told to use the Worker Portal.
@@ -76,6 +76,9 @@ function userIdArg(v: unknown): string {
 }
 
 Deno.serve(handler(async (req, body) => {
+  // Password sign-in and password change are switched off: MJM Intranet only
+  if (body.action === 'sign_in' || body.action === 'change_password') throw new ApiError('err_intranet_only', 403);
+
   if (body.action === 'sign_in') {
     const userId = userIdArg(body.userId);
     const password = String(body.password ?? '');
