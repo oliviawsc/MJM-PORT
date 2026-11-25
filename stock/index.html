@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-04';
+var APP_BUILD = '20261124-32';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -1414,6 +1414,11 @@ var APP_BUILD = '20261124-04';
                     <button id="topLangMS" onclick="setLang('ms')"
                         style="padding:5px 11px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:Inter,sans-serif;background:#F0FDF4;color:#2E7D32;transition:background .13s;">BM</button>
                 </div>
+                <!-- Manual Sync button -->
+                <button id="syncNowBtn" onclick="manualSyncNow()"
+                    style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1D4ED8;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;flex-shrink:0;transition:background .13s;"
+                    onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'"
+                    title="Force-push all local data to Supabase">☁️ Sync Now</button>
                 <button id="avatarBtn" onclick="toggleAvatarDropdown(event)"
                     style="display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border-radius:99px;border:1px solid #D1FAE5;background:#F0FDF4;cursor:pointer;font-family:Inter,sans-serif;transition:background .13s;"
                     onmouseover="this.style.background='#D1FAE5'" onmouseout="this.style.background='#F0FDF4'">
@@ -4541,6 +4546,48 @@ async function syncToSupabase(key, data) {
     if (!ok) {
         // Could be a transient network failure — queue for retry
         _queueSync(key, activeEstate);
+    }
+}
+
+// Manual sync triggered by user pressing the "Sync Now" button.
+// Pushes ALL data arrays for the current estate to Supabase, then drains the queue.
+async function manualSyncNow() {
+    const btn = document.getElementById('syncNowBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
+    try {
+        if (!navigator.onLine) {
+            showSyncError('Device is offline — cannot sync right now.');
+            return;
+        }
+        if (!activeEstate) {
+            showSyncError('No estate selected — please select an estate first.');
+            return;
+        }
+        // Push every table for the active estate
+        const keyDataPairs = [
+            [STORAGE_KEYS.transactions,    transactions],
+            [STORAGE_KEYS.items,           items],
+            [STORAGE_KEYS.locations,       locations],
+            [STORAGE_KEYS.manuringRounds,  manuringRounds],
+            [STORAGE_KEYS.fieldMaintRounds,fieldMaintRounds],
+            [STORAGE_KEYS.maintClaims,     maintClaims],
+            [STORAGE_KEYS.chemIngredients, chemIngredients],
+            [STORAGE_KEYS.rainfallTxns,    rainfallTxns],
+        ];
+        let anyFailed = false;
+        for (const [key, data] of keyDataPairs) {
+            const ok = await _executeSyncForEstate(key, activeEstate, data);
+            if (!ok) anyFailed = true;
+        }
+        // Also drain queued items for other estates / keys
+        await drainSyncQueue();
+        if (!anyFailed) {
+            showSyncSuccess('All data has been synced to the server.');
+        } else {
+            showSyncError('Some data could not be synced — check your connection and try again.');
+        }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '☁️ Sync Now'; }
     }
 }
 
