@@ -75,12 +75,14 @@
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
     const SESSION_KEY = 'opp_auth_session';
     const APP = 'stock/index.html';
-    const CTX_KEYS = ['gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
+    const CTX_KEYS = ['gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
     const SSO_ERRORS = {
         err_forbidden:      'you do not have access to this module in the Intranet',
         err_inactive:       'your account has been deactivated',
         err_sso_invalid:    'the link has expired or was already used. Please open it from the Intranet again',
         err_sso_not_set_up: 'the Intranet connection is not set up yet (missing API key)',
+        err_no_company:     'MJM Intranet has not given you any company for this module. Ask HR / your admin to give you access in the Intranet',
+        err_intranet_unavailable: 'MJM Intranet could not be reached to check your company access. Please try again',
         err_network:        'network error',
     };
 
@@ -105,29 +107,30 @@
 
     function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
 
-    // Company list = the MJM Intranet companies, as synced into port_estates by
-    // stock-master-sync (one row per estate; company_name groups them). Estates
-    // of a company are handled inside each module later.
-    const COMPANY_KEY = 'port_company';
+    // Company list = exactly the companies MJM Intranet gives this person for
+    // this module (stock-sso puts them in the session at sign-in), in Intranet
+    // company code order: { id, code, name, short_name }. Companies only — a
+    // company's locations are handled inside each module.
+    const COMPANY_KEY = 'port_company_id';
     let companies = [];
-    async function loadCompanies() {
-        try {
-            const res = await fetch(SUPABASE_URL + '/rest/v1/port_estates?select=name,company_name,intranet_id,is_active,sort_order&order=sort_order.asc,name.asc',
-                { headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
-            if (!res.ok) return [];
-            // Only rows linked to an Intranet company, listed by that company's name:
-            // the old estate rows (e.g. "Mega Jutamas (Suai)") are never shown as companies.
-            const rows = (await res.json()).filter((r) => r.is_active !== false && r.intranet_id && r.company_name);
-            const seen = new Set(), out = [];
-            rows.forEach((r) => { const c = r.company_name.trim(); if (c && !seen.has(c)) { seen.add(c); out.push(c); } });
-            return out;
-        } catch (e) { return []; }
+    // The Intranet may send the company id, code, short name or name
+    function findCompany(v) {
+        const x = String(v || '').trim().toLowerCase();
+        if (!x) return null;
+        return companies.find((c) => c.id === v) ||
+            companies.find((c) => [c.code, c.short_name, c.name].some((k) => (k || '').toLowerCase() === x)) || null;
     }
-    function pickCompany(name) {
-        if (!name) return;
-        ctx.gw_company = name; ctx.gw_company_name = name;
-        delete ctx.gw_company_short; delete ctx.gw_estate; delete ctx.gw_estate_short;
-        try { localStorage.setItem(COMPANY_KEY, name); } catch (e) {}
+    function currentCompany() {
+        return findCompany(ctx.gw_company_id) || findCompany(ctx.gw_company) || findCompany(ctx.gw_company_name) || findCompany(ctx.gw_company_short);
+    }
+    function pickCompany(id) {
+        const c = companies.find((x) => x.id === id);
+        if (!c) return;
+        // gw_company / gw_company_name stay the company name for the module pages
+        ctx.gw_company_id = c.id; ctx.gw_company = c.name; ctx.gw_company_name = c.name;
+        if (c.short_name) ctx.gw_company_short = c.short_name; else delete ctx.gw_company_short;
+        delete ctx.gw_estate; delete ctx.gw_estate_short;
+        try { localStorage.setItem(COMPANY_KEY, c.id); } catch (e) {}
     }
     const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
     // Back to the Intranet with the company chosen here, so its business box
@@ -155,23 +158,25 @@
         who.innerHTML = (session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '') +
             '<a class="intranet" href="' + esc(intranetLink()) + '">&#8592; MJM Intranet</a>';
         const chips = [];
-        const current = ctx.gw_company_name || ctx.gw_company || '';
+        const cur = currentCompany();
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
         if (!companies.length && session) chips.push('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.');
         if (companies.length) {
             pick.style.display = '';
-            sel.innerHTML = (companies.includes(current) ? '' : '<option value="">— Choose company —</option>') +
-                companies.map((c) => '<option value="' + esc(c) + '"' + (c === current ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
+            sel.innerHTML = (cur ? '' : '<option value="">— Choose company —</option>') +
+                companies.map((c) => '<option value="' + esc(c.id) + '"' + (cur && c.id === cur.id ? ' selected' : '') + '>' +
+                    esc((c.code ? c.code + ' · ' : '') + c.name) + '</option>').join('');
         } else {
             pick.style.display = 'none';
-            if (current) chips.push('&#127970; ' + esc(current));
         }
         if (ctx.gw_estate) chips.push('&#128205; ' + esc(ctx.gw_estate));
         document.getElementById('ctxChips').innerHTML = chips.map((c) => '<span class="chip">' + c + '</span>').join('');
         const note = document.getElementById('note');
-        if (errorText) note.innerHTML = '<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>';
-        else if (!session) note.innerHTML = '<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>';
+        if (errorText) note.innerHTML = '<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. Please open Plantation Operation from MJM Intranet again.</p>';
+        else if (!session) note.innerHTML = '<p class="note warn">You are not signed in. Please open Plantation Operation from MJM Intranet.</p>';
         else note.innerHTML = '';
+        // No company from the Intranet → the modules stay closed
+        if (!companies.length) { document.getElementById('grid').innerHTML = ''; return; }
         document.getElementById('grid').innerHTML = MODULES.map((m) =>
             '<a class="card" href="' + esc(appLink(m.module)) + '">' +
             '<div class="ic" style="background:' + m.bg + '">' + m.icon + '</div>' +
@@ -229,18 +234,19 @@
             error = r.error || '';
         }
         cleanUrl();
-        // Company list: the companies the Intranet gave this person (saved in the
-        // session at sign-in); the Super Admin sees every synced company.
-        companies = (session && Array.isArray(session.companies) && session.companies.length)
-            ? session.companies
-            : (session && session.role === 'superadmin') ? await loadCompanies() : [];
-        if (!ctx.gw_company_name && !ctx.gw_company) {
+        // Company list: only what the Intranet gave this person (saved in the
+        // session at sign-in). An old session without company ids gets none.
+        companies = (session && Array.isArray(session.companies))
+            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name) : [];
+        const fromIntranet = currentCompany();
+        if (fromIntranet) pickCompany(fromIntranet.id);
+        else {
+            // a company the Intranet did not give this person is never carried on
+            ['gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => delete ctx[k]);
             let last = ''; try { last = localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
-            if (last && companies.includes(last)) pickCompany(last);
-        } else if (ctx.gw_company_name || ctx.gw_company) {
-            try { localStorage.setItem(COMPANY_KEY, ctx.gw_company_name || ctx.gw_company); } catch (e) {}
+            if (last) pickCompany(last);
         }
-        if (session && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
+        if (session && companies.length && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
         draw(session, error);
         document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });
     })();

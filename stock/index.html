@@ -10679,7 +10679,7 @@ async function syncEstatesFromIntranet() {
         if (r.added.length) parts.push('added ' + r.added.join(', '));
         if (r.renamed.length) parts.push('renamed ' + r.renamed.map(x => x[0] + ' → ' + x[1]).join(', '));
         if (r.deactivated.length) parts.push('hidden ' + r.deactivated.join(', '));
-        if (msg) msg.textContent = 'Synced ' + r.total + ' estates' + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
+        if (msg) msg.textContent = 'Synced ' + r.total + ' Intranet companies' + (r.unlinked && r.unlinked.length ? ' (old estate names without a company: ' + r.unlinked.join(', ') + ')' : '') + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
         await renderEstatesList();
     } catch (e) {
         if (msg) msg.textContent = 'Sync failed: ' + e.message;
