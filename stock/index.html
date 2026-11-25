@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-36';
+var APP_BUILD = '20261124-37';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17754,6 +17754,30 @@ var MR_MONTH_NAMES = ['January','February','March','April','May','June','July','
 var _ffbShortMo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var _ffbActiveTab = 'harvest';
 var _ffbAllRows = { estate: '', rows: [], loaded: false };
+// Cache for port_ffb_production rows (ffb_target, harvester_target)
+var _ffbProdRows = { estate: '', rows: [], loaded: false };
+
+async function ffbLoadProdRows(estate) {
+    if (_ffbProdRows.estate === estate && _ffbProdRows.loaded) return _ffbProdRows.rows;
+    _ffbProdRows = { estate: estate, rows: [], loaded: false };
+    if (!estate || typeof supabase === 'undefined') { _ffbProdRows.loaded = true; return []; }
+    var curYear = new Date().getFullYear();
+    try {
+        var resp = await supabase.from('port_ffb_production').select('*')
+            .eq('estate', estate).gte('year', 2015).lte('year', curYear + 1)
+            .order('year', { ascending: true }).order('month', { ascending: true });
+        if (resp.error) console.warn('[FFB prod] load', resp.error);
+        _ffbProdRows.rows = resp.data || [];
+    } catch(e) {}
+    _ffbProdRows.loaded = true;
+    return _ffbProdRows.rows;
+}
+function _ffbProdUpdateCache(payload) {
+    if (!_ffbProdRows.loaded) return;
+    var idx = _ffbProdRows.rows.findIndex(function(r){return r.year===payload.year&&r.month===payload.month;});
+    if (idx >= 0) _ffbProdRows.rows[idx] = Object.assign({}, _ffbProdRows.rows[idx], payload);
+    else { _ffbProdRows.rows.push(payload); _ffbProdRows.rows.sort(function(a,b){return a.year!==b.year?a.year-b.year:a.month-b.month;}); }
+}
 
 async function ffbLoadAllRows(estate) {
     if (_ffbAllRows.estate === estate && _ffbAllRows.loaded) return _ffbAllRows.rows;
@@ -17831,6 +17855,7 @@ function renderFfbModule() {
     if (!sec || !sec.classList.contains('active')) return;
     var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
     if (_ffbAllRows.estate !== estate) _ffbAllRows = { estate: '', rows: [], loaded: false };
+    if (_ffbProdRows.estate !== estate) _ffbProdRows = { estate: '', rows: [], loaded: false };
     if (_ffbActiveTab === 'harvest')    renderFfbHarvestTab();
     else if (_ffbActiveTab === 'harvesters') renderFfbHarvestersTab();
     else if (_ffbActiveTab === 'grading')    renderFfbGradingTab();
@@ -18013,14 +18038,14 @@ function ffbCloseHarvesterTargetPage() {
 function renderFfbHarvesterTargetTab() {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if(!estate){document.getElementById('ffbHarvesterTargetBody').innerHTML='<p class="text-gray-400 text-sm py-4 text-center">Please select an estate.</p>';return;}
-    ffbLoadAllRows(estate).then(function(allRows){_renderFfbHarvesterTargetSummary(allRows);});
+    ffbLoadProdRows(estate).then(function(prodRows){_renderFfbHarvesterTargetSummary(prodRows);});
 }
-function _renderFfbHarvesterTargetSummary(allRows) {
+function _renderFfbHarvesterTargetSummary(prodRows) {
     var body=document.getElementById('ffbHarvesterTargetBody');
     if(!body)return;
     var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var years=[];
-    allRows.forEach(function(r){if(years.indexOf(r.year)===-1)years.push(r.year);});
+    prodRows.forEach(function(r){if(years.indexOf(r.year)===-1)years.push(r.year);});
     years.sort(function(a,b){return b-a;});
     if(!years.length){body.innerHTML='<p class="text-gray-400 text-sm py-4 text-center">No years yet. Add a year below.</p>';return;}
     var html='';
@@ -18035,7 +18060,7 @@ function _renderFfbHarvesterTargetSummary(allRows) {
         html+='<th class="px-3 py-2 text-center border border-blue-200">Month</th>';
         html+='<th class="px-3 py-2 text-center border border-blue-200">Harvester Target (persons)</th>';
         html+='</tr></thead><tbody>';
-        var yRows=allRows.filter(function(r){return r.year===yr;});
+        var yRows=prodRows.filter(function(r){return r.year===yr;});
         for(var m=1;m<=12;m++){
             var row=yRows.find(function(r){return r.month===m;})||{};
             var val=row.harvester_target!=null?row.harvester_target:'';
@@ -18058,13 +18083,14 @@ async function ffbSaveHarvesterTargetYear(year) {
         var val=el.value!==''?parseInt(el.value,10):null;
         var payload={estate:estate,year:year,month:m,harvester_target:val};
         try{
-            var resp=await supabase.from('port_mgmt_monthly').upsert(payload,{onConflict:'estate,year,month'});
+            var resp=await supabase.from('port_ffb_production').upsert(payload,{onConflict:'estate,year,month'});
             if(resp.error)throw resp.error;
-            _ffbUpdateCache(payload);
+            _ffbProdUpdateCache(payload);
         }catch(e){alert('Error saving '+year+' month '+m+': '+e.message);return;}
     }
     alert('Harvester Target for '+year+' saved.');
-    ffbLoadAllRows(estate).then(function(allRows){_renderFfbHarvesterTargetSummary(allRows);});
+    _ffbProdRows = { estate: '', rows: [], loaded: false }; // force reload
+    ffbLoadProdRows(estate).then(function(prodRows){_renderFfbHarvesterTargetSummary(prodRows);});
 }
 function ffbAddHarvesterTargetYear() {
     var input=document.getElementById('ffbHarvesterTargetNewYear');
@@ -18072,10 +18098,10 @@ function ffbAddHarvesterTargetYear() {
     if(!yr||yr<2000||yr>2100){alert('Enter a valid year (2000-2100).');return;}
     input.value='';
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    ffbLoadAllRows(estate).then(function(allRows){
-        var exists=allRows.some(function(r){return r.year===yr;});
-        if(!exists){_ffbAllRows.rows.push({estate:estate,year:yr,month:1});_ffbAllRows.rows.sort(function(a,b){return a.year!==b.year?a.year-b.year:a.month-b.month;});}
-        _renderFfbHarvesterTargetSummary(_ffbAllRows.rows);
+    ffbLoadProdRows(estate).then(function(prodRows){
+        var exists=prodRows.some(function(r){return r.year===yr;});
+        if(!exists){_ffbProdRows.rows.push({estate:estate,year:yr,month:1});_ffbProdRows.rows.sort(function(a,b){return a.year!==b.year?a.year-b.year:a.month-b.month;});}
+        _renderFfbHarvesterTargetSummary(_ffbProdRows.rows);
     });
 }
 
