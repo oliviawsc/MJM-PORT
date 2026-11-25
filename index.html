@@ -23,13 +23,14 @@
         .bg::after { width: 55vw; height: 55vw; right: -20vw; bottom: -25vw; background: #BAE6FD; }
         .top { position: sticky; top: 0; z-index: 5; background: linear-gradient(90deg, rgba(224,242,254,.85), rgba(240,253,244,.85)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,.8); }
         .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
-        .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .back-slot { position: relative; width: 36px; height: 36px; flex: none; }
         .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; color: #0F172A; }
-        .back { display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
+        .back { position: absolute; left: 0; top: 0; z-index: 2; display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
                 color: #334155; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; transition: background .15s; }
         .back svg { width: 18px; height: 18px; flex: none; }
         .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
-        .back:hover, .back:focus-visible { background: #F1F5F9; }
+        .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
         .back:hover span, .back:focus-visible span { max-width: 160px; opacity: 1; margin-left: 6px; }
         .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 40vw; }
         .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
@@ -38,8 +39,12 @@
         .who .me small { display: block; font-size: 12px; color: #64748B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .who .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; color: #0F172A; display: grid; place-items: center; font-size: 14px; font-weight: 600; flex: none; overflow: hidden; }
         .who .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .who .logout { width: 36px; height: 36px; border-radius: 10px; border: 0; background: transparent; color: #64748B; display: grid; place-items: center; cursor: pointer; }
+        .who .logout:hover { background: rgba(241,245,249,.9); color: #0F172A; }
+        .who .logout svg { width: 20px; height: 20px; }
         main { max-width: 1180px; margin: 0 auto; padding: 44px 16px 60px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; user-select: none; -webkit-user-select: none; }
+        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; user-select: none; -webkit-user-select: none; }
+        .tile { width: 160px; }
         .tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 12px 18px; border-radius: 20px; background: rgba(255,255,255,.86); border: 1px solid rgba(226,232,240,.9);
                 box-shadow: 0 2px 10px rgba(15,23,42,.05); text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s; -webkit-touch-callout: none; touch-action: manipulation; }
         .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
@@ -57,7 +62,7 @@
         .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
         @keyframes s { to { transform: rotate(360deg); } }
         footer { text-align: center; font-size: 12px; color: #94A3B8; padding: 10px; }
-        @media (max-width: 640px) { .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; } .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; } }
+        @media (max-width: 640px) { .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; } .grid { gap: 12px; } .tile { width: calc(50% - 6px); } }
     </style>
 </head>
 <body>
@@ -65,8 +70,8 @@
     <div id="splash" class="splash" style="display:none;"><div><div class="spin"></div>Signing in from MJM Intranet…</div></div>
     <header class="top"><div class="in">
         <div class="left">
-            <a class="back" id="back" href="https://mjmelon.github.io/MJM-Intranet/" title="Back to MJM Intranet">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Intranet</span></a>
+            <span class="back-slot"><a class="back" id="back" href="https://mjmelon.github.io/MJM-Intranet/" title="Back to MJM Intranet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Intranet</span></a></span>
             <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect"></select></label>
         </div>
         <div class="title">Plantation Operation</div>
@@ -213,13 +218,21 @@
         grid.addEventListener('dragstart', (e) => e.preventDefault());
     }
 
+    const LOGOUT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>';
+    function logout() {
+        localStorage.removeItem(SESSION_KEY);
+        try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+        location.href = intranetLink();
+    }
     function draw(session, errorText) {
         const who = document.getElementById('who');
         const name = session ? (session.name || session.email || '') : '';
         const photo = session && session.avatar && /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(session.avatar) ? session.avatar : '';
         who.innerHTML = session
-            ? '<div class="me"><b>' + esc(name) + '</b><small>' + esc(session.email || '') + '</small></div><span class="avatar">' + (photo ? '<img src="' + esc(photo) + '" alt="">' : esc(name.trim().slice(0, 1).toUpperCase() || '?')) + '</span>'
+            ? '<div class="me"><b>' + esc(name) + '</b><small>' + esc(session.email || '') + '</small></div><span class="avatar">' + (photo ? '<img src="' + esc(photo) + '" alt="">' : esc(name.trim().slice(0, 1).toUpperCase() || '?')) + '</span>' +
+              '<button type="button" class="logout" id="logout" title="Log out" aria-label="Log out">' + LOGOUT_SVG + '</button>'
             : '';
+        if (session) document.getElementById('logout').onclick = logout;
         document.getElementById('back').href = intranetLink();
         const current = ctx.gw_company_name || ctx.gw_company || '';
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
