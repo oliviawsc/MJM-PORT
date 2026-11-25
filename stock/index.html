@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-41';
+var APP_BUILD = '20261125-42';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -18126,22 +18126,28 @@ function _renderFfbHarvesterTargetSummary(prodRows) {
 async function ffbSaveHarvesterTargetYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if(!estate)return;
+    var yRows=_ffbProdRows.rows.filter(function(r){return r.year===year;});
+    var toUpsert=[];
     for(var m=1;m<=12;m++){
         var el=document.getElementById('ffbHarvTgt_'+year+'_'+m);
         if(!el)continue;
         var val=el.value!==''?parseInt(el.value,10):null;
-        var payload={estate:estate,year:year,month:m,harvester_target:val};
-        try{
-            var resp=await supabase.from('port_ffb_production').upsert(payload,{onConflict:'estate,year,month'});
-            if(resp.error)throw resp.error;
-            _ffbProdUpdateCache(payload);
-        }catch(e){alert('Error saving '+year+' month '+m+': '+e.message);return;}
+        var existing=yRows.find(function(r){return r.month===m;});
+        if(val!==null||(existing&&existing.harvester_target!=null))
+            toUpsert.push({estate:estate,year:year,month:m,harvester_target:val});
     }
-    _ffbProdRows = { estate: '', rows: [], loaded: false }; // force reload
-    ffbLoadProdRows(estate).then(function(prodRows){
-        _renderFfbHarvesterTargetSummary(prodRows);
-        showSyncSuccess('Harvester Target for '+year+' saved.');
-    });
+    try{
+        if(toUpsert.length>0){
+            var resp=await supabaseClient.from('port_ffb_production').upsert(toUpsert,{onConflict:'estate,year,month'});
+            if(resp.error)throw resp.error;
+            toUpsert.forEach(function(p){_ffbProdUpdateCache(p);});
+        }
+        _ffbProdRows = { estate: '', rows: [], loaded: false };
+        ffbLoadProdRows(estate).then(function(prodRows){
+            _renderFfbHarvesterTargetSummary(prodRows);
+            showSyncSuccess('Harvester Target for '+year+' saved.');
+        });
+    }catch(e){alert('Error saving '+year+': '+e.message);}
 }
 function ffbAddHarvesterTargetYear() {
     var input=document.getElementById('ffbAddYearInput_harvtgt');
