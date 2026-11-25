@@ -30,7 +30,7 @@ export const ALL_SECTION_IDS = [
 interface CheckResult {
   allowed: boolean;
   module_code?: string;
-  user?: { id: string; email: string; full_name?: string | null };
+  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null };
   error?: string;
 }
 
@@ -102,7 +102,7 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow, companies: string[]) {
+function toSession(row: UserRow, companies: string[], avatar = '') {
   const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL ? 'superadmin' : roleOf(row);
   return {
     id: row.id,
@@ -114,6 +114,8 @@ function toSession(row: UserRow, companies: string[]) {
     permissions: role === 'superadmin' ? ALL_SECTION_IDS : (row.permissions ?? {}),
     // Companies this person was given for the Stock icon in the Intranet (business + company)
     companies,
+    // The person's Intranet profile photo (public storage URL), shown in the portal
+    avatar,
   };
 }
 
@@ -144,5 +146,5 @@ Deno.serve(handler(async (_req, body) => {
   }
   // Keep the estate list equal to the Intranet's companies (at most once every 10 minutes)
   try { await syncEstatesFromIntranet(false); } catch (e) { console.warn('[stock-sso] estate sync skipped:', e instanceof Error ? e.message : e); }
-  return { session: toSession(row, companies), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? '')), auth, module };
 }));
