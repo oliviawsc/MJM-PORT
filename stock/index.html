@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-34';
+var APP_BUILD = '20261124-35';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -4510,7 +4510,12 @@ async function _executeSyncForEstate(key, estate, data) {
         }
 
         if (data.length > 0) {
-            const tagged = data.map(r => ({ ...r, estate }));
+            const tagged = data.map(r => {
+                const rec = { ...r, estate };
+                delete rec.picture;                          // pictures are local-only
+                if (rec.created_at == null) delete rec.created_at; // let DB default apply
+                return rec;
+            });
             const { error: upErr } = await supabaseClient
                 .from(table).upsert(tagged, { onConflict: 'id' });
             if (upErr) {
