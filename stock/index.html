@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-33';
+var APP_BUILD = '20261124-34';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17165,7 +17165,14 @@ function mgmtReportFigures(estate, ym) {
     // Sasaran  : cumulative kg/palm target — each round's kgPerPalm added from its target month onward.
     // Pencapaian: same, but a round only counts when its % applied (actual ÷ budget) >= 95 %.
     const _mainRounds = (typeof manuringRounds !== 'undefined' ? manuringRounds : [])
-        .filter((r) => { const n = (r.name || '').toUpperCase(); return n.indexOf('INFILLING') === -1; });
+        .filter((r) => {
+            const n = (r.name || '').toUpperCase();
+            // Exclude standalone infilling rounds (INFILLING with no P-round reference).
+            // Companion rounds like "INFILLING-P2" or "INFILLING-P3" ARE included because
+            // they apply alongside a main P-round and count toward the total annual dosage.
+            if (n.indexOf('INFILLING') !== -1 && !/\bP\d/.test(n)) return false;
+            return true;
+        });
     if (_mainRounds.length > 0) {
         const _bSasaran     = new Array(12).fill(0);
         const _bPencapaian  = new Array(12).fill(0);
