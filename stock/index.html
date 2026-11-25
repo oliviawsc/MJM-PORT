@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-39';
+var APP_BUILD = '20261125-40';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2679,7 +2679,10 @@ var APP_BUILD = '20261125-39';
                     </div>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-blue-800 mb-3">Summary No. of Harvesters</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-blue-800">Summary No. of Harvesters</h3>
+                        <button onclick="ffbOpenHarvesterTargetPage()" class="flex items-center gap-1.5 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg shadow-sm">🎯 Harvester Target</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm" style="border-collapse:collapse;white-space:nowrap;">
                             <thead class="bg-blue-100 text-blue-800">
@@ -2709,8 +2712,17 @@ var APP_BUILD = '20261125-39';
                         <button onclick="ffbAddYear('harvesters')" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 font-semibold">+ Add Year</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Panel: Harvester Target (sub-page, hidden by default) -->
+            <div id="ffbPanel_harvesterTarget" class="pt-4" style="display:none;">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="ffbCloseHarvesterTargetPage()" class="flex items-center gap-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300">← Back</button>
+                    <h2 class="text-xl font-bold text-blue-700">🎯 Harvester Target</h2>
+                </div>
+                <p class="text-xs text-blue-700 mb-3">Enter Monthly Harvester Target (persons) per year.</p>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-blue-800 mb-3">🎯 Harvester Target</h3>
+                    <h3 class="text-base font-bold text-blue-800 mb-3">Monthly Harvester Target</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm" style="border-collapse:collapse;white-space:nowrap;">
                             <thead class="bg-blue-100 text-blue-800">
@@ -17949,11 +17961,11 @@ function switchFfbTab(tab) {
         harvesters: { on: 'border-blue-700 bg-blue-700 text-white',     off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700' },
         grading:    { on: 'border-amber-700 bg-amber-700 text-white',   off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-amber-50 hover:text-amber-700' }
     };
-    // Hide the target sub-page whenever a real tab is clicked
+    // Hide any sub-pages whenever a real tab is clicked
     var targetPanel = document.getElementById('ffbPanel_target');
     if (targetPanel) targetPanel.style.display = 'none';
-    var tabBar = document.getElementById('ffbTabBar');
-    if (tabBar) tabBar.style.display = '';
+    var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
+    if (harvTgtPanel) harvTgtPanel.style.display = 'none';
     ['harvest','harvesters','grading'].forEach(function(t) {
         var btn = document.getElementById('ffbTabBtn_' + t);
         var panel = document.getElementById('ffbPanel_' + t);
@@ -18048,15 +18060,24 @@ function _renderFfbHarvestSummary(allRows) {
 // ── No. of Harvesters ─────────────────────────────────────────────────────
 function renderFfbHarvestersTab() {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
-    if (!estate) {
-        var sb=document.getElementById('ffbHarvestersSummaryBody');
-        if(sb)sb.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
-        var tb=document.getElementById('ffbHarvesterTargetSummaryBody');
-        if(tb)tb.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
-        return;
-    }
+    var tbody=document.getElementById('ffbHarvestersSummaryBody');
+    if (!estate){if(tbody)tbody.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
     ffbLoadAllRows(estate).then(function(allRows){ _renderFfbHarvestersSummary(allRows); });
-    ffbLoadProdRows(estate).then(function(prodRows){ _renderFfbHarvesterTargetSummary(prodRows); });
+}
+function ffbOpenHarvesterTargetPage() {
+    ['harvest','harvesters','grading'].forEach(function(t){
+        var p=document.getElementById('ffbPanel_'+t); if(p)p.style.display='none';
+    });
+    var tabBar=document.getElementById('ffbTabBar'); if(tabBar)tabBar.style.display='none';
+    var panel=document.getElementById('ffbPanel_harvesterTarget'); if(panel)panel.style.display='';
+    var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
+    var tbody=document.getElementById('ffbHarvesterTargetSummaryBody');
+    if(!estate){if(tbody)tbody.innerHTML='<tr><td colspan="15" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';return;}
+    ffbLoadProdRows(estate).then(function(prodRows){_renderFfbHarvesterTargetSummary(prodRows);});
+}
+function ffbCloseHarvesterTargetPage() {
+    var panel=document.getElementById('ffbPanel_harvesterTarget'); if(panel)panel.style.display='none';
+    switchFfbTab(_ffbActiveTab||'harvesters');
 }
 function renderFfbHarvestersInput() { renderFfbHarvestersTab(); }
 function _renderFfbHarvestersSummary(allRows) {
