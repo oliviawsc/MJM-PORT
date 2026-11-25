@@ -11,59 +11,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Plantation Operation portal: the front door of this system. Each
-           card is one module; Stock is the classic app in stock/index.html. */
+        /* Plantation Operation portal: the front door of this system. Each tile
+           is one module; Stock is the classic app in stock/index.html. */
         * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: #0F172A;
-               background: linear-gradient(160deg, #F0FDF4 0%, #ECFDF5 45%, #F8FAFC 100%); }
-        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px;
-               background: rgba(255,255,255,.75); backdrop-filter: blur(10px); border-bottom: 1px solid #E2E8F0; }
-        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; color: #14532D; }
-        .brand .leaf { width: 34px; height: 34px; border-radius: 10px; background: #166534; color: #fff; display: grid; place-items: center; font-size: 18px; }
-        .who { font-size: 12.5px; color: #475569; text-align: right; }
-        .who b { color: #0F172A; display: block; font-size: 13px; }
-        main { max-width: 960px; margin: 0 auto; padding: 36px 20px 60px; }
-        h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.01em; }
-        .sub { margin: 0 0 8px; color: #475569; font-size: 14.5px; }
-        .ctx { display: inline-flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 26px; }
-        .co-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; }
-        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 60vw; }
-        .who .intranet { display: block; margin-top: 4px; font-size: 12.5px; font-weight: 600; color: #166534; text-decoration: none; }
-        .who .intranet:hover { text-decoration: underline; }
-        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #fff; border: 1px solid #CBD5E1; font-size: 12.5px; font-weight: 600; color: #334155; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-        .card { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 18px; background: #fff; border: 1px solid #E2E8F0;
-                box-shadow: 0 2px 10px rgba(15,23,42,.05); text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
-        .card .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; color: #fff; }
-        .card h2 { margin: 4px 0 0; font-size: 17px; }
-        .card p { margin: 0; font-size: 13px; color: #64748B; line-height: 1.45; }
-        .card .go { margin-top: auto; font-size: 13px; font-weight: 600; color: #166534; }
+        body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #F8FAFC; position: relative; overflow-x: hidden; }
+        main { flex: 1; width: 100%; }
+        /* Background: quiet off-white with two soft colour washes */
+        .bg { position: fixed; inset: 0; z-index: -1; background: #F6F8FB; overflow: hidden; }
+        .bg::before, .bg::after { content: ''; position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+        .bg::before { width: 60vw; height: 60vw; left: -18vw; top: -22vw; background: #BBF7D0; }
+        .bg::after { width: 55vw; height: 55vw; right: -20vw; bottom: -25vw; background: #BAE6FD; }
+        .top { position: sticky; top: 0; z-index: 5; background: linear-gradient(90deg, rgba(224,242,254,.85), rgba(240,253,244,.85)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,.8); }
+        .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+        .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; color: #0F172A; }
+        .back { display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
+                color: #334155; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; transition: background .15s; }
+        .back svg { width: 18px; height: 18px; flex: none; }
+        .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
+        .back:hover, .back:focus-visible { background: #F1F5F9; }
+        .back:hover span, .back:focus-visible span { max-width: 160px; opacity: 1; margin-left: 6px; }
+        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 40vw; }
+        .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+        .who .me { text-align: right; line-height: 1.25; min-width: 0; }
+        .who .me b { display: block; font-size: 14px; font-weight: 500; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .who .me small { display: block; font-size: 12px; color: #64748B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .who .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; color: #0F172A; display: grid; place-items: center; font-size: 14px; font-weight: 600; flex: none; overflow: hidden; }
+        .who .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        main { max-width: 1180px; margin: 0 auto; padding: 44px 16px 60px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; user-select: none; -webkit-user-select: none; }
+        .tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 12px 18px; border-radius: 20px; background: rgba(255,255,255,.86); border: 1px solid rgba(226,232,240,.9);
+                box-shadow: 0 2px 10px rgba(15,23,42,.05); text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s; -webkit-touch-callout: none; touch-action: manipulation; }
+        .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
+        .tile .ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: #fff; }
+        .tile .ic svg { width: 28px; height: 28px; }
+        .tile h2 { margin: 0; font-size: 14.5px; font-weight: 600; text-align: center; color: #0F172A; }
+        .tile.ghost { opacity: .35; border-style: dashed; }
+        .tile.lift { position: fixed; margin: 0; z-index: 30; pointer-events: none; transform: scale(1.05); box-shadow: 0 18px 36px rgba(15,23,42,.22); transition: none; }
+        body.dragging .tile { cursor: grabbing; }
         .note { margin: 0 0 18px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
         .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
         .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .hint { margin: 26px 0 0; text-align: center; font-size: 12px; color: #94A3B8; }
         .splash { position: fixed; inset: 0; display: grid; place-items: center; background: #F0FDF4; z-index: 10; font-weight: 600; color: #14532D; }
         .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
         @keyframes s { to { transform: rotate(360deg); } }
         footer { text-align: center; font-size: 12px; color: #94A3B8; padding: 10px; }
+        @media (max-width: 640px) { .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; } .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; } }
     </style>
 </head>
 <body>
+    <div class="bg"></div>
     <div id="splash" class="splash" style="display:none;"><div><div class="spin"></div>Signing in from MJM Intranet…</div></div>
-    <header class="top">
-        <div class="brand"><span class="leaf">&#127796;</span> Plantation Operation</div>
-        <div class="who" id="who"></div>
-    </header>
-    <main>
-        <h1>Plantation Operation</h1>
-        <p class="sub">Choose a module.</p>
-        <div class="ctx" id="ctx">
-            <label class="co-pick" id="coPick" style="display:none;"><span>Company</span>
-                <select id="coSelect"></select></label>
-            <span id="ctxChips"></span>
+    <header class="top"><div class="in">
+        <div class="left">
+            <a class="back" id="back" href="https://mjmelon.github.io/MJM-Intranet/" title="Back to MJM Intranet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Intranet</span></a>
+            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect"></select></label>
         </div>
+        <div class="title">Plantation Operation</div>
+        <div class="who" id="who"></div>
+    </div></header>
+    <main>
         <div id="note"></div>
         <div class="grid" id="grid"></div>
+        <p class="hint" id="hint" style="display:none;">Press and hold a module to move it.</p>
     </main>
     <footer>MJM Group · Plantation Operation</footer>
 
@@ -75,6 +87,7 @@
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
     const SESSION_KEY = 'opp_auth_session';
     const APP = 'stock/index.html';
+    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
     const CTX_KEYS = ['gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
     const SSO_ERRORS = {
         err_forbidden:      'you do not have access to this module in the Intranet',
@@ -84,18 +97,20 @@
         err_network:        'network error',
     };
 
-    // The modules of this system. `module` is the deep link the classic app understands.
+    // The modules of this system. `module` is the deep link the classic app
+    // understands; `href` is a page of its own. Icons: simple line symbols.
+    const svg = (d) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
     const MODULES = [
-        { module: 'estate',    title: 'Estate Info',       icon: '&#127796;', bg: '#3F6212', href: 'estate/index.html',
-          desc: 'Planted area by division, phase and block: area, palm count, density, year planted.' },
-        { module: 'stock',     title: 'Stock',             icon: '&#128230;', bg: '#166534',
-          desc: 'Fertiliser, chemical and seedling stock, transactions, ledger and records.' },
-        { module: 'report',    title: 'Management Report', icon: '&#128202;', bg: '#0F766E',
-          desc: 'Penilaian Prestasi Ladang: monthly estate performance charts.' },
-        { module: 'ffbrecord', title: 'FFB Production',    icon: '&#127804;', bg: '#B45309',
-          desc: 'Record monthly FFB production, harvesters and grading. Links to Management Report.' },
-        { module: 'rainfall',  title: 'Rainfall',          icon: '&#127783;&#65039;', bg: '#0C4A6E',
-          desc: 'Record daily rainfall transactions and view monthly and yearly rainfall reports.' },
+        { module: 'estate',    title: 'Estate Info',       bg: '#3F6212', href: 'estate/index.html',
+          icon: svg('<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/>') },
+        { module: 'stock',     title: 'Stock',             bg: '#166534',
+          icon: svg('<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>') },
+        { module: 'report',    title: 'Management Report', bg: '#0F766E',
+          icon: svg('<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>') },
+        { module: 'ffbrecord', title: 'FFB Production',    bg: '#B45309',
+          icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
+        { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
+          icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
     ];
 
     const params = new URLSearchParams(location.search);
@@ -106,8 +121,7 @@
     function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
 
     // Company list = the MJM Intranet companies, as synced into port_estates by
-    // stock-master-sync (one row per estate; company_name groups them). Estates
-    // of a company are handled inside each module later.
+    // stock-master-sync (one row per estate; company_name groups them).
     const COMPANY_KEY = 'port_company';
     let companies = [];
     async function loadCompanies() {
@@ -127,7 +141,6 @@
         delete ctx.gw_company_short; delete ctx.gw_estate; delete ctx.gw_estate_short;
         try { localStorage.setItem(COMPANY_KEY, name); } catch (e) {}
     }
-    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
     // Back to the Intranet with the company chosen here, so its business box
     // switches to the same company (the Intranet reads gw_company on arrival).
     function intranetLink() {
@@ -148,33 +161,82 @@
             history.replaceState(null, '', u.pathname + u.search + u.hash);
         } catch (e) {}
     }
+
+    // ---- Module order: the person's own, kept on this device (press and hold to move)
+    const ORDER_KEY = 'port_module_order';
+    function orderedModules() {
+        let order = []; try { order = JSON.parse(localStorage.getItem(ORDER_KEY)) || []; } catch (e) {}
+        const at = (m) => { const i = order.indexOf(m.module); return i < 0 ? 1e6 + MODULES.indexOf(m) : i; };
+        return MODULES.slice().sort((a, b) => at(a) - at(b));
+    }
+    function saveOrder() {
+        const ids = [...document.querySelectorAll('#grid .tile')].map((t) => t.dataset.module);
+        try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); } catch (e) {}
+    }
+    function enableDrag(grid) {
+        let holdTimer = null, source = null, clone = null, offX = 0, offY = 0, startX = 0, startY = 0, suppressClick = false;
+        const tileAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest('#grid .tile:not(.lift)'); };
+        grid.addEventListener('pointerdown', (e) => {
+            const tile = e.target.closest('.tile'); if (!tile || e.button) return;
+            startX = e.clientX; startY = e.clientY;
+            holdTimer = setTimeout(() => {
+                const r = tile.getBoundingClientRect();
+                offX = e.clientX - r.left; offY = e.clientY - r.top;
+                clone = tile.cloneNode(true); clone.classList.add('lift');
+                clone.style.width = r.width + 'px'; clone.style.height = r.height + 'px'; clone.style.left = r.left + 'px'; clone.style.top = r.top + 'px';
+                document.body.appendChild(clone);
+                source = tile; tile.classList.add('ghost'); document.body.classList.add('dragging');
+                try { tile.setPointerCapture(e.pointerId); } catch (e2) {}
+                if (navigator.vibrate) navigator.vibrate(15);
+            }, 350);
+        });
+        grid.addEventListener('pointermove', (e) => {
+            if (!source) { if (holdTimer && Math.hypot(e.clientX - startX, e.clientY - startY) > 8) { clearTimeout(holdTimer); holdTimer = null; } return; }
+            e.preventDefault();
+            clone.style.left = (e.clientX - offX) + 'px'; clone.style.top = (e.clientY - offY) + 'px';
+            const over = tileAt(e.clientX, e.clientY);
+            if (!over || over === source) return;
+            const tiles = [...grid.children];
+            if (tiles.indexOf(over) > tiles.indexOf(source)) over.after(source); else over.before(source);
+        });
+        const end = () => {
+            clearTimeout(holdTimer); holdTimer = null;
+            if (!source) return;
+            source.classList.remove('ghost'); if (clone) clone.remove(); clone = null; source = null;
+            document.body.classList.remove('dragging');
+            suppressClick = true; setTimeout(() => { suppressClick = false; }, 50);
+            saveOrder();
+        };
+        grid.addEventListener('pointerup', end); grid.addEventListener('pointercancel', end);
+        grid.addEventListener('click', (e) => { if (suppressClick || source) { e.preventDefault(); e.stopPropagation(); } }, true);
+        grid.addEventListener('contextmenu', (e) => { if (source || holdTimer) e.preventDefault(); });
+        grid.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+
     function draw(session, errorText) {
         const who = document.getElementById('who');
-        who.innerHTML = (session ? '<b>' + esc(session.name || session.email) + '</b>' + esc(session.role === 'superadmin' ? 'Super Admin' : session.email || '') : '') +
-            '<a class="intranet" href="' + esc(intranetLink()) + '">&#8592; MJM Intranet</a>';
-        const chips = [];
+        const name = session ? (session.name || session.email || '') : '';
+        const photo = session && session.avatar && /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(session.avatar) ? session.avatar : '';
+        who.innerHTML = session
+            ? '<div class="me"><b>' + esc(name) + '</b><small>' + esc(session.email || '') + '</small></div><span class="avatar">' + (photo ? '<img src="' + esc(photo) + '" alt="">' : esc(name.trim().slice(0, 1).toUpperCase() || '?')) + '</span>'
+            : '';
+        document.getElementById('back').href = intranetLink();
         const current = ctx.gw_company_name || ctx.gw_company || '';
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
-        if (!companies.length && session) chips.push('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.');
+        const notes = [];
+        if (!companies.length && session) notes.push('<p class="note warn">&#9888;&#65039; No company has been given to you for this module in MJM Intranet.</p>');
         if (companies.length) {
             pick.style.display = '';
             sel.innerHTML = (companies.includes(current) ? '' : '<option value="">— Choose company —</option>') +
                 companies.map((c) => '<option value="' + esc(c) + '"' + (c === current ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
-        } else {
-            pick.style.display = 'none';
-            if (current) chips.push('&#127970; ' + esc(current));
-        }
-        if (ctx.gw_estate) chips.push('&#128205; ' + esc(ctx.gw_estate));
-        document.getElementById('ctxChips').innerHTML = chips.map((c) => '<span class="chip">' + c + '</span>').join('');
-        const note = document.getElementById('note');
-        if (errorText) note.innerHTML = '<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>';
-        else if (!session) note.innerHTML = '<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>';
-        else note.innerHTML = '';
-        document.getElementById('grid').innerHTML = MODULES.map((m) =>
-            '<a class="card" href="' + esc(appLink(m.module)) + '">' +
-            '<div class="ic" style="background:' + m.bg + '">' + m.icon + '</div>' +
-            '<h2>' + esc(m.title) + '</h2><p>' + esc(m.desc) + '</p>' +
-            '<span class="go">Open &rsaquo;</span></a>').join('');
+        } else pick.style.display = 'none';
+        if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>');
+        else if (!session) notes.push('<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>');
+        document.getElementById('note').innerHTML = notes.join('');
+        document.getElementById('grid').innerHTML = orderedModules().map((m) =>
+            '<a class="tile" draggable="false" data-module="' + esc(m.module) + '" href="' + esc(appLink(m.module)) + '">' +
+            '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + '</h2></a>').join('');
+        document.getElementById('hint').style.display = '';
     }
 
     // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
@@ -240,6 +302,7 @@
         }
         if (session && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
         draw(session, error);
+        enableDrag(document.getElementById('grid'));
         document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });
     })();
 })();
