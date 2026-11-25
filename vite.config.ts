@@ -22,9 +22,9 @@ function arrangeOutput(): Plugin {
   };
 }
 
-// Published at https://oliviawsc.github.io/plantationstockmanagementsystem/
+// Published at https://oliviawsc.github.io/MJM-PORT/
 export default defineConfig({
-  base: '/plantationstockmanagementsystem/',
+  base: '/MJM-PORT/',
   plugins: [react(), tailwindcss(), arrangeOutput()],
   build: { sourcemap: false, rollupOptions: { input: resolve(__dirname, 'app.html') } },
   test: {
