@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-58';
+var APP_BUILD = '20261125-59';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -17378,6 +17378,18 @@ function mgmtReportFigures(estate, ym) {
         if (_bPencapaian.some((v) => v > 0)) put('baja_pencapaian', _r2(_bPencapaian));
     }
 
+    // Penalty data from port_ffb_penalty
+    if (typeof _ffbPenaltyRows !== 'undefined' && _ffbPenaltyRows.loaded && _ffbPenaltyRows.estate === estate) {
+        delete series.penalti; delete series.downgraded;
+        const penRows = _ffbPenaltyRows.rows;
+        const getPen = (y, field) => MR_MONTHS.map((m, i) => {
+            const r = penRows.find((x) => x.year === y && x.month === i + 1);
+            return r && r[field] != null ? Number(r[field]) : null;
+        });
+        put('penalti', getPen(year, 'penalty_rm'));
+        put('downgraded', getPen(year, 'downgraded_bunch'));
+    }
+
     // Hujan — monthly totals from daily rainfall transactions.
     // Read from the estate-scoped localStorage key first (always saved by loadFromSupabase before
     // refreshAll fires), then fall back to the in-memory rainfallTxns global as a last resort.
@@ -17507,6 +17519,9 @@ function renderMgmtReport() {
     }
     if (estate && typeof ffbLoadAllRows !== 'undefined' && !(_ffbAllRows.estate === estate && _ffbAllRows.loaded)) {
         ffbLoadAllRows(estate).then(redrawIfActive);
+    }
+    if (estate && typeof ffbLoadPenaltyRows !== 'undefined' && !(_ffbPenaltyRows.estate === estate && _ffbPenaltyRows.loaded)) {
+        ffbLoadPenaltyRows(estate).then(redrawIfActive);
     }
 }
 
