@@ -1086,12 +1086,14 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-44';
+var APP_BUILD = '20261125-45';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
     if (typeof APP_BUILD === 'undefined' && !_vr) {
-        window.location.replace(window.location.pathname + '?_vr=1' + (window.location.hash || ''));
+        var _lgUrl = new URL(window.location.href);
+        _lgUrl.searchParams.set('_vr', '1');
+        window.location.replace(_lgUrl.pathname + _lgUrl.search + (window.location.hash || ''));
         return;
     }
     // Version-change guard: compare the running build against the last stored
@@ -1100,7 +1102,9 @@ var APP_BUILD = '20261125-44';
     try {
         var stored = localStorage.getItem('opp_app_build');
         if (stored && stored !== APP_BUILD && !_vr) {
-            window.location.replace(window.location.pathname + '?_vr=' + APP_BUILD + (window.location.hash || ''));
+            var _vrUrl = new URL(window.location.href);
+            _vrUrl.searchParams.set('_vr', APP_BUILD);
+            window.location.replace(_vrUrl.pathname + _vrUrl.search + (window.location.hash || ''));
             return;
         }
         localStorage.setItem('opp_app_build', APP_BUILD);
