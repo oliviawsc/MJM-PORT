@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-50';
+var APP_BUILD = '20261125-51';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2783,11 +2783,11 @@ var APP_BUILD = '20261125-50';
                     <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
                     <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
                 </div>
+                <div class="flex justify-end mb-3">
+                    <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
+                </div>
                 <div id="ffbBlockYieldTableContainer" class="overflow-x-auto bg-white rounded-xl shadow p-4 mb-4">
                     <p class="text-gray-400 py-4 text-center text-sm">Select an estate to load data.</p>
-                </div>
-                <div class="flex justify-end">
-                    <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
                 </div>
             </div>
 
