@@ -40,7 +40,7 @@ interface CheckResult {
 function apiKeyFor(module: Module): string {
   const key = module === 'report'
     ? Deno.env.get('INTRANET_REPORT_API_KEY')
-    : Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
+    : Deno.env.get('INTRANET_PORT_API_KEY') || Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
   if (!key) throw new ApiError('err_sso_not_set_up', 500);
   return key;
 }

@@ -41,7 +41,7 @@ export interface SyncResult {
 export function moduleApiKey(module: PortModule): string | null {
   if (module === 'report') return Deno.env.get('INTRANET_REPORT_API_KEY') ?? null;
   if (module === 'mantap') return Deno.env.get('INTRANET_MANTAP_API_KEY') ?? null;
-  return Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY') || null;
+  return Deno.env.get('INTRANET_PORT_API_KEY') || Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY') || null;
 }
 
 /** The Intranet's master data for one module's icon (gw-master-data, with that module's API key). */
