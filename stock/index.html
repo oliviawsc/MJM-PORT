@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-37';
+var APP_BUILD = '20261125-38';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2658,7 +2658,6 @@ var APP_BUILD = '20261124-37';
 
             <!-- Panel: No. of Harvesters -->
             <div id="ffbPanel_harvesters" class="pt-6" style="display:none;">
-<<<<<<< HEAD
                 <div class="flex items-center gap-3 mb-4">
                     <label class="text-sm font-semibold text-blue-800">Year</label>
                     <select id="ffbHarvesterYearSel" onchange="renderFfbHarvestersInput()"
@@ -2682,8 +2681,6 @@ var APP_BUILD = '20261124-37';
                         </table>
                     </div>
                 </div>
-=======
->>>>>>> origin/main
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
                     <h3 class="text-base font-bold text-blue-800 mb-3">Summary No. of Harvesters</h3>
                     <div class="overflow-x-auto">
@@ -4577,20 +4574,10 @@ async function _executeSyncForEstate(key, estate, data) {
         }
 
         if (data.length > 0) {
-<<<<<<< HEAD
             const tagged = data.map(r => {
                 const rec = { ...r, estate };
-                delete rec.picture;                          // pictures are local-only
-                if (rec.created_at == null) delete rec.created_at; // let DB default apply
-=======
-            // Strip picture blobs (payload size) and null created_at (explicit null
-            // overrides the DB DEFAULT, causing a not-null constraint violation for
-            // old records that never had created_at set in localStorage).
-            const tagged = data.map(function(r) {
-                var rec = Object.assign({}, r, { estate: estate });
                 delete rec.picture;
                 if (rec.created_at == null) delete rec.created_at;
->>>>>>> origin/main
                 return rec;
             });
             const { error: upErr } = await supabaseClient
@@ -17859,7 +17846,6 @@ var MR_MONTH_NAMES = ['January','February','March','April','May','June','July','
 var _ffbShortMo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var _ffbActiveTab = 'harvest';
 var _ffbAllRows = { estate: '', rows: [], loaded: false };
-<<<<<<< HEAD
 // Cache for port_ffb_production rows (ffb_target, harvester_target)
 var _ffbProdRows = { estate: '', rows: [], loaded: false };
 
@@ -17883,7 +17869,8 @@ function _ffbProdUpdateCache(payload) {
     var idx = _ffbProdRows.rows.findIndex(function(r){return r.year===payload.year&&r.month===payload.month;});
     if (idx >= 0) _ffbProdRows.rows[idx] = Object.assign({}, _ffbProdRows.rows[idx], payload);
     else { _ffbProdRows.rows.push(payload); _ffbProdRows.rows.sort(function(a,b){return a.year!==b.year?a.year-b.year:a.month-b.month;}); }
-=======
+}
+
 var _ffbExtraYears = []; // years added by user via "+ Add Year"
 
 function ffbAddYear(tab) {
@@ -17898,7 +17885,6 @@ function ffbAddYear(tab) {
     else if (tab === 'grading') renderFfbGradingTab();
     else if (tab === 'target') renderFfbTargetTab();
     else renderFfbGradingTab();
->>>>>>> origin/main
 }
 
 async function ffbLoadAllRows(estate) {
