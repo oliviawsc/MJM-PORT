@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-54';
+var APP_BUILD = '20261125-55';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -18067,38 +18067,34 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     });
     var mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var monthLabel = mn[month - 1] + ' ' + year;
-    // Sticky style helpers — explicit backgrounds prevent bleed-through
-    var S = {
-        hdrCorner: 'position:sticky;top:0;left:0;z-index:5;background:#ccfbf1;',
-        hdr:       'position:sticky;top:0;z-index:4;background:#ccfbf1;',
-        areaCorner:'position:sticky;top:33px;left:0;z-index:3;background:#f0fdfa;',
-        area:      'position:sticky;top:33px;z-index:2;background:#f0fdfa;',
-        col:       'position:sticky;left:0;z-index:1;background:#ffffff;',
-        colTeal:   'position:sticky;left:0;z-index:1;background:#f0fdfa;',
-        colOrange: 'position:sticky;left:0;z-index:1;background:#fff7ed;'
-    };
+    // thead gets its own stacking context (z-index:2) so it always paints above tbody rows.
+    // tbody gets z-index:1. Within tbody, Area row corner uses higher z-index for left+top sticky.
     var html = '<table class="min-w-full text-xs" style="border-collapse:separate;border-spacing:0;white-space:nowrap;">';
-    // Header row
-    html += '<thead><tr>';
-    html += '<th class="px-3 py-2 text-left border border-teal-200 font-semibold text-teal-800 min-w-[110px]" style="' + S.hdrCorner + '">' + _ffbEscHtml(monthLabel) + '</th>';
-    blocks.forEach(function(b) { html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold text-teal-800 min-w-[80px]" style="' + S.hdr + '">' + _ffbEscHtml(b.block_name) + '</th>'; });
-    html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold text-teal-800 min-w-[80px]" style="' + S.hdr + '">Total</th>';
-    html += '</tr></thead><tbody>';
-    // Area (Ha) row — sticky at top just below header
+    // ── Header row ──
+    html += '<thead style="position:relative;z-index:2;"><tr>';
+    html += '<th class="px-3 py-2 text-left border border-teal-200 font-semibold text-teal-800 min-w-[110px]" style="position:sticky;top:0;left:0;background:#ccfbf1;">' + _ffbEscHtml(monthLabel) + '</th>';
+    blocks.forEach(function(b) {
+        html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold text-teal-800 min-w-[80px]" style="position:sticky;top:0;background:#ccfbf1;">' + _ffbEscHtml(b.block_name) + '</th>';
+    });
+    html += '<th class="px-2 py-2 text-center border border-teal-200 font-semibold text-teal-800 min-w-[80px]" style="position:sticky;top:0;background:#ccfbf1;">Total</th>';
+    html += '</tr></thead>';
+    // ── Body ── (z-index:1 keeps every tbody row below the thead stacking context)
+    html += '<tbody style="position:relative;z-index:1;">';
+    // Area (Ha) row — sticky just below header; corner is also sticky-left
     var totalHa = 0;
     html += '<tr>';
-    html += '<td class="px-3 py-1.5 border border-teal-200 text-teal-700 font-semibold text-xs" style="' + S.areaCorner + '">Area (Ha)</td>';
+    html += '<td class="px-3 py-1.5 border border-teal-200 text-teal-700 font-semibold text-xs" style="position:sticky;top:33px;left:0;z-index:2;background:#f0fdfa;">Area (Ha)</td>';
     blocks.forEach(function(b) {
         var ha = parseFloat(b.hectares) || 0;
         totalHa += ha;
-        html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700" style="' + S.area + '">' + ha.toFixed(2) + '</td>';
+        html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700" style="position:sticky;top:33px;z-index:1;background:#f0fdfa;">' + ha.toFixed(2) + '</td>';
     });
-    html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700 font-semibold" style="' + S.area + '">' + totalHa.toFixed(2) + '</td>';
+    html += '<td class="px-2 py-1.5 border border-teal-200 text-center text-teal-700 font-semibold" style="position:sticky;top:33px;z-index:1;background:#f0fdfa;">' + totalHa.toFixed(2) + '</td>';
     html += '</tr>';
     // Day rows
     for (var d = 1; d <= daysInMonth; d++) {
-        html += '<tr class="hover:bg-gray-50">';
-        html += '<td class="px-3 py-0.5 border border-gray-200 text-center font-medium text-gray-600 text-xs" style="' + S.col + '">' + d + '</td>';
+        html += '<tr>';
+        html += '<td class="px-3 py-0.5 border border-gray-200 text-center font-medium text-gray-600 text-xs" style="position:sticky;left:0;z-index:1;background:#fff;">' + d + '</td>';
         blocks.forEach(function(b) {
             var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
             var val = (lookup[d] && lookup[d][b.block_name] != null) ? lookup[d][b.block_name] : '';
@@ -18106,26 +18102,26 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
             html += '<input type="number" min="0" step="0.01" id="ffbBY_' + d + '_' + colKey + '" data-day="' + d + '" value="' + (val !== '' ? val : '') + '" oninput="ffbBlockYieldRowChanged(' + d + ')" class="w-full px-1 py-0.5 text-center text-xs border-0 focus:outline-none focus:bg-teal-50 bg-transparent min-w-[72px]">';
             html += '</td>';
         });
-        html += '<td id="ffbBYRowTotal_' + d + '" class="px-2 py-1 border border-gray-200 text-center text-gray-700 font-medium bg-white">0.00</td>';
+        html += '<td id="ffbBYRowTotal_' + d + '" class="px-2 py-1 border border-gray-200 text-center text-gray-700 font-medium" style="background:#fff;">0.00</td>';
         html += '</tr>';
     }
     // Total (MT) row
     html += '<tr>';
-    html += '<td class="px-3 py-2 border border-teal-200 text-teal-800 font-bold text-xs" style="' + S.colTeal + '">Total (MT)</td>';
+    html += '<td class="px-3 py-2 border border-teal-200 text-teal-800 font-bold text-xs" style="position:sticky;left:0;z-index:1;background:#f0fdfa;">Total (MT)</td>';
     blocks.forEach(function(b) {
         var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
-        html += '<td id="ffbBYColTotal_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-teal-800 font-semibold bg-teal-50">0.00</td>';
+        html += '<td id="ffbBYColTotal_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-teal-800 font-semibold" style="background:#f0fdfa;">0.00</td>';
     });
-    html += '<td id="ffbBYGrandTotal" class="px-2 py-2 border border-teal-200 text-center text-teal-900 font-bold bg-teal-50">0.00</td>';
+    html += '<td id="ffbBYGrandTotal" class="px-2 py-2 border border-teal-200 text-center text-teal-900 font-bold" style="background:#f0fdfa;">0.00</td>';
     html += '</tr>';
     // Yield/Ha row
     html += '<tr>';
-    html += '<td class="px-3 py-2 border border-teal-200 text-orange-700 font-bold text-xs" style="' + S.colOrange + '">Yield/Ha</td>';
+    html += '<td class="px-3 py-2 border border-teal-200 text-orange-700 font-bold text-xs" style="position:sticky;left:0;z-index:1;background:#fff7ed;">Yield/Ha</td>';
     blocks.forEach(function(b) {
         var colKey = b.block_name.replace(/[^a-zA-Z0-9]/g, '_');
-        html += '<td id="ffbBYYieldHa_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-orange-700 font-semibold bg-orange-50">0.00</td>';
+        html += '<td id="ffbBYYieldHa_' + colKey + '" class="px-2 py-2 border border-teal-200 text-center text-orange-700 font-semibold" style="background:#fff7ed;">0.00</td>';
     });
-    html += '<td id="ffbBYGrandYieldHa" class="px-2 py-2 border border-teal-200 text-center text-orange-900 font-bold bg-orange-50">0.00</td>';
+    html += '<td id="ffbBYGrandYieldHa" class="px-2 py-2 border border-teal-200 text-center text-orange-900 font-bold" style="background:#fff7ed;">0.00</td>';
     html += '</tr></tbody></table>';
     container.innerHTML = html;
     _ffbBlockYieldUpdateAll(blocks, daysInMonth);
