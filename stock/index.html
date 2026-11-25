@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-42';
+var APP_BUILD = '20261125-43';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -17852,10 +17852,10 @@ var _ffbProdRows = { estate: '', rows: [], loaded: false };
 async function ffbLoadProdRows(estate) {
     if (_ffbProdRows.estate === estate && _ffbProdRows.loaded) return _ffbProdRows.rows;
     _ffbProdRows = { estate: estate, rows: [], loaded: false };
-    if (!estate || typeof supabase === 'undefined') { _ffbProdRows.loaded = true; return []; }
+    if (!estate || typeof supabaseClient === 'undefined') { _ffbProdRows.loaded = true; return []; }
     var curYear = new Date().getFullYear();
     try {
-        var resp = await supabase.from('port_ffb_production').select('*')
+        var resp = await supabaseClient.from('port_ffb_production').select('*')
             .eq('estate', estate).gte('year', 2015).lte('year', curYear + 1)
             .order('year', { ascending: true }).order('month', { ascending: true });
         if (resp.error) console.warn('[FFB prod] load', resp.error);
