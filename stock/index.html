@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-48';
+var APP_BUILD = '20261125-49';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2778,49 +2778,16 @@ var APP_BUILD = '20261125-48';
 
             <!-- Panel: FFB Yield by Block -->
             <div id="ffbPanel_blockyield" class="pt-4" style="display:none;">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
-                        <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
-                        <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
-                    </div>
-                    <button onclick="ffbOpenBlockSetupPage()" class="flex items-center gap-1.5 text-sm font-semibold bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded-lg shadow-sm">⚙ Block Setup</button>
+                <div class="flex items-center gap-2 mb-4">
+                    <button onclick="ffbBlockYieldPrevMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">‹ Prev</button>
+                    <span id="ffbBlockYieldMonthLabel" class="font-bold text-teal-800 text-base min-w-[150px] text-center">-</span>
+                    <button onclick="ffbBlockYieldNextMonth()" class="text-sm font-semibold bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-300">Next ›</button>
                 </div>
                 <div id="ffbBlockYieldTableContainer" class="overflow-x-auto bg-white rounded-xl shadow p-4 mb-4">
                     <p class="text-gray-400 py-4 text-center text-sm">Select an estate to load data.</p>
                 </div>
                 <div class="flex justify-end">
                     <button onclick="ffbSaveBlockYieldMonth()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold text-sm shadow">💾 Save</button>
-                </div>
-            </div>
-
-            <!-- Panel: Block Setup (sub-page) -->
-            <div id="ffbPanel_blockSetup" class="pt-4" style="display:none;">
-                <div class="flex items-center gap-3 mb-4">
-                    <button onclick="ffbCloseBlockSetupPage()" class="flex items-center gap-1 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300">← Back</button>
-                    <h2 class="text-xl font-bold text-teal-700">⚙ Block Setup</h2>
-                </div>
-                <p class="text-xs text-teal-700 mb-3">Define blocks and their planted areas (Ha) for this estate. These are used to calculate Yield/Ha in the Yield by Block table.</p>
-                <div class="bg-white p-4 rounded-xl shadow mb-4">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm mb-4" style="border-collapse:collapse;">
-                            <thead class="bg-teal-100 text-teal-800">
-                                <tr>
-                                    <th class="px-3 py-2 text-left border border-teal-200">Block Name</th>
-                                    <th class="px-3 py-2 text-center border border-teal-200 w-32">Area (Ha)</th>
-                                    <th class="px-2 py-2 text-center border border-teal-200 w-36">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ffbBlockSetupBody">
-                                <tr><td colspan="3" class="text-center text-gray-400 py-4 text-sm">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 mt-2 pt-3 border-t border-gray-200">
-                        <input type="text" id="ffbNewBlockName" placeholder="Block name e.g. Block 1" class="border border-gray-300 rounded px-2 py-1.5 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-teal-400">
-                        <input type="number" id="ffbNewBlockHa" placeholder="Area (Ha)" min="0" step="0.01" class="border border-gray-300 rounded px-2 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-teal-400">
-                        <button onclick="ffbAddBlock()" class="text-xs bg-teal-600 text-white px-3 py-1.5 rounded hover:bg-teal-700 font-semibold">+ Add Block</button>
-                    </div>
                 </div>
             </div>
 
@@ -17999,8 +17966,6 @@ function switchFfbTab(tab) {
     if (targetPanel) targetPanel.style.display = 'none';
     var harvTgtPanel = document.getElementById('ffbPanel_harvesterTarget');
     if (harvTgtPanel) harvTgtPanel.style.display = 'none';
-    var blockSetupPanel = document.getElementById('ffbPanel_blockSetup');
-    if (blockSetupPanel) blockSetupPanel.style.display = 'none';
     ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
         var btn = document.getElementById('ffbTabBtn_' + t);
         var panel = document.getElementById('ffbPanel_' + t);
@@ -18043,10 +18008,12 @@ async function ffbLoadBlocks(estate) {
     _ffbBlocks = { estate: estate, blocks: [], loaded: false };
     if (!estate || typeof supabaseClient === 'undefined') { _ffbBlocks.loaded = true; return []; }
     try {
-        var resp = await supabaseClient.from('port_ffb_blocks').select('*')
-            .eq('estate', estate).order('sort_order', {ascending:true}).order('id', {ascending:true});
+        var resp = await supabaseClient.from('port_locations').select('id,name,area')
+            .eq('estate', estate).order('name', {ascending:true});
         if (resp.error) throw resp.error;
-        _ffbBlocks.blocks = resp.data || [];
+        _ffbBlocks.blocks = (resp.data || []).map(function(r) {
+            return { id: r.id, block_name: r.name, hectares: r.area };
+        });
     } catch(e) { console.error('ffbLoadBlocks error:', e); }
     _ffbBlocks.loaded = true;
     return _ffbBlocks.blocks;
@@ -18089,7 +18056,7 @@ function _renderFfbBlockYieldTable(blocks, yieldRows, year, month) {
     var container = document.getElementById('ffbBlockYieldTableContainer');
     if (!container) return;
     if (!blocks || !blocks.length) {
-        container.innerHTML = '<div class="text-center py-8 text-gray-400"><p class="mb-3">No blocks defined yet.</p><button onclick="ffbOpenBlockSetupPage()" class="text-sm bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 font-semibold">⚙ Setup Blocks</button></div>';
+        container.innerHTML = '<p class="text-gray-400 py-8 text-center text-sm">No locations found for this estate. Add blocks in the Locations module first.</p>';
         return;
     }
     var daysInMonth = new Date(year, month, 0).getDate();
@@ -18234,104 +18201,6 @@ function ffbBlockYieldNextMonth() {
     if (_ffbBlockYieldMonth > 12) { _ffbBlockYieldMonth = 1; _ffbBlockYieldYear++; }
     _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
     renderFfbBlockYieldTab();
-}
-
-function ffbOpenBlockSetupPage() {
-    ['harvest','harvesters','grading','blockyield'].forEach(function(t) {
-        var p = document.getElementById('ffbPanel_' + t); if (p) p.style.display = 'none';
-    });
-    ['ffbPanel_target','ffbPanel_harvesterTarget'].forEach(function(id) {
-        var p = document.getElementById(id); if (p) p.style.display = 'none';
-    });
-    var tabBar = document.getElementById('ffbTabBar'); if (tabBar) tabBar.style.display = 'none';
-    var setupPanel = document.getElementById('ffbPanel_blockSetup'); if (setupPanel) setupPanel.style.display = '';
-    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
-    if (estate) ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
-    else ffbRenderBlockSetup([]);
-}
-
-function ffbCloseBlockSetupPage() {
-    var setupPanel = document.getElementById('ffbPanel_blockSetup'); if (setupPanel) setupPanel.style.display = 'none';
-    _ffbBlocks = { estate: '', blocks: [], loaded: false };
-    switchFfbTab('blockyield');
-}
-
-function ffbRenderBlockSetup(blocks) {
-    var tbody = document.getElementById('ffbBlockSetupBody');
-    if (!tbody) return;
-    if (!blocks || !blocks.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-400 py-4 text-sm">No blocks defined. Add blocks below.</td></tr>';
-        return;
-    }
-    var html = '';
-    blocks.forEach(function(b) {
-        html += '<tr>';
-        html += '<td class="px-3 py-2 border border-teal-200"><input type="text" id="ffbBlkName_' + b.id + '" value="' + _ffbEscHtml(b.block_name) + '" class="border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-teal-400"></td>';
-        html += '<td class="px-3 py-2 border border-teal-200 text-center"><input type="number" min="0" step="0.01" id="ffbBlkHa_' + b.id + '" value="' + (parseFloat(b.hectares)||0) + '" class="border border-gray-200 rounded px-2 py-1 text-sm w-24 text-center focus:outline-none focus:ring-1 focus:ring-teal-400"></td>';
-        html += '<td class="px-2 py-2 border border-teal-200 text-center whitespace-nowrap">';
-        html += '<button onclick="ffbSaveBlockEdit(' + b.id + ')" class="text-xs bg-teal-500 text-white px-2 py-1 rounded hover:bg-teal-600 mr-1">Save</button>';
-        html += '<button onclick="ffbDeleteBlock(' + b.id + ')" class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>';
-        html += '</td></tr>';
-    });
-    tbody.innerHTML = html;
-}
-
-async function ffbAddBlock() {
-    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
-    if (!estate) { alert('Please select an estate first.'); return; }
-    var nameEl = document.getElementById('ffbNewBlockName');
-    var haEl = document.getElementById('ffbNewBlockHa');
-    if (!nameEl || !haEl) return;
-    var name = nameEl.value.trim();
-    var ha = parseFloat(haEl.value) || 0;
-    if (!name) { alert('Please enter a block name.'); nameEl.focus(); return; }
-    if (typeof supabaseClient === 'undefined') { alert('Not connected.'); return; }
-    var currentBlocks = _ffbBlocks.loaded ? _ffbBlocks.blocks : [];
-    var maxOrder = currentBlocks.length ? Math.max.apply(null, currentBlocks.map(function(b){return b.sort_order||0;})) : 0;
-    try {
-        var resp = await supabaseClient.from('port_ffb_blocks').insert({ estate: estate, block_name: name, hectares: ha, sort_order: maxOrder + 1 }).select();
-        if (resp.error) throw resp.error;
-        nameEl.value = ''; haEl.value = '';
-        _ffbBlocks = { estate: '', blocks: [], loaded: false };
-        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
-    } catch(e) { alert('Error adding block: ' + e.message); }
-}
-
-async function ffbSaveBlockEdit(id) {
-    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
-    var nameEl = document.getElementById('ffbBlkName_' + id);
-    var haEl = document.getElementById('ffbBlkHa_' + id);
-    if (!nameEl || !haEl) return;
-    var name = nameEl.value.trim();
-    var ha = parseFloat(haEl.value) || 0;
-    if (!name) { alert('Block name cannot be empty.'); nameEl.focus(); return; }
-    if (typeof supabaseClient === 'undefined') return;
-    try {
-        var resp = await supabaseClient.from('port_ffb_blocks').update({ block_name: name, hectares: ha }).eq('id', id).eq('estate', estate);
-        if (resp.error) throw resp.error;
-        _ffbBlocks = { estate: '', blocks: [], loaded: false };
-        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
-        showSyncSuccess('Block saved.');
-    } catch(e) { alert('Error updating block: ' + e.message); }
-}
-
-async function ffbDeleteBlock(id) {
-    if (!confirm('Delete this block? All yield data for this block will also be deleted.')) return;
-    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
-    if (typeof supabaseClient === 'undefined') return;
-    var blockName = '';
-    if (_ffbBlocks.loaded) { var bx = _ffbBlocks.blocks.find(function(x){return x.id===id;}); if (bx) blockName = bx.block_name; }
-    try {
-        if (blockName) {
-            var r2 = await supabaseClient.from('port_ffb_block_yield').delete().eq('estate',estate).eq('block_name',blockName);
-            if (r2.error) console.warn('Delete yield error:', r2.error);
-        }
-        var resp = await supabaseClient.from('port_ffb_blocks').delete().eq('id',id).eq('estate',estate);
-        if (resp.error) throw resp.error;
-        _ffbBlocks = { estate: '', blocks: [], loaded: false };
-        _ffbBlockYieldData = { estate: '', year: 0, month: 0, rows: [], loaded: false };
-        ffbLoadBlocks(estate).then(ffbRenderBlockSetup);
-    } catch(e) { alert('Error deleting block: ' + e.message); }
 }
 
 function renderFfbModule() {
