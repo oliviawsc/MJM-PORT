@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261125-40';
+var APP_BUILD = '20261125-41';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -2658,26 +2658,6 @@ var APP_BUILD = '20261125-40';
 
             <!-- Panel: No. of Harvesters -->
             <div id="ffbPanel_harvesters" class="pt-6" style="display:none;">
-                <div class="flex items-center gap-3 mb-4">
-                    <label class="text-sm font-semibold text-blue-800">Year</label>
-                    <select id="ffbHarvesterYearSel" onchange="renderFfbHarvestersInput()"
-                        class="text-sm text-blue-800 bg-white border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow mb-6">
-                    <h3 class="text-base font-bold text-blue-800 mb-3">Monthly Harvesters Input</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm" style="border-collapse:collapse;">
-                            <thead class="bg-blue-100 text-blue-800">
-                                <tr>
-                                    <th class="px-3 py-2 text-center border border-blue-200">Month</th>
-                                    <th class="px-3 py-2 text-center border border-blue-200">No. of Harvesters</th>
-                                    <th class="px-3 py-2 text-center border border-blue-200">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ffbHarvestersInputBody"></tbody>
-                        </table>
-                    </div>
-                </div>
                 <div class="bg-white p-4 rounded-xl shadow mb-6">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-base font-bold text-blue-800">Summary No. of Harvesters</h3>
