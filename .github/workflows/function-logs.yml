@@ -1,0 +1,48 @@
+# Prints the recent Edge Function logs of the Supabase project, so a sign-in
+# problem can be read from GitHub (Actions tab → "Function logs" → Run workflow)
+# without the Supabase dashboard. Uses the same SUPABASE_ACCESS_TOKEN secret.
+name: Function logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      function:
+        description: 'Function name (empty = all)'
+        default: 'stock-sso'
+      minutes:
+        description: 'How far back, in minutes'
+        default: '120'
+
+env:
+  PROJECT_REF: pxzvayptwpvuvlenmdwp
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Secrets set on the project (names only)
+        run: |
+          curl -sS "https://api.supabase.com/v1/projects/$PROJECT_REF/secrets" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | python3 -c 'import sys,json; print("\n".join(sorted(s["name"] for s in json.load(sys.stdin))))'
+      - name: Deployed functions
+        run: |
+          curl -sS "https://api.supabase.com/v1/projects/$PROJECT_REF/functions" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | python3 -c 'import sys,json; [print(f["slug"], f["status"], "verify_jwt=" + str(f.get("verify_jwt")), f.get("updated_at")) for f in json.load(sys.stdin)]'
+      - name: Requests (status codes)
+        run: |
+          START=$(date -u -d "-${{ github.event.inputs.minutes }} minutes" +%Y-%m-%dT%H:%M:%SZ)
+          FN="${{ github.event.inputs.function }}"
+          SQL="select id, function_edge_logs.timestamp, event_message, r.status_code, r.method, r.pathname, ex.execution_time_ms from function_edge_logs cross join unnest(metadata) as m cross join unnest(m.response) as r cross join unnest(m.request) as req cross join unnest(req.url) as u left join unnest(m.execution) as ex on true where r.pathname like '%${FN}%' order by timestamp desc limit 40"
+          curl -sS -G "https://api.supabase.com/v1/projects/$PROJECT_REF/analytics/endpoints/logs.all" \
+            --data-urlencode "iso_timestamp_start=$START" --data-urlencode "sql=$SQL" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | python3 -c 'import sys,json; d=json.load(sys.stdin); rows=d.get("result",[]); print(json.dumps(d)[:800] if not rows else ""); [print(r.get("timestamp"), r.get("status_code"), r.get("execution_time_ms"), r.get("event_message","")[:160]) for r in rows]'
+      - name: Console output of the function
+        run: |
+          START=$(date -u -d "-${{ github.event.inputs.minutes }} minutes" +%Y-%m-%dT%H:%M:%SZ)
+          FN="${{ github.event.inputs.function }}"
+          SQL="select id, function_logs.timestamp, event_message, m.level, m.function_id from function_logs cross join unnest(metadata) as m order by timestamp desc limit 60"
+          curl -sS -G "https://api.supabase.com/v1/projects/$PROJECT_REF/analytics/endpoints/logs.all" \
+            --data-urlencode "iso_timestamp_start=$START" --data-urlencode "sql=$SQL" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | python3 -c 'import sys,json; d=json.load(sys.stdin); rows=d.get("result",[]); print(json.dumps(d)[:800] if not rows else ""); [print(r.get("timestamp"), r.get("level"), (r.get("event_message") or "")[:400].replace("\n"," | ")) for r in rows]'
