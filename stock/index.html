@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261124-32';
+var APP_BUILD = '20261124-33';
 (function () {
     // If this constant is missing (old cached file) and the URL doesn't already
     // have the refresh param, redirect to ?_vr=1 — a URL not in the browser
@@ -17165,7 +17165,7 @@ function mgmtReportFigures(estate, ym) {
     // Sasaran  : cumulative kg/palm target — each round's kgPerPalm added from its target month onward.
     // Pencapaian: same, but a round only counts when its % applied (actual ÷ budget) >= 95 %.
     const _mainRounds = (typeof manuringRounds !== 'undefined' ? manuringRounds : [])
-        .filter((r) => { const n = (r.name || '').toUpperCase(); return n.indexOf('INFILLING') === -1 && /\bP\d+\b/.test(n); });
+        .filter((r) => { const n = (r.name || '').toUpperCase(); return n.indexOf('INFILLING') === -1; });
     if (_mainRounds.length > 0) {
         const _bSasaran     = new Array(12).fill(0);
         const _bPencapaian  = new Array(12).fill(0);
