@@ -142,6 +142,7 @@
         const chips = [];
         const current = ctx.gw_company_name || ctx.gw_company || '';
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
+        if (!companies.length && session) chips.push('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.');
         if (companies.length) {
             pick.style.display = '';
             sel.innerHTML = (companies.includes(current) ? '' : '<option value="">— Choose company —</option>') +
@@ -213,8 +214,11 @@
             error = r.error || '';
         }
         cleanUrl();
-        // Company: the one the Intranet sent, else the one chosen here last time
-        companies = await loadCompanies();
+        // Company list: the companies the Intranet gave this person (saved in the
+        // session at sign-in); the Super Admin sees every synced company.
+        companies = (session && Array.isArray(session.companies) && session.companies.length)
+            ? session.companies
+            : (session && session.role === 'superadmin') ? await loadCompanies() : [];
         if (!ctx.gw_company_name && !ctx.gw_company) {
             let last = ''; try { last = localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
             if (last && companies.includes(last)) pickCompany(last);

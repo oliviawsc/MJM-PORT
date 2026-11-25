@@ -9,7 +9,7 @@
 import {
   ApiError, anonClient, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, toAuthEmail, USERS_TABLE, type UserRow,
 } from '../_shared/common.ts';
-import { syncEstatesFromIntranet } from '../_shared/masterSync.ts';
+import { companiesForUser, intranetMasterData, syncEstatesFromIntranet } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
 
@@ -102,7 +102,7 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow) {
+function toSession(row: UserRow, companies: string[]) {
   const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL ? 'superadmin' : roleOf(row);
   return {
     id: row.id,
@@ -112,6 +112,8 @@ function toSession(row: UserRow) {
     estate: '',
     role,
     permissions: role === 'superadmin' ? ALL_SECTION_IDS : (row.permissions ?? {}),
+    // Companies this person was given for the Stock icon in the Intranet (business + company)
+    companies,
   };
 }
 
@@ -130,8 +132,17 @@ Deno.serve(handler(async (_req, body) => {
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
 
   const auth = await issueSession(row);
-  await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString() }).eq('id', row.id);
+  // The companies the Intranet gives this person for the Stock icon; remembered on the user row
+  let companies: string[] = [];
+  try {
+    const md = await intranetMasterData();
+    companies = await companiesForUser(email, md);
+    await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString(), companies }).eq('id', row.id);
+  } catch (e) {
+    console.warn('[stock-sso] companies skipped:', e instanceof Error ? e.message : e);
+    await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString() }).eq('id', row.id);
+  }
   // Keep the estate list equal to the Intranet's companies (at most once every 10 minutes)
   try { await syncEstatesFromIntranet(false); } catch (e) { console.warn('[stock-sso] estate sync skipped:', e instanceof Error ? e.message : e); }
-  return { session: toSession(row), auth, module };
+  return { session: toSession(row, companies), auth, module };
 }));

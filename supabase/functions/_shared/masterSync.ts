@@ -56,21 +56,50 @@ export function matchEstate(hints: string[], names: string[]): string {
   return best.length === 1 ? best[0] : '';
 }
 
-/** The estate list the Intranet wants Stock to have. */
-async function wantedFromIntranet(): Promise<Wanted[]> {
+interface MasterData {
+  companies: Company[]; links: { group_id: string; company_id: string }[]; estates?: Estate[];
+  module_company_ids: string[]; module_business_ids: string[];
+  module_users?: { id: string; email: string; full_name: string | null; is_admin: boolean; company_ids: string[] }[];
+}
+
+/** The Intranet's master data for the Stock icon (gw-master-data, with this module's API key). */
+export async function intranetMasterData(): Promise<MasterData> {
   const key = Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
   if (!key) throw new Error('err_sso_not_set_up');
   const res = await fetch(`${INTRANET_URL}/functions/v1/gw-master-data`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-gw-api-key': key }, body: '{}',
   });
   if (!res.ok) throw new Error('intranet_' + res.status);
-  const m = await res.json() as {
-    companies: Company[]; links: { group_id: string; company_id: string }[]; estates?: Estate[];
-    module_company_ids: string[]; module_business_ids: string[];
-  };
+  return await res.json() as MasterData;
+}
+
+/** Companies carrying the Stock icon: tagged directly, or in a business that carries it. */
+function companiesWithIcon(m: MasterData): Set<string> {
   const taggedBiz = new Set(m.module_business_ids ?? []);
   const withIcon = new Set<string>(m.module_company_ids ?? []);
   for (const l of m.links ?? []) if (taggedBiz.has(l.group_id)) withIcon.add(l.company_id);
+  return withIcon;
+}
+
+/** The companies one person may open in Plantation Operation, by name, in the
+ *  Intranet's order: the companies HR gave them in the businesses where they
+ *  have the Stock icon (an Intranet super admin: every company with the icon).
+ *  Unknown person → []. */
+export async function companiesForUser(email: string, m?: MasterData): Promise<string[]> {
+  const md = m ?? await intranetMasterData();
+  const me = (md.module_users ?? []).find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (!me) return [];
+  const ids = new Set(me.company_ids ?? []);
+  return (md.companies ?? [])
+    .filter((c) => c.is_active !== false && ids.has(c.id))
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+    .map((c) => c.name.trim());
+}
+
+/** The estate list the Intranet wants Stock to have. */
+async function wantedFromIntranet(): Promise<Wanted[]> {
+  const m = await intranetMasterData();
+  const withIcon = companiesWithIcon(m);
   const estates = (m.estates ?? []).filter((e) => e.is_active !== false);
   const out: Wanted[] = [];
   let i = 0;
