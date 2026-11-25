@@ -119,6 +119,7 @@
     ];
 
     const params = new URLSearchParams(location.search);
+    const fromIntranetNoToken = !params.get('gw_token') && /^https:\/\/mjmelon\.github\.io/.test(document.referrer || '');
     const ctx = {};
     CTX_KEYS.forEach((k) => { const v = (params.get(k) || '').trim(); if (v) ctx[k] = v; });
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -244,6 +245,7 @@
                 companies.map((c) => '<option value="' + esc(c) + '"' + (c === current ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
         } else pick.style.display = 'none';
         if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>');
+        else if (!session && fromIntranetNoToken) notes.push('<p class="note err">You came from MJM Intranet but no sign-in token arrived, so the Intranet is still opening an old address. In Intranet Admin → Modules → Plantation Operation, set Address (URL) to <b>' + esc(location.origin + location.pathname) + '</b>.</p>');
         else if (!session) notes.push('<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>');
         document.getElementById('note').innerHTML = notes.join('');
         document.getElementById('grid').innerHTML = orderedModules().map((m) =>
