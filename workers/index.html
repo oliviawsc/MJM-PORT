@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#166534">
+    <title>Worker Manage · Plantation Operation</title>
+    <link rel="icon" type="image/png" href="../public/palm-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="workers.css">
+</head>
+<body>
+    <div class="bg"></div>
+    <header class="top"><div class="in">
+        <div class="left">
+            <span class="back-slot"><a class="back" id="back" href="../" title="Back to Plantation Operation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Plantation Operation</span></a></span>
+            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect" aria-label="Company"></select></label>
+        </div>
+        <div class="title">Worker Manage</div>
+        <div class="who" id="who"></div>
+    </div></header>
+
+    <main class="center">
+        <div id="note"></div>
+        <div class="grid" id="grid">
+            <a class="tile" id="tMobile" href="https://mjmelon.github.io/Mantap/#/m">
+                <span class="ic" style="background:#0F766E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
+                <h2>Mantap mobile view<small>Workers sign in here</small></h2>
+            </a>
+            <a class="tile" id="tList" href="list.html">
+                <span class="ic" style="background:#1D4ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <h2>Worker list<small>This company's workers</small></h2>
+            </a>
+        </div>
+    </main>
+
+<script src="common.js"></script>
+<script>
+(function () {
+    const W = window.PortWorkers;
+    const draw = () => {
+        W.drawTop('../');
+        const n = document.getElementById('note');
+        if (!W.session) { n.innerHTML = '<p class="note warn">You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.</p>'; document.getElementById('grid').style.display = 'none'; }
+        else if (!W.company) n.innerHTML = '<p class="note warn">Choose a company in the top bar.</p>';
+        else n.innerHTML = '';
+    };
+    draw();
+    W.onCompanyChange(draw);
+})();
+</script>
+</body>
+</html>
