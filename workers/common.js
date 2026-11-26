@@ -79,7 +79,19 @@
         onCompanyChange: (f) => listeners.push(f),
         /** Locations of the chosen company (the company itself when none is linked). */
         locations: () => (company && session && session.company_estates && session.company_estates[company.id]) || (company ? [company.name] : []),
-        /** Worker Manage is for the Super Admin and Admins of the chosen company. */
-        canManage: () => !!session && (session.role === 'superadmin' || session.role === 'admin'),
+        /** Worker Manage, as set in PORT → User Access for the chosen company:
+         *  Super Admin and Admins always; others with Worker Manage = View / Edit. */
+        canView: () => {
+            if (!session) return false;
+            if (session.role === 'superadmin' || session.role === 'admin') return true;
+            const p = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+            return p.workers === 'view' || p.workers === 'edit';
+        },
+        canEdit: () => {
+            if (!session) return false;
+            if (session.role === 'superadmin' || session.role === 'admin') return true;
+            const p = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+            return p.workers === 'edit';
+        },
     };
 })();

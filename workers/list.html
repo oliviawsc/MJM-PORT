@@ -28,19 +28,18 @@
     <main>
         <div id="note"></div>
         <div class="bar" id="bar" style="display:none">
-            <input class="input search" id="q" type="search" placeholder="Search name or login ID" autocomplete="off">
+            <input class="input search" id="q" type="search" placeholder="Search" autocomplete="off">
             <select id="loc" aria-label="Location" style="display:none"></select>
-            <span class="sp"></span>
-            <span class="muted" id="count" style="font-size:13px"></span>
         </div>
         <div class="wrap" id="wrap" style="display:none">
             <table class="wl">
-                <thead><tr id="head"></tr></thead>
+                <thead id="head"></thead>
                 <tbody id="rows"></tbody>
             </table>
         </div>
     </main>
 
+    <!-- Edit worker profile -->
     <div class="modal" id="editModal"><div class="dlg">
         <h2 id="eName"></h2>
         <div class="muted" id="eId" style="font-size:13px"></div>
@@ -50,6 +49,12 @@
             <select id="eType"><option value="">— Not set —</option><option value="local">Local</option><option value="foreign">Foreign</option></select></label>
         <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="eSave">Save</button></div>
     </div></div>
+
+    <!-- View worker profile -->
+    <div class="modal" id="viewModal"><div class="dlg profile" role="dialog" aria-modal="true" aria-labelledby="pfName">
+        <div class="pf-top"><h2 id="pfName"></h2><button class="pf-x" type="button" data-close aria-label="Close">&times;</button></div>
+        <div class="pf-body" id="pfBody"></div>
+    </div></div>
     <div class="toast" id="toast"></div>
 
 <script src="common.js"></script>
@@ -58,41 +63,20 @@
     const W = window.PortWorkers, esc = W.esc, $ = (id) => document.getElementById(id);
     const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
     const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
-    const MANTAP_URL = 'https://mjmelon.github.io/Mantap/';
     const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = 'none'), 2600); };
     const ERR = {
-        err_forbidden: 'Only the Super Admin and this company\'s Admins can open the worker list.',
+        err_forbidden: 'You do not have access to Worker Manage in this company. Ask your Admin to set it in User Access.',
         err_invalid: 'Something in the form is not valid.',
         err_network: 'Could not connect. Please try again.',
     };
     const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, KEY) : null;
 
-    // Columns. Name, Gender, Type now; the grey ones are built later.
-    const COLS = [
-        { k: 'name', label: 'Name', cls: 'c-name' },
-        { k: 'gender', label: 'Gender' },
-        { k: 'type', label: 'Type' },
-        { k: 'login_id', label: 'MANTAP Login ID', later: true },
-        { k: 'login_pin', label: 'MANTAP Login PIN', later: true },
-        { k: 'join', label: 'Join Date', later: true },
-        { k: 'claim1', label: '1st Recruitment Claim', later: true },
-        { k: 'claim2', label: '2nd Recruitment Claim', later: true },
-        { k: 'claim3', label: '3rd Recruitment Claim', later: true },
-        { k: 'passport', label: 'Passport Number', later: true },
-        { k: 'passport_exp', label: 'Passport Expiry', later: true },
-        { k: 'socso', label: 'SOCSO Number', later: true },
-        { k: 'permit_issued', label: 'Permit Issued Date', later: true },
-        { k: 'levy_exp', label: 'Levy Expiry Date', later: true },
-        { k: 'levy_no', label: 'Levy Number', later: true },
-        { k: 'levy_status', label: 'Levy Status', later: true },
-        { k: 'license_exp', label: 'Labour License Expiry Date', later: true },
-        { k: 'resign', label: 'Resign Date', later: true },
-        { k: 'service', label: 'Service Period', later: true },
-        { k: 'status', label: 'Status', later: true },
-        { k: 'epf', label: 'EPF Claim', later: true },
-        { k: 'remark', label: 'Remark', later: true },
-        { k: 'action', label: 'Action', cls: 'c-act' },
-    ];
+    // Columns, in order. "mantap" = the MANTAP group (light), "soon" = coming later (grey).
+    const MANTAP = [{ k: 'login_id', label: 'Login ID' }, { k: 'login_pin', label: 'Login PIN' }];
+    const SOON = ['Join Date', '1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'Passport Number', 'Passport Expiry',
+        'SOCSO Number', 'Permit Issued Date', 'Levy Expiry Date', 'Levy Number', 'Levy Status', 'Labour License Expiry Date', 'Resign Date',
+        'Service Period', 'Status', 'EPF Claim', 'Remark'];
+    const TOTAL_COLS = 4 + MANTAP.length + SOON.length + 1; // No., Name, Gender, Type … Action
     const LABEL = { male: 'Male', female: 'Female', local: 'Local', foreign: 'Foreign' };
 
     let workers = null, editing = null, loc = '';
@@ -112,6 +96,9 @@
     }
     const note = (html, kind) => { $('note').innerHTML = html ? '<p class="note ' + (kind || 'warn') + '">' + html + '</p>' : ''; };
     const loginId = (email) => String(email || '').replace(/@psms\.app$/i, '');
+    const pill = (v) => v ? '<span class="pill ' + esc(v) + '">' + LABEL[v] + '</span>' : '<span class="unset">Not set</span>';
+    // The PIN is stored scrambled (one-way), so nobody can read it back; it is reset in Mantap
+    const PIN = '<span class="pin" title="Hidden for security. Reset it in Mantap if forgotten.">••••••</span>';
 
     function drawLocations() {
         const list = W.locations();
@@ -120,24 +107,34 @@
         $('loc').innerHTML = '<option value="">All locations</option>' + list.map((n) => '<option' + (n === loc ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
     }
 
-    function cell(c, w) {
-        if (c.later) return '<td class="later">—</td>';
-        if (c.k === 'name') return '<td class="c-name"><b>' + esc(w.name) + '</b><span class="em">' + esc(w.estates.join(', ')) + '</span></td>';
-        if (c.k === 'gender') return '<td>' + (w.gender ? '<span class="pill ' + esc(w.gender) + '">' + LABEL[w.gender] + '</span>' : '<span class="unset">Not set</span>') + '</td>';
-        if (c.k === 'type') return '<td>' + (w.workerType ? '<span class="pill ' + esc(w.workerType) + '">' + LABEL[w.workerType] + '</span>' : '<span class="unset">Not set</span>') + '</td>';
-        if (c.k === 'action') return '<td class="c-act"><div class="acts"><button class="btn sm" data-edit="' + w.id + '">Edit</button><button class="btn sm" data-profile="' + w.id + '">Profile</button></div></td>';
-        return '<td></td>';
+    function drawHead() {
+        $('head').innerHTML =
+            '<tr><th class="c-no" rowspan="2">No.</th><th class="c-name" rowspan="2">Name</th><th rowspan="2">Gender</th><th rowspan="2">Type</th>' +
+            '<th class="grp mantap" colspan="' + MANTAP.length + '">MANTAP</th>' +
+            '<th class="soon" colspan="' + SOON.length + '">Coming soon in worker management system</th>' +
+            '<th class="c-act" rowspan="2">Action</th></tr>' +
+            '<tr>' + MANTAP.map((c) => '<th class="mantap">' + esc(c.label) + '</th>').join('') + SOON.map((l) => '<th class="later">' + esc(l) + '</th>').join('') + '</tr>';
+        // the second header row sticks right under the first one
+        requestAnimationFrame(() => {
+            const h = $('head').rows[0].getBoundingClientRect().height;
+            [...$('head').rows[1].cells].forEach((c) => { c.style.top = h + 'px'; });
+        });
     }
 
     function drawRows() {
-        $('head').innerHTML = COLS.map((c) => '<th class="' + (c.cls || '') + (c.later ? ' later' : '') + '"' + (c.later ? ' title="Coming later"' : '') + '>' + esc(c.label) + '</th>').join('');
         const q = $('q').value.trim().toLowerCase();
         const list = (workers || []).filter((w) =>
             (!q || w.name.toLowerCase().includes(q) || loginId(w.email).toLowerCase().includes(q)) &&
             (!loc || w.estates.includes(loc)));
-        $('count').textContent = list.length + ' of ' + (workers || []).length + ' workers';
-        $('rows').innerHTML = list.length ? list.map((w) => '<tr>' + COLS.map((c) => cell(c, w)).join('') + '</tr>').join('')
-            : '<tr><td class="c-name empty" colspan="1">' + (workers && workers.length ? 'No worker matches.' : 'No workers in ' + esc(W.company.name) + ' yet.') + '</td><td colspan="' + (COLS.length - 1) + '"></td></tr>';
+        $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
+                '<td class="c-no">' + (i + 1) + '</td>' +
+                '<td class="c-name"><b>' + esc(w.name) + '</b><span class="em">' + esc(w.estates.join(', ')) + '</span></td>' +
+                '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
+                '<td class="mantap">' + esc(loginId(w.email)) + '</td><td class="mantap">' + PIN + '</td>' +
+                SOON.map(() => '<td class="later">—</td>').join('') +
+                '<td class="c-act"><div class="acts"><button class="btn sm" data-view="' + w.id + '">View profile</button>' +
+                (W.canEdit() ? '<button class="btn sm" data-edit="' + w.id + '">Edit profile</button>' : '') + '</div></td></tr>').join('')
+            : '<tr><td class="nodata" colspan="' + TOTAL_COLS + '">No data</td></tr>';
     }
 
     async function load() {
@@ -145,8 +142,8 @@
         $('bar').style.display = 'none'; $('wrap').style.display = 'none';
         if (!W.session) return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.');
         if (!W.company) return note('Choose a company in the top bar.');
-        if (!W.canManage()) return note(ERR.err_forbidden);
-        note('Loading ' + esc(W.company.name) + '…', 'info');
+        if (!W.canView()) return note(ERR.err_forbidden);
+        note('Loading…', 'info');
         try {
             const r = await call({ action: 'list' });
             workers = r.workers || [];
@@ -154,17 +151,41 @@
             return note('Could not load workers: ' + esc(ERR[e.message] || e.message), 'err');
         }
         note('');
-        drawLocations();
+        drawLocations(); drawHead();
         $('bar').style.display = ''; $('wrap').style.display = '';
         drawRows();
     }
 
-    // Action: Edit (gender, type) and Profile (the worker's page in Mantap)
+    // ---- View worker profile (floating window)
+    const FACE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+    const field = (k, v) => '<div class="pf-f"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>';
+    function openView(id) {
+        const w = workers.find((x) => x.id === id); if (!w) return;
+        $('pfName').textContent = w.name;
+        const soon = (labels) => labels.map((l) => field(l, '—')).join('');
+        $('pfBody').innerHTML =
+            '<div class="pf-head"><div class="pf-face" title="Photo coming soon"><div>' + FACE + '<small>No photo</small></div></div>' +
+            '<div class="pf-grid">' +
+                field('Gender', w.gender ? LABEL[w.gender] : '<span class="unset">Not set</span>') +
+                field('Type', w.workerType ? LABEL[w.workerType] : '<span class="unset">Not set</span>') +
+                field('MANTAP Login ID', esc(loginId(w.email))) +
+                field('MANTAP Login PIN', PIN) +
+            '</div></div>' +
+            '<div class="pf-sec soon"><h3>Employment <small>Coming soon</small></h3><div class="pf-grid">' + soon(['Join Date', 'Service Period', 'Resign Date', 'Status']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Identity &amp; Work Permit Documents <small>Coming soon</small></h3><div class="pf-grid">' +
+                soon(['Passport Number', 'Passport Expiry', 'Permit Issued Date', 'Labour License Expiry Date', 'Levy Number', 'Levy Status', 'Levy Expiry Date', 'SOCSO Number']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Claims <small>Coming soon</small></h3><div class="pf-grid">' +
+                soon(['1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'EPF Claim']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Remark <small>Coming soon</small></h3><div class="pf-grid">' + field('Remark', '—') + '</div></div>';
+        $('viewModal').classList.add('open');
+    }
+
+    // ---- Edit worker profile (gender, type for now)
     function openEdit(id) {
         const w = workers.find((x) => x.id === id); if (!w) return;
         editing = w;
-        $('eName').textContent = w.name;
-        $('eId').textContent = 'Login ID: ' + loginId(w.email);
+        $('eName').textContent = 'Edit profile · ' + w.name;
+        $('eId').textContent = 'MANTAP Login ID: ' + loginId(w.email);
         $('eGender').value = w.gender || '';
         $('eType').value = w.workerType || '';
         $('editModal').classList.add('open');
@@ -179,19 +200,13 @@
         } catch (e) { toast('Could not save: ' + (ERR[e.message] || (/port_worker_details/.test(e.message) ? 'run the 20261129 SQL in Supabase first' : e.message))); }
         btn.disabled = false; btn.textContent = 'Save';
     };
-    async function openProfile(id) {
-        let hand = '';
-        try {
-            const { data: s } = await sb.auth.getSession();
-            if (s && s.session) hand = '&pt=' + encodeURIComponent(s.session.access_token) + '&pr=' + encodeURIComponent(s.session.refresh_token);
-        } catch (e) {}
-        location.href = MANTAP_URL + '#/portal/workers/' + id + '?co=' + encodeURIComponent(W.company.id) + '&con=' + encodeURIComponent(W.company.name) + hand;
-    }
+
     document.addEventListener('click', (e) => {
+        const vw = e.target.closest('[data-view]'); if (vw) return openView(Number(vw.dataset.view));
         const ed = e.target.closest('[data-edit]'); if (ed) return openEdit(Number(ed.dataset.edit));
-        const pf = e.target.closest('[data-profile]'); if (pf) return openProfile(Number(pf.dataset.profile));
-        if (e.target.closest('[data-close]') || e.target.id === 'editModal') $('editModal').classList.remove('open');
+        if (e.target.closest('[data-close]') || e.target.classList.contains('modal')) document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
     });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open')); });
     $('q').addEventListener('input', () => workers && drawRows());
     $('loc').addEventListener('change', (e) => { loc = e.target.value; drawRows(); });
     W.onCompanyChange(() => { loc = ''; load(); });

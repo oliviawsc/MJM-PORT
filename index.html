@@ -127,7 +127,7 @@
           icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
         { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
           icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
-        { module: 'workers',   title: 'Worker Manage', sub: '(Mantap)', bg: '#1D4ED8', href: 'workers/index.html', admin: true,
+        { module: 'workers',   title: 'Worker Manage', sub: '(Mantap)', bg: '#1D4ED8', href: 'workers/index.html',
           icon: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
         { module: 'access',    title: 'User Access',       bg: '#7C2D12', href: 'access/index.html', admin: true,
           icon: svg('<circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.65-8.65"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/>') },
@@ -140,12 +140,18 @@
         report:    ['mgmtreport'],
         ffbrecord: ['ffbrecord'],
         rainfall:  ['rainfall', 'rainfallreport', 'rainfallsummary'],
+        workers:   ['workers'],
     };
     // May this person open this module card? (set in PORT → User Access)
     function canOpen(session, m) {
         if (!session) return false;
         if (session.role === 'superadmin') return true;
         if (m.admin) return session.role === 'admin';
+        if (m.module === 'workers') { // Worker Manage: Admins, or Worker list = View / Edit in User Access
+            if (session.role === 'admin') return true;
+            const wp = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+            return wp.workers === 'view' || wp.workers === 'edit';
+        }
         const p = session.permissions;
         if (!p || Array.isArray(p)) return true;
         if ((session.role === 'hq_user' || session.role === 'admin') && !p.__configured) return true; // not set yet: view everything
