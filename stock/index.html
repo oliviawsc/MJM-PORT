@@ -1238,7 +1238,7 @@ var APP_BUILD = '20261126-70';
                     Sign in to the Intranet and open the Plantation Operation icon.
                 </p>
                 <p id="loginError" class="hidden"></p>
-                <a id="loginBtn" href="https://mjmelon.github.io/MJM-Intranet/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
+                <a id="loginBtn" href="https://mjm.opispro.com/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
                     <span id="loginBtnText">Go to MJM Intranet</span>
                 </a>
             </div>
@@ -11874,7 +11874,7 @@ function logoutUser() {
     try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
     // Sign out of PORT and of MJM Intranet (no automatic Super Admin sign-in any more)
     supabaseClient.auth.signOut().catch(e => console.warn('[Auth] signOut error', e)).finally(() => {
-        window.location.href = 'https://mjmelon.github.io/MJM-Intranet/?gw_logout=1';
+        window.location.href = 'https://mjm.opispro.com/?gw_logout=1';
     });
 }
 

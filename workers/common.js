@@ -6,7 +6,7 @@
     const SESSION_KEY = 'opp_auth_session';
     const COMPANY_ID_KEY = 'port_company_id';
     const COMPANY_KEY = 'port_company';
-    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+    const INTRANET_URL = 'https://mjm.opispro.com/';
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const LOGOUT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>';
 

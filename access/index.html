@@ -151,7 +151,7 @@
     function logout() {
         localStorage.removeItem(SESSION_KEY);
         try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
-        location.href = 'https://mjmelon.github.io/MJM-Intranet/?gw_logout=1'; // the Intranet signs out too
+        location.href = 'https://mjm.opispro.com/?gw_logout=1'; // the Intranet signs out too
     }
     const COMPANY_ID_KEY = 'port_company_id';   // shared with the front page
     const COMPANY_KEY = 'port_company';         // company name, shared with the front page
@@ -327,7 +327,7 @@
 
     async function load() {
         $('bar').style.display = 'none'; $('wrap').style.display = 'none';
-        if (!session) return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.');
+        if (!session) return note('You are not signed in. Please open Plantation Operation from <a href="https://mjm.opispro.com/">MJM Intranet</a>.');
         if (!company) return note(companies.length ? 'Choose a company in the top bar.' : 'No company has been given to you in MJM Intranet.');
         note('Loading ' + esc(company.name) + '…', 'info');
         try {
