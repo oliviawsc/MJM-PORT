@@ -39,21 +39,13 @@
         </div>
     </main>
 
-    <!-- Edit worker profile -->
-    <div class="modal" id="editModal"><div class="dlg">
-        <h2 id="eName"></h2>
-        <div class="muted" id="eId" style="font-size:13px"></div>
-        <label>Gender
-            <select id="eGender"><option value="">— Not set —</option><option value="male">Male</option><option value="female">Female</option></select></label>
-        <label>Type
-            <select id="eType"><option value="">— Not set —</option><option value="local">Local</option><option value="foreign">Foreign</option></select></label>
-        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="eSave">Save</button></div>
-    </div></div>
-
-    <!-- View worker profile -->
-    <div class="modal" id="viewModal"><div class="dlg profile" role="dialog" aria-modal="true" aria-labelledby="pfName">
-        <div class="pf-top"><h2 id="pfName"></h2><button class="pf-x" type="button" data-close aria-label="Close">&times;</button></div>
+    <!-- Worker profile: view, and edit mode (pencil) -->
+    <div class="modal" id="viewModal"><div class="dlg profile" id="pfDlg" role="dialog" aria-modal="true" aria-labelledby="pfName">
+        <div class="pf-top"><h2><span id="pfName"></span><span class="edit-tag">Editing</span></h2>
+            <div class="tools"><button class="ibtn ghost" type="button" id="pfEdit" title="Edit profile" aria-label="Edit profile"></button>
+            <button class="pf-x" type="button" data-close aria-label="Close">&times;</button></div></div>
         <div class="pf-body" id="pfBody"></div>
+        <div class="pf-foot"><button class="btn" type="button" id="pfCancel">Cancel</button><button class="btn primary" type="button" id="pfSave">Save</button></div>
     </div></div>
     <div class="toast" id="toast"></div>
 
@@ -63,23 +55,28 @@
     const W = window.PortWorkers, esc = W.esc, $ = (id) => document.getElementById(id);
     const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
     const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
-    const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = 'none'), 2600); };
+    const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = 'none'), 3200); };
     const ERR = {
         err_forbidden: 'You do not have access to Worker Manage in this company. Ask your Admin to set it in User Access.',
         err_invalid: 'Something in the form is not valid.',
         err_network: 'Could not connect. Please try again.',
     };
     const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, KEY) : null;
+    const svg = (d) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+    const I_VIEW = svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+    const I_HIDE = svg('<path d="M17.9 17.9A10.1 10.1 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 5.1-5.9M9.9 5.2A9.1 9.1 0 0 1 12 5c6.4 0 10 7 10 7a18.5 18.5 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="m2 2 20 20"/>');
+    const I_EDIT = svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/>');
 
-    // Columns, in order. "mantap" = the MANTAP group (light), "soon" = coming later (grey).
+    // Columns, in order. MANTAP group (light), then "coming soon" (grey).
     const MANTAP = [{ k: 'login_id', label: 'Login ID' }, { k: 'login_pin', label: 'Login PIN' }];
     const SOON = ['Join Date', '1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'Passport Number', 'Passport Expiry',
         'SOCSO Number', 'Permit Issued Date', 'Levy Expiry Date', 'Levy Number', 'Levy Status', 'Labour License Expiry Date', 'Resign Date',
         'Service Period', 'Status', 'EPF Claim', 'Remark'];
-    const TOTAL_COLS = 4 + MANTAP.length + SOON.length + 1; // No., Name, Gender, Type … Action
+    const TOTAL_COLS = 6 + MANTAP.length + SOON.length + 1; // No., Name, Worker ID, Opispro ID, Gender, Type … Action
     const LABEL = { male: 'Male', female: 'Female', local: 'Local', foreign: 'Foreign' };
 
-    let workers = null, editing = null, loc = '';
+    let workers = null, current = null, editing = false, loc = '';
+    const shownPins = new Map(); // worker id → PIN, while shown
 
     async function call(body) {
         if (!sb) throw new Error('err_network');
@@ -97,8 +94,24 @@
     const note = (html, kind) => { $('note').innerHTML = html ? '<p class="note ' + (kind || 'warn') + '">' + html + '</p>' : ''; };
     const loginId = (email) => String(email || '').replace(/@psms\.app$/i, '');
     const pill = (v) => v ? '<span class="pill ' + esc(v) + '">' + LABEL[v] + '</span>' : '<span class="unset">Not set</span>';
-    // The PIN is stored scrambled (one-way), so nobody can read it back; it is reset in Mantap
-    const PIN = '<span class="pin" title="Hidden for security. Reset it in Mantap if forgotten.">••••••</span>';
+    const txt = (v) => v ? esc(v) : '<span class="unset">—</span>';
+
+    // MANTAP PIN: dots, with an eye to show it (Edit access only)
+    function pinHtml(w) {
+        const shown = shownPins.get(w.id);
+        return '<span class="pinbox"><span class="pinval' + (shown ? '' : ' pin') + '">' + (shown ? esc(shown) : '••••••') + '</span>' +
+            (W.canEdit() ? '<button type="button" class="ibtn" data-pin="' + w.id + '" title="' + (shown ? 'Hide PIN' : 'Show PIN') + '" aria-label="' + (shown ? 'Hide PIN' : 'Show PIN') + '">' + (shown ? I_HIDE : I_VIEW) + '</button>' : '') + '</span>';
+    }
+    async function togglePin(id) {
+        if (shownPins.has(id)) { shownPins.delete(id); return redraw(); }
+        try {
+            const r = await call({ action: 'reveal_pin', id });
+            if (!r.pin) return toast('This PIN was set before PINs could be shown. Reset it once in Mantap, then it can be seen here.');
+            shownPins.set(id, r.pin); redraw();
+            setTimeout(() => { if (shownPins.get(id) === r.pin) { shownPins.delete(id); redraw(); } }, 30000); // hides again after 30 s
+        } catch (e) { toast('Could not show the PIN: ' + (ERR[e.message] || e.message)); }
+    }
+    function redraw() { drawRows(); if (current && !editing) drawProfile(); }
 
     function drawLocations() {
         const list = W.locations();
@@ -106,34 +119,33 @@
         $('loc').style.display = list.length > 1 ? '' : 'none'; // only when the company has more than one location
         $('loc').innerHTML = '<option value="">All locations</option>' + list.map((n) => '<option' + (n === loc ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
     }
-
     function drawHead() {
         $('head').innerHTML =
-            '<tr><th class="c-no" rowspan="2">No.</th><th class="c-name" rowspan="2">Name</th><th rowspan="2">Gender</th><th rowspan="2">Type</th>' +
+            '<tr><th class="c-no" rowspan="2">No.</th><th class="c-name" rowspan="2">Name</th><th rowspan="2">Worker ID</th><th rowspan="2">Opispro Worker ID</th>' +
+            '<th rowspan="2">Gender</th><th rowspan="2">Type</th>' +
             '<th class="grp mantap" colspan="' + MANTAP.length + '">MANTAP</th>' +
             '<th class="soon" colspan="' + SOON.length + '">Coming soon in worker management system</th>' +
             '<th class="c-act" rowspan="2">Action</th></tr>' +
             '<tr>' + MANTAP.map((c) => '<th class="mantap">' + esc(c.label) + '</th>').join('') + SOON.map((l) => '<th class="later">' + esc(l) + '</th>').join('') + '</tr>';
-        // the second header row sticks right under the first one
-        requestAnimationFrame(() => {
+        requestAnimationFrame(() => {   // the second header row sticks right under the first one
             const h = $('head').rows[0].getBoundingClientRect().height;
             [...$('head').rows[1].cells].forEach((c) => { c.style.top = h + 'px'; });
         });
     }
-
     function drawRows() {
         const q = $('q').value.trim().toLowerCase();
         const list = (workers || []).filter((w) =>
-            (!q || w.name.toLowerCase().includes(q) || loginId(w.email).toLowerCase().includes(q)) &&
+            (!q || [w.name, loginId(w.email), w.workerNo, w.opisproId].some((v) => String(v || '').toLowerCase().includes(q))) &&
             (!loc || w.estates.includes(loc)));
         $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
                 '<td class="c-no">' + (i + 1) + '</td>' +
-                '<td class="c-name"><b>' + esc(w.name) + '</b><span class="em">' + esc(w.estates.join(', ')) + '</span></td>' +
+                '<td class="c-name"><b>' + esc(w.name) + '</b></td>' +
+                '<td>' + txt(w.workerNo) + '</td><td>' + txt(w.opisproId) + '</td>' +
                 '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
-                '<td class="mantap">' + esc(loginId(w.email)) + '</td><td class="mantap">' + PIN + '</td>' +
+                '<td class="mantap">' + esc(loginId(w.email)) + '</td><td class="mantap">' + pinHtml(w) + '</td>' +
                 SOON.map(() => '<td class="later">—</td>').join('') +
-                '<td class="c-act"><div class="acts"><button class="btn sm" data-view="' + w.id + '">View profile</button>' +
-                (W.canEdit() ? '<button class="btn sm" data-edit="' + w.id + '">Edit profile</button>' : '') + '</div></td></tr>').join('')
+                '<td class="c-act"><div class="acts"><button class="ibtn" data-view="' + w.id + '" title="View profile" aria-label="View profile">' + I_VIEW + '</button>' +
+                (W.canEdit() ? '<button class="ibtn" data-edit="' + w.id + '" title="Edit profile" aria-label="Edit profile">' + I_EDIT + '</button>' : '') + '</div></td></tr>').join('')
             : '<tr><td class="nodata" colspan="' + TOTAL_COLS + '">No data</td></tr>';
     }
 
@@ -144,32 +156,35 @@
         if (!W.company) return note('Choose a company in the top bar.');
         if (!W.canView()) return note(ERR.err_forbidden);
         note('Loading…', 'info');
-        try {
-            const r = await call({ action: 'list' });
-            workers = r.workers || [];
-        } catch (e) {
-            return note('Could not load workers: ' + esc(ERR[e.message] || e.message), 'err');
-        }
+        try { workers = (await call({ action: 'list' })).workers || []; }
+        catch (e) { return note('Could not load workers: ' + esc(ERR[e.message] || e.message), 'err'); }
+        shownPins.clear();
         note('');
         drawLocations(); drawHead();
         $('bar').style.display = ''; $('wrap').style.display = '';
         drawRows();
     }
 
-    // ---- View worker profile (floating window)
+    // ---- Worker profile window: view, and edit mode (pencil; Cancel / Save at the bottom right)
     const FACE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
     const field = (k, v) => '<div class="pf-f"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>';
-    function openView(id) {
-        const w = workers.find((x) => x.id === id); if (!w) return;
+    const sel = (id, val, opts) => '<select id="' + id + '"><option value="">— Not set —</option>' + opts.map(([v, l]) => '<option value="' + v + '"' + (v === val ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
+    const inp = (id, val) => '<input id="' + id + '" maxlength="50" value="' + esc(val || '') + '" autocomplete="off">';
+    function drawProfile() {
+        const w = current;
         $('pfName').textContent = w.name;
+        $('pfDlg').classList.toggle('editing', editing);
+        $('pfEdit').style.display = W.canEdit() && !editing ? '' : 'none';
         const soon = (labels) => labels.map((l) => field(l, '—')).join('');
         $('pfBody').innerHTML =
             '<div class="pf-head"><div class="pf-face" title="Photo coming soon"><div>' + FACE + '<small>No photo</small></div></div>' +
             '<div class="pf-grid">' +
-                field('Gender', w.gender ? LABEL[w.gender] : '<span class="unset">Not set</span>') +
-                field('Type', w.workerType ? LABEL[w.workerType] : '<span class="unset">Not set</span>') +
+                field('Worker ID', editing ? inp('fNo', w.workerNo) : txt(w.workerNo)) +
+                field('Opispro Worker ID', editing ? inp('fOp', w.opisproId) : txt(w.opisproId)) +
+                field('Gender', editing ? sel('fGender', w.gender, [['male', 'Male'], ['female', 'Female']]) : (w.gender ? LABEL[w.gender] : '<span class="unset">Not set</span>')) +
+                field('Type', editing ? sel('fType', w.workerType, [['local', 'Local'], ['foreign', 'Foreign']]) : (w.workerType ? LABEL[w.workerType] : '<span class="unset">Not set</span>')) +
                 field('MANTAP Login ID', esc(loginId(w.email))) +
-                field('MANTAP Login PIN', PIN) +
+                field('MANTAP Login PIN', pinHtml(w)) +
             '</div></div>' +
             '<div class="pf-sec soon"><h3>Employment <small>Coming soon</small></h3><div class="pf-grid">' + soon(['Join Date', 'Service Period', 'Resign Date', 'Status']) + '</div></div>' +
             '<div class="pf-sec soon"><h3>Identity &amp; Work Permit Documents <small>Coming soon</small></h3><div class="pf-grid">' +
@@ -177,36 +192,37 @@
             '<div class="pf-sec soon"><h3>Claims <small>Coming soon</small></h3><div class="pf-grid">' +
                 soon(['1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'EPF Claim']) + '</div></div>' +
             '<div class="pf-sec soon"><h3>Remark <small>Coming soon</small></h3><div class="pf-grid">' + field('Remark', '—') + '</div></div>';
+        if (editing) { const f = $('fNo'); if (f) f.focus(); }
+    }
+    function openProfile(id, edit) {
+        current = (workers || []).find((x) => x.id === id); if (!current) return;
+        editing = !!edit && W.canEdit();
+        $('pfEdit').innerHTML = I_EDIT;
+        drawProfile();
         $('viewModal').classList.add('open');
     }
-
-    // ---- Edit worker profile (gender, type for now)
-    function openEdit(id) {
-        const w = workers.find((x) => x.id === id); if (!w) return;
-        editing = w;
-        $('eName').textContent = 'Edit profile · ' + w.name;
-        $('eId').textContent = 'MANTAP Login ID: ' + loginId(w.email);
-        $('eGender').value = w.gender || '';
-        $('eType').value = w.workerType || '';
-        $('editModal').classList.add('open');
-    }
-    $('eSave').onclick = async () => {
-        if (!editing) return;
-        const btn = $('eSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    const closeProfile = () => { $('viewModal').classList.remove('open'); current = null; editing = false; };
+    $('pfEdit').onclick = () => { editing = true; drawProfile(); };
+    $('pfCancel').onclick = () => { editing = false; drawProfile(); };
+    $('pfSave').onclick = async () => {
+        if (!current) return;
+        const v = { workerNo: $('fNo').value.trim(), opisproId: $('fOp').value.trim(), gender: $('fGender').value, workerType: $('fType').value };
+        const btn = $('pfSave'); btn.disabled = true; btn.textContent = 'Saving…';
         try {
-            await call({ action: 'set_details', id: editing.id, gender: $('eGender').value, workerType: $('eType').value });
-            editing.gender = $('eGender').value; editing.workerType = $('eType').value;
-            $('editModal').classList.remove('open'); drawRows(); toast('Saved');
-        } catch (e) { toast('Could not save: ' + (ERR[e.message] || (/port_worker_details/.test(e.message) ? 'run the 20261129 SQL in Supabase first' : e.message))); }
+            await call(Object.assign({ action: 'set_details', id: current.id }, v));
+            Object.assign(current, v);
+            editing = false; drawProfile(); drawRows(); toast('Saved');
+        } catch (e) { toast('Could not save: ' + (ERR[e.message] || (/worker_no|opispro_id|port_worker_details/.test(e.message) ? 'run the latest worker SQL in Supabase first' : e.message))); }
         btn.disabled = false; btn.textContent = 'Save';
     };
 
     document.addEventListener('click', (e) => {
-        const vw = e.target.closest('[data-view]'); if (vw) return openView(Number(vw.dataset.view));
-        const ed = e.target.closest('[data-edit]'); if (ed) return openEdit(Number(ed.dataset.edit));
-        if (e.target.closest('[data-close]') || e.target.classList.contains('modal')) document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
+        const pn = e.target.closest('[data-pin]'); if (pn) return togglePin(Number(pn.dataset.pin));
+        const vw = e.target.closest('[data-view]'); if (vw) return openProfile(Number(vw.dataset.view), false);
+        const ed = e.target.closest('[data-edit]'); if (ed) return openProfile(Number(ed.dataset.edit), true);
+        if (e.target.closest('[data-close]') || e.target.id === 'viewModal') closeProfile();
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open')); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('viewModal').classList.contains('open')) { if (editing) { editing = false; drawProfile(); } else closeProfile(); } });
     $('q').addEventListener('input', () => workers && drawRows());
     $('loc').addEventListener('change', (e) => { loc = e.target.value; drawRows(); });
     W.onCompanyChange(() => { loc = ''; load(); });

@@ -430,3 +430,10 @@ create policy port_estate_meta_all on public.port_estate_meta for all to anon, a
 
 alter table public.port_estate_blocks add column if not exists area_ha_prev    numeric(10,2);
 alter table public.port_estate_blocks add column if not exists palm_count_prev integer;
+
+-- ===== 20261130100000_port_worker_ids =====
+-- Worker list: Worker ID and Opispro Worker ID per worker (set in the worker's profile).
+-- Safe to run more than once.
+alter table public.port_worker_details add column if not exists worker_no  text not null default '';
+alter table public.port_worker_details add column if not exists opispro_id text not null default '';
+alter table public.port_worker_details add column if not exists pin_locked text;  -- locked (AES-GCM) copy of the MANTAP PIN, Edge Functions only
