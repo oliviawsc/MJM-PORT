@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-84';
+var APP_BUILD = '20261126-85';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1953,13 +1953,6 @@ var APP_BUILD = '20261126-84';
                             <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_peralatan">Peralatan</div>
                         </button>
 
-                        <!-- Hujan -->
-                        <button id="estateHubRainfallCard" class="estate-card" onclick="navigateToSection('mobile_rainfall')" style="padding:22px 12px;">
-                            <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#0ea5e9,#0284c7);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(14,165,233,.25);">
-                                <span style="font-size:28px;">&#127783;&#65039;</span>
-                            </div>
-                            <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="mobile_rf_header_short">Hujan</div>
-                        </button>
 
                     </div>
 
@@ -12011,7 +12004,6 @@ function applyEstateHubPermissions(session) {
     const chemOk  = getSectionAccess(session, 'estate_racun')   !== 'none';
     const opsOk   = getSectionAccess(session, 'estate_anak')    !== 'none';
     const sumOk   = getSectionAccess(session, 'summary')        !== 'none';
-    const rainOk  = getSectionAccess(session, 'mobile_rainfall')  !== 'none';
     const toolsOk = getSectionAccess(session, 'tools_mobile_cat') !== 'none';
 
     const hide = (id, show) => {
@@ -12024,7 +12016,6 @@ function applyEstateHubPermissions(session) {
     hide('estateHubChemCard',     chemOk);
     hide('estateHubOPSCard',      opsOk);
     hide('estateHubSumCard',      sumOk);
-    hide('estateHubRainfallCard', rainOk);
     hide('estateHubToolsCard',    toolsOk);
 }
 
