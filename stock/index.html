@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-60';
+var APP_BUILD = '20261126-61';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1309,6 +1309,8 @@ var APP_BUILD = '20261126-60';
             <button data-target="tools" class="nav-item" onclick="navigateToSection('tools')">                  <span class="nav-icon">&#128295;</span><span class="sb-label" data-i18n="sb_lbl_tools">Tools / Peralatan</span></button>
             <button data-target="toolsrecord" class="nav-item" onclick="navigateToSection('toolsrecord')">            <span class="nav-icon">&#128203;</span><span class="sb-label" data-i18n="sb_lbl_toolsrecord">Tools Record</span></button>
             <!-- Management Report is opened from the Plantation Operation portal (../), not from inside Stock -->
+            <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Cases</p>
+            <button data-target="carlos" class="nav-item" onclick="navigateToSection('carlos')"><span class="nav-icon">&#128269;</span><span class="sb-label">Carlos</span></button>
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Admin</p>
             <button data-target="settings" id="navSettings" class="nav-item hidden">
                 <span class="nav-icon">&#9881;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_settings">Settings</span>
@@ -3624,6 +3626,58 @@ var APP_BUILD = '20261126-60';
             </div>
         </section>
 
+        <!-- ============ CARLOS ============ -->
+        <section id="carlos" class="page-section">
+            <h2 class="text-3xl font-bold mb-2">&#128269; Carlos</h2>
+            <p class="text-sm text-indigo-700 mb-5">Track and manage Carlos cases by month and year.</p>
+
+            <!-- Sub-module tabs -->
+            <div id="carlosTabBar" class="flex gap-1 border-b-2 border-indigo-200 mb-0">
+                <button id="carlosTabBtn_cases" onclick="switchCarlosTab('cases')"
+                    class="px-5 py-2.5 text-sm font-semibold rounded-t-lg border border-b-0 border-indigo-700 bg-indigo-700 text-white relative" style="margin-bottom:-2px;">Carlos Cases</button>
+            </div>
+
+            <!-- Panel: Carlos Cases -->
+            <div id="carlosPanel_cases" class="pt-4">
+                <div class="bg-white p-4 rounded-xl shadow mb-6">
+                    <h3 class="text-base font-bold text-indigo-800 mb-1">Summary of Carlos Cases</h3>
+                    <p class="text-xs text-indigo-600 mb-3">Record Total Opened and Closed Cases per month. Bring Forward and Pending Cases are calculated automatically.</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm" style="border-collapse:collapse;white-space:nowrap;">
+                            <thead class="bg-indigo-100 text-indigo-800">
+                                <tr>
+                                    <th class="px-3 py-2 text-center border border-indigo-200">Year</th>
+                                    <th class="px-3 py-2 text-left border border-indigo-200">Metric</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Jan</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Feb</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Mar</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Apr</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">May</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Jun</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Jul</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Aug</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Sep</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Oct</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Nov</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Dec</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Total</th>
+                                    <th class="px-2 py-2 text-center border border-indigo-200">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="carlosCasesSummaryBody">
+                                <tr><td colspan="16" class="text-center text-gray-400 py-6">Select an estate to load data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <input type="number" id="carlosAddYearInput" min="2010" max="2100" placeholder="Year e.g. 2024"
+                            class="border border-gray-300 rounded px-2 py-1 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                        <button onclick="carlosAddYear()" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 font-semibold">+ Add Year</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ============ MANAGEMENT REPORT (Penilaian Prestasi Ladang dashboard) ============ -->
         <section id="mgmtreport" class="page-section">
             <div class="mr-toolbar">
@@ -4916,6 +4970,8 @@ async function loadFromSupabase() {
           if (_mrSec && _mrSec.classList.contains('active')) renderMgmtReport(); }
         { const _ffbSec = document.getElementById('ffbrecord');
           if (_ffbSec && _ffbSec.classList.contains('active') && typeof renderFfbModule === 'function') renderFfbModule(); }
+        { const _carlosSec = document.getElementById('carlos');
+          if (_carlosSec && _carlosSec.classList.contains('active') && typeof renderCarlosModule === 'function') renderCarlosModule(); }
 
         // Re-render mobile panes that are open but not covered by refreshAll().
         // Critical on a fresh-browser login: localStorage was empty at boot, so
@@ -17717,6 +17773,7 @@ function navigateToSection(target) {
     if (target === 'chemrecord') renderChemRecord();
     if (target === 'plantrecord') renderPlantRecord();
     if (target === 'ffbrecord') renderFfbModule();
+    if (target === 'carlos') renderCarlosModule();
     if (target === 'rainfall') {
         const rfDate = document.getElementById('rfDate');
         if (rfDate && !rfDate.value) rfDate.valueAsDate = new Date();
@@ -18546,6 +18603,269 @@ async function ffbSavePenaltyYear(year) {
         alert('Error saving: ' + e.message);
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CARLOS MODULE
+// ══════════════════════════════════════════════════════════════════════════════
+var _carlosCasesRows = { estate: '', rows: [], loaded: false };
+var _carlosExtraYears = [];
+var _carlosActiveTab = 'cases';
+
+async function carlosLoadRows(estate) {
+    if (_carlosCasesRows.estate === estate && _carlosCasesRows.loaded) return _carlosCasesRows.rows;
+    var { data, error } = await supabaseClient.from('port_carlos_cases')
+        .select('*').eq('estate', estate).order('year').order('month');
+    if (error) throw error;
+    _carlosCasesRows = { estate: estate, rows: data || [], loaded: true };
+    return _carlosCasesRows.rows;
+}
+
+function renderCarlosModule() {
+    var sec = document.getElementById('carlos');
+    if (!sec || !sec.classList.contains('active')) return;
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (_carlosCasesRows.estate !== estate) {
+        _carlosCasesRows = { estate: '', rows: [], loaded: false };
+        _carlosExtraYears = [];
+    }
+    if (_carlosActiveTab === 'cases') renderCarlosCasesTab();
+}
+
+function switchCarlosTab(tab) {
+    _carlosActiveTab = tab;
+    var styles = {
+        cases: { on: 'border-indigo-700 bg-indigo-700 text-white', off: 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700' }
+    };
+    ['cases'].forEach(function(t) {
+        var btn = document.getElementById('carlosTabBtn_' + t);
+        var panel = document.getElementById('carlosPanel_' + t);
+        if (btn) { btn.className = btn.className.replace(/border-\S+ bg-\S+ text-\S+/g, '').trim() + ' ' + (t === tab ? styles[t].on : styles[t].off); }
+        if (panel) panel.style.display = (t === tab) ? '' : 'none';
+    });
+    if (tab === 'cases') renderCarlosCasesTab();
+}
+
+function renderCarlosCasesTab() {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    var tbody = document.getElementById('carlosCasesSummaryBody');
+    if (!estate) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="text-center text-gray-400 py-6">Please select an estate.</td></tr>';
+        return;
+    }
+    carlosLoadRows(estate).then(function(rows) { _renderCarlosCasesSummary(rows); });
+}
+
+function _renderCarlosCasesSummary(rows) {
+    var tbody = document.getElementById('carlosCasesSummaryBody');
+    if (!tbody) return;
+    var curYear = new Date().getFullYear();
+    var years = [];
+    rows.forEach(function(r) { if (years.indexOf(r.year) === -1) years.push(r.year); });
+    if (years.indexOf(curYear) === -1) years.push(curYear);
+    _carlosExtraYears.forEach(function(y) { if (years.indexOf(y) === -1) years.push(y); });
+    years.sort(function(a, b) { return b - a; });
+
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // Helper: get opened/closed for a given year/month from rows
+    function getVal(yr, m, field) {
+        var r = rows.find(function(x) { return x.year === yr && x.month === m; });
+        return (r && r[field] != null) ? Number(r[field]) : 0;
+    }
+
+    // Calculate pending chain: BF(Jan year Y) = Pending(Dec year Y-1)
+    function calcBF(yr, m) {
+        if (m === 1) {
+            // BF Jan = Pending Dec of previous year
+            var prevYr = yr - 1;
+            var bf = calcBF(prevYr, 1);
+            for (var i = 1; i <= 12; i++) {
+                bf = bf + getVal(prevYr, i, 'opened_cases') - getVal(prevYr, i, 'closed_cases');
+            }
+            return Math.max(0, bf);
+        }
+        // BF(m) = BF(m-1) + opened(m-1) - closed(m-1)
+        return Math.max(0, calcBF(yr, m - 1) + getVal(yr, m - 1, 'opened_cases') - getVal(yr, m - 1, 'closed_cases'));
+    }
+    // Limit recursion depth: only go back up to 5 years before stopping
+    var _bfCache = {};
+    function getBF(yr, m) {
+        var key = yr + '_' + m;
+        if (_bfCache[key] !== undefined) return _bfCache[key];
+        var result = 0;
+        if (m === 1) {
+            // Find if prev year exists in rows
+            var prevYrRows = rows.filter(function(x) { return x.year === yr - 1; });
+            if (prevYrRows.length > 0) {
+                var prevBF = getBF(yr - 1, 1);
+                for (var i = 1; i <= 12; i++) {
+                    prevBF = prevBF + getVal(yr - 1, i, 'opened_cases') - getVal(yr - 1, i, 'closed_cases');
+                }
+                result = Math.max(0, prevBF);
+            } else {
+                result = 0;
+            }
+        } else {
+            var prevPending = getBF(yr, m - 1) + getVal(yr, m - 1, 'opened_cases') - getVal(yr, m - 1, 'closed_cases');
+            result = Math.max(0, prevPending);
+        }
+        _bfCache[key] = result;
+        return result;
+    }
+
+    var rowBg  = '#f5f3ff';  // indigo-50
+    var hdrBg  = '#e0e7ff';  // indigo-100
+    var pendBg = '#ede9fe';  // violet-100
+    var inputStyle = 'width:52px;text-align:center;border:1px solid #c7d2fe;border-radius:4px;padding:2px 2px;font-size:12px;';
+
+    var html = '';
+    years.forEach(function(yr) {
+        // Pre-compute BF and pending for all 12 months
+        var bf = [], opened = [], closed = [], pending = [];
+        for (var m = 1; m <= 12; m++) {
+            bf[m]      = getBF(yr, m);
+            opened[m]  = getVal(yr, m, 'opened_cases');
+            closed[m]  = getVal(yr, m, 'closed_cases');
+            pending[m] = Math.max(0, bf[m] + opened[m] - closed[m]);
+        }
+        var totalOpened  = opened.slice(1).reduce(function(a,b){return a+b;},0);
+        var totalClosed  = closed.slice(1).reduce(function(a,b){return a+b;},0);
+        var totalBF      = bf[1];   // opening balance of Jan
+        var totalPending = pending[12]; // closing balance of Dec
+
+        // Row 1: Total Bring Forward (read-only)
+        html += '<tr style="background:' + hdrBg + ';">';
+        html += '<td rowspan="4" style="text-align:center;font-weight:700;border:1px solid #c7d2fe;padding:4px 10px;vertical-align:middle;font-size:13px;">' + yr + '</td>';
+        html += '<td style="padding:4px 8px;border:1px solid #c7d2fe;font-weight:600;white-space:nowrap;font-size:12px;">Total Bring Forward</td>';
+        for (var m = 1; m <= 12; m++) {
+            html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 2px;font-size:12px;" id="carlosBF_' + yr + '_' + m + '">' + bf[m] + '</td>';
+        }
+        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:600;font-size:12px;">' + totalBF + '</td>';
+        html += '<td rowspan="4" style="text-align:center;border:1px solid #c7d2fe;padding:4px 6px;vertical-align:middle;">';
+        html += '<button onclick="carlosSaveYear(' + yr + ')" id="carlosSaveBtn_' + yr + '" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 font-semibold">Save</button>';
+        html += '</td></tr>';
+
+        // Row 2: Total Opened Cases (editable)
+        html += '<tr style="background:#fff;">';
+        html += '<td style="padding:4px 8px;border:1px solid #c7d2fe;font-weight:600;white-space:nowrap;font-size:12px;">Total Opened Cases</td>';
+        for (var m = 1; m <= 12; m++) {
+            html += '<td style="border:1px solid #c7d2fe;padding:2px;">';
+            html += '<input type="number" min="0" id="carlosOpen_' + yr + '_' + m + '" value="' + opened[m] + '" style="' + inputStyle + '" oninput="carlosRecalcRow(' + yr + ')">';
+            html += '</td>';
+        }
+        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:600;font-size:12px;" id="carlosOpenTotal_' + yr + '">' + totalOpened + '</td>';
+        html += '</tr>';
+
+        // Row 3: Total Closed Cases (editable)
+        html += '<tr style="background:#fff;">';
+        html += '<td style="padding:4px 8px;border:1px solid #c7d2fe;font-weight:600;white-space:nowrap;font-size:12px;">Total Closed Cases</td>';
+        for (var m = 1; m <= 12; m++) {
+            html += '<td style="border:1px solid #c7d2fe;padding:2px;">';
+            html += '<input type="number" min="0" id="carlosClose_' + yr + '_' + m + '" value="' + closed[m] + '" style="' + inputStyle + '" oninput="carlosRecalcRow(' + yr + ')">';
+            html += '</td>';
+        }
+        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:600;font-size:12px;" id="carlosCloseTotal_' + yr + '">' + totalClosed + '</td>';
+        html += '</tr>';
+
+        // Row 4: Total Pending Cases (read-only, calculated)
+        html += '<tr style="background:' + pendBg + ';">';
+        html += '<td style="padding:4px 8px;border:1px solid #c7d2fe;font-weight:700;white-space:nowrap;font-size:12px;color:#5b21b6;">Total Pending Cases</td>';
+        for (var m = 1; m <= 12; m++) {
+            html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 2px;font-size:12px;font-weight:600;color:#5b21b6;" id="carlosPend_' + yr + '_' + m + '">' + pending[m] + '</td>';
+        }
+        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:700;font-size:12px;color:#5b21b6;" id="carlosPendTotal_' + yr + '">' + totalPending + '</td>';
+        html += '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="16" class="text-center text-gray-400 py-6">No data yet. Add a year to begin.</td></tr>';
+}
+
+function carlosRecalcRow(yr) {
+    // Recalculate BF + Pending for all months of the given year on the fly
+    // Uses current input values
+    var rows = _carlosCasesRows.rows;
+    function getLive(y, m, type) {
+        var el = document.getElementById('carlos' + (type === 'open' ? 'Open' : 'Close') + '_' + y + '_' + m);
+        if (el) return Math.max(0, parseInt(el.value) || 0);
+        var r = rows.find(function(x) { return x.year === y && x.month === m; });
+        return (r && r[type === 'open' ? 'opened_cases' : 'closed_cases'] != null) ? Number(r[type === 'open' ? 'opened_cases' : 'closed_cases']) : 0;
+    }
+    // Find BF for Jan of this year (from previous year Dec pending, based on saved data)
+    var prevYrRows = rows.filter(function(x) { return x.year === yr - 1; });
+    var bf = 0;
+    if (prevYrRows.length > 0) {
+        var _bfPrev = {};
+        function getBFPrev(y, m) {
+            var k = y + '_' + m; if (_bfPrev[k] !== undefined) return _bfPrev[k];
+            var v = 0;
+            if (m === 1) { v = 0; }
+            else { v = Math.max(0, getBFPrev(y, m-1) + getLive(y, m-1, 'open') - getLive(y, m-1, 'close')); }
+            _bfPrev[k] = v; return v;
+        }
+        var prevBF = getBFPrev(yr - 1, 1);
+        for (var i = 1; i <= 12; i++) {
+            prevBF = prevBF + getLive(yr - 1, i, 'open') - getLive(yr - 1, i, 'close');
+        }
+        bf = Math.max(0, prevBF);
+    }
+    var totalOpened = 0, totalClosed = 0;
+    for (var m = 1; m <= 12; m++) {
+        var open   = getLive(yr, m, 'open');
+        var close_ = getLive(yr, m, 'close');
+        var pend   = Math.max(0, bf + open - close_);
+        totalOpened  += open;
+        totalClosed  += close_;
+        var bfEl   = document.getElementById('carlosBF_' + yr + '_' + m);
+        var pendEl = document.getElementById('carlosPend_' + yr + '_' + m);
+        if (bfEl)   bfEl.textContent   = bf;
+        if (pendEl) pendEl.textContent = pend;
+        bf = pend; // next month BF = this month pending
+    }
+    var oTot = document.getElementById('carlosOpenTotal_' + yr);
+    var cTot = document.getElementById('carlosCloseTotal_' + yr);
+    var pTot = document.getElementById('carlosPendTotal_' + yr);
+    if (oTot) oTot.textContent = totalOpened;
+    if (cTot) cTot.textContent = totalClosed;
+    if (pTot) pTot.textContent = bf; // bf at this point = Dec pending
+}
+
+function carlosAddYear() {
+    var input = document.getElementById('carlosAddYearInput');
+    var yr = parseInt(input ? input.value : '');
+    if (!yr || yr < 2000 || yr > 2100) { alert('Please enter a valid year (2000-2100).'); return; }
+    if (_carlosExtraYears.indexOf(yr) === -1) _carlosExtraYears.push(yr);
+    if (input) input.value = '';
+    _renderCarlosCasesSummary(_carlosCasesRows.rows);
+}
+
+async function carlosSaveYear(year) {
+    var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
+    if (!estate) { alert('Please select an estate first.'); return; }
+    var btn = document.getElementById('carlosSaveBtn_' + year);
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+        var upserts = [];
+        for (var m = 1; m <= 12; m++) {
+            var openEl  = document.getElementById('carlosOpen_'  + year + '_' + m);
+            var closeEl = document.getElementById('carlosClose_' + year + '_' + m);
+            var opened  = openEl  ? (parseInt(openEl.value)  || 0) : 0;
+            var closed  = closeEl ? (parseInt(closeEl.value) || 0) : 0;
+            upserts.push({ estate: estate, year: year, month: m, opened_cases: opened, closed_cases: closed });
+        }
+        var { error } = await supabaseClient.from('port_carlos_cases')
+            .upsert(upserts, { onConflict: 'estate,year,month' });
+        if (error) throw error;
+        _carlosCasesRows = { estate: '', rows: [], loaded: false };
+        await carlosLoadRows(estate);
+        _renderCarlosCasesSummary(_carlosCasesRows.rows);
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Saved'; setTimeout(function() { if (btn) btn.textContent = 'Save'; }, 2000); }
+        if (typeof showSyncSuccess === 'function') showSyncSuccess('Carlos Cases for ' + year + ' saved.');
+    } catch(e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+        alert('Error saving: ' + e.message);
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
 
 function renderFfbModule() {
     var sec = document.getElementById('ffbrecord');
