@@ -126,7 +126,8 @@ Deno.serve(handler(async (req, body) => {
   if (body.action === 'list') {
     const { data, error } = await db.from(USERS_TABLE).select('id, name, email, permissions, status, last_active').order('name');
     if (error) throw error;
-    const rows = (data ?? []) as UserRow[];
+    // Only people who sign in from the Intranet: Mantap workers (User ID accounts, <id>@psms.app) are managed in Worker Manage
+    const rows = ((data ?? []) as UserRow[]).filter((r) => !/@psms\.app$/i.test(r.email ?? ''));
     const byEmail = await companiesByEmail(rows.map((r) => r.email.toLowerCase()));
     const { data: cos } = await db.from('port_companies').select('id, code, name');
     const coById = new Map(((cos ?? []) as { id: string; code: string | null; name: string }[]).map((c) => [c.id, c]));
