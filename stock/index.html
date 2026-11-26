@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-88';
+var APP_BUILD = '20261126-89';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11616,9 +11616,10 @@ function bootApp(session) {
         var _acc = session.company_access && session.company_access[_co.id];
         if (_acc && session.role !== 'superadmin') { session.role = _acc.role; session.permissions = _acc.permissions; }
         var _est = session.company_estates && session.company_estates[_co.id];
-        // Always reset estates on company switch — prevents stale estates from the
-        // previous company bleeding through when the new company has no estates mapped.
-        session.estates = (Array.isArray(_est) && _est.length) ? _est : [];
+        // Always reset estates on company switch. Mirror estate/index.html setEstates():
+        // when no company_estates configured, fall back to [company.name] so the picker
+        // is never empty and queries always filter to the right company's data.
+        session.estates = (Array.isArray(_est) && _est.length) ? _est : [_co.name];
         session.estate = '';
         session.company_id = _co.id;
         session.company_name = _co.name;
