@@ -30,7 +30,19 @@
         .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
         .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
         .back:hover span, .back:focus-visible span { max-width: 200px; opacity: 1; margin-left: 6px; }
-        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; }
+        .co-pick { position: relative; }
+        .co-btn { height: 36px; padding: 0 30px 0 12px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; position: relative; }
+        .co-btn::after { content: ''; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid #64748B; border-bottom: 2px solid #64748B; transform: rotate(45deg); }
+        .co-menu { display: none; position: absolute; left: 0; top: 42px; min-width: 100%; width: max-content; max-width: 70vw; max-height: 60vh; overflow: auto; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,23,42,.16); padding: 6px; z-index: 40; }
+        .co-menu.open { display: block; }
+        .co-menu button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 9px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+        .co-menu button:hover { background: #F1F5F9; }
+        .co-menu button.on { font-weight: 700; color: #14532D; }
+        .co-menu button.on::before { content: '\2713'; color: #16A34A; }
+        .co-menu button:not(.on)::before { content: ''; width: 12px; }
+        .switch { position: fixed; inset: 0; z-index: 50; display: none; place-items: center; background: rgba(248,250,252,.92); backdrop-filter: blur(6px); font-weight: 600; color: #14532D; }
+        .switch .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes s { to { transform: rotate(360deg); } }
         .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; }
         .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
         .who .me { text-align: right; line-height: 1.25; min-width: 0; }
@@ -99,13 +111,18 @@
         .meta label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
         .meta input[type=date] { height: 32px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 13px; color: var(--ink); background: #fff; }
         table.grid { table-layout: fixed; width: 100%; font-size: 13px; }
-        table.grid td { padding: 3px 3px; }
+        table.grid td { padding: 3px 3px; text-align: center; vertical-align: middle; }
+        table.grid td.calc, table.grid td.num { text-align: center; padding-right: 3px; }
+        table.grid input { text-align: center; }
+        table.grid th.pm { font-size: 20px; font-weight: 700; line-height: 1; }
+        table.grid tr.sub td, table.grid tr.total td { text-align: center; }
+        table.grid tr.sub td:first-child, table.grid tr.total td:first-child { text-align: left; }
+        table.grid small { font-size: 11px; font-weight: 500; color: var(--mute); }
         .wrap { overflow: visible; }
         table.grid td.lvl { background: #FAFAF9; }
         table.grid input { width: 100%; min-width: 0; height: 32px; border: 1px solid #CBD5E1; border-radius: 7px; padding: 0 6px; font: inherit; font-size: 13px; color: var(--ink); background: #fff; }
-        table.grid input.num { text-align: right; font-variant-numeric: tabular-nums; }
+        table.grid input.num { font-variant-numeric: tabular-nums; }
         table.grid th { padding-left: 6px; padding-right: 6px; white-space: normal; font-size: 11px; }
-        table.grid td.calc { padding-right: 8px; }
         table.grid td.hd { text-align: center; padding: 0; }
         .handle { display: inline-block; cursor: grab; color: #94A3B8; font-size: 14px; letter-spacing: -3px; user-select: none; padding: 6px 4px; }
         .handle:hover { color: var(--ink); }
@@ -117,7 +134,8 @@
         table.grid input.dirty { background: #FEFCE8; }
         table.grid input.saved { background: #ECFDF5; transition: background 1.2s; }
         table.grid input.bad { border-color: #FCA5A5; background: #FEF2F2; }
-        table.grid td.calc { text-align: right; color: var(--mute); font-variant-numeric: tabular-nums; padding-right: 12px; }
+        table.grid td.calc { color: var(--ink); font-variant-numeric: tabular-nums; }
+        table.grid.editing td.calc { color: var(--mute); }
         table.grid tr.new td { background: #F0FDF4; }
         table.grid .x { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: #94A3B8; cursor: pointer; font-size: 16px; }
         table.grid .x:hover { background: #FEF2F2; color: #B91C1C; }
@@ -151,11 +169,12 @@
 </head>
 <body>
     <div class="bg"></div>
+    <div class="switch" id="switch"><div><div class="spin"></div><div id="switchText">Switching company…</div></div></div>
     <header class="top"><div class="in">
         <div class="left">
             <span class="back-slot"><a class="back" id="back" href="../" title="Back to Plantation Operation">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Plantation Operation</span></a></span>
-            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect" aria-label="Company"></select></label>
+            <div class="co-pick" id="coPick" style="display:none;"><button type="button" class="co-btn" id="coBtn" aria-haspopup="listbox"></button><div class="co-menu" id="coMenu" role="listbox"></div></div>
         </div>
         <div class="title">Estate Info</div>
         <div class="who" id="who"></div>
@@ -232,17 +251,27 @@
         const photo = session && session.avatar && /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(session.avatar) ? session.avatar : '';
         $('who').innerHTML = session ? '<div class="me"><b>' + esc(name) + '</b><small>' + esc(session.email || '') + '</small></div><span class="avatar">' +
             (photo ? '<img src="' + esc(photo) + '" alt="">' : esc(name.trim().slice(0, 1).toUpperCase() || '?')) + '</span>' : '';
-        const pick = $('coPick'), sel = $('coSelect');
+        const pick = $('coPick');
         if (companies.length) {
             pick.style.display = '';
-            sel.innerHTML = (company ? '' : '<option value="">— Choose company —</option>') +
-                companies.map((c) => '<option value="' + esc(c.id) + '"' + (company && c.id === company.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
+            $('coBtn').textContent = company ? company.name : '— Choose company —';
+            $('coMenu').innerHTML = companies.map((c) => '<button type="button" data-co="' + esc(c.id) + '" class="' + (company && c.id === company.id ? 'on' : '') + '">' + esc(c.name) + '</button>').join('');
         } else pick.style.display = 'none';
         const u = new URL('../', location.href);
         if (company) u.searchParams.set('gw_company_id', company.id);
         $('back').href = u.pathname + u.search;
     }
-    $('coSelect').onchange = (e) => { setCompany(findCompany(e.target.value)); };
+    $('coBtn').onclick = () => $('coMenu').classList.toggle('open');
+    document.addEventListener('click', (e) => { if (!e.target.closest('#coPick')) $('coMenu').classList.remove('open'); });
+    $('coMenu').onclick = (e) => {
+        const b = e.target.closest('[data-co]'); if (!b) return;
+        $('coMenu').classList.remove('open');
+        const c = findCompany(b.dataset.co); if (!c || (company && c.id === company.id)) return;
+        // Switching a company reloads the page for that company
+        $('switchText').textContent = 'Switching to ' + c.name + '…'; $('switch').style.display = 'grid';
+        try { localStorage.setItem(COMPANY_ID_KEY, c.id); localStorage.setItem(COMPANY_KEY, c.name); } catch (e2) {}
+        setTimeout(() => { location.href = location.pathname + '?gw_company_id=' + encodeURIComponent(c.id); }, 350);
+    };
 
     // ---- Locations (old estate names) of the chosen company
     async function loadEstates() {
@@ -291,66 +320,72 @@
 
     // =====================================================================
     // The block table: Division | Phase | Block | Year planted | Area (before, after) |
-    // Palm count (before, after, difference) | Density (before, after, difference)
+    // Palm count (before, after, ±) | Density (before, after, ±)
     // "before" and "after" are two map dates, set in the column titles.
+    // View mode shows the figures; Edit turns the cells into boxes, with
+    // Cancel / Save. Nothing is written until Save.
     // =====================================================================
     const sum = (list, k) => list.reduce((a, r) => a + (r[k] == null || r[k] === '' ? 0 : +r[k]), 0);
     const densOf = (area, palms) => (area > 0 && palms != null && palms !== '' ? palms / area : null);
     const avgDens = (list, ak, pk) => { const a = sum(list, ak), p = sum(list, pk); return a > 0 && p ? p / a : null; };
-    const diff = (a, b, d) => (a == null || b == null ? '' : (b - a < 0 ? '\u2212' + num(a - b, d) : b - a > 0 ? '+' + num(b - a, d) : '0'));
+    const diff = (a, b, d) => (a == null || b == null ? '' : (b - a < 0 ? '−' + num(a - b, d) : b - a > 0 ? '+' + num(b - a, d) : '0'));
     const FIELDS = [
-        { k: 'division',        label: 'Division',     type: 'text', lvl: true },
-        { k: 'phase',           label: 'Phase',        type: 'text', lvl: true },
-        { k: 'block',           label: 'Block',        type: 'text' },
-        { k: 'year_planted',    label: 'Year planted', type: 'text' },
-        { k: 'area_ha_prev',    label: 'before',       type: 'dec' },
-        { k: 'area_ha',         label: 'after',        type: 'dec' },
-        { k: 'palm_count_prev', label: 'before',       type: 'int' },
-        { k: 'palm_count',      label: 'after',        type: 'int' },
+        { k: 'division',        type: 'text', lvl: true },
+        { k: 'phase',           type: 'text', lvl: true },
+        { k: 'block',           type: 'text' },
+        { k: 'year_planted',    type: 'text' },
+        { k: 'area_ha_prev',    type: 'dec' },
+        { k: 'area_ha',         type: 'dec' },
+        { k: 'palm_count_prev', type: 'int' },
+        { k: 'palm_count',      type: 'int' },
     ];
     const sortRows = () => rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || (a.id || 0) - (b.id || 0));
     const monthLabel = (d) => { if (!d) return ''; const x = new Date(d + (d.length === 7 ? '-01' : '')); return isNaN(x) ? d : x.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' }); };
+    let editing = false, draft = [], removed = [];
 
     function drawBlocks() {
-        const edit = canEdit();
-        const saved = rows.filter((r) => r.id);
+        const edit = editing && canEdit();
+        const list = edit ? draft : rows;
         const before = monthLabel(meta.prev_map_date) || 'Before', after = monthLabel(meta.map_date) || 'After';
-        const dateCell = (k, label) => edit
+        const dateCell = (k, label) => canEdit()
             ? '<th class="num"><button type="button" class="hdate" data-meta="' + k + '" title="Map date: click to change">' + esc(label) + ' &#9662;</button><input type="month" class="hdate-in" data-meta="' + k + '" value="' + esc((meta[k] || '').slice(0, 7)) + '"></th>'
             : '<th class="num">' + esc(label) + '</th>';
         const head =
-            '<colgroup><col style="width:4%"><col style="width:9%"><col style="width:7%"><col style="width:8%"><col style="width:8%">' +
+            '<colgroup>' + (edit ? '<col style="width:4%">' : '') + '<col style="width:9%"><col style="width:7%"><col style="width:8%"><col style="width:8%">' +
             '<col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:5%"><col style="width:9%"><col style="width:9%"><col style="width:5%">' + (edit ? '<col style="width:4%">' : '') + '</colgroup><thead>' +
-            '<tr><th rowspan="2"></th><th rowspan="2">Division</th><th rowspan="2">Phase</th><th rowspan="2">Block</th><th rowspan="2" class="num">Year planted</th>' +
+            '<tr>' + (edit ? '<th rowspan="2"></th>' : '') + '<th rowspan="2">Division</th><th rowspan="2">Phase</th><th rowspan="2">Block</th><th rowspan="2">Year planted</th>' +
             '<th colspan="2" class="grp-h">Area (ha)</th><th colspan="3" class="grp-h">Palm count</th><th colspan="3" class="grp-h">Density (palms/ha)</th>' + (edit ? '<th rowspan="2"></th>' : '') + '</tr>' +
             '<tr>' + dateCell('prev_map_date', before) + dateCell('map_date', after) +
-            dateCell('prev_map_date', before) + dateCell('map_date', after) + '<th class="num">&plusmn;</th>' +
-            '<th class="num">' + esc(before) + '</th><th class="num">' + esc(after) + '</th><th class="num">&plusmn;</th></tr></thead>';
+            dateCell('prev_map_date', before) + dateCell('map_date', after) + '<th class="pm">&plusmn;</th>' +
+            '<th class="num">' + esc(before) + '</th><th class="num">' + esc(after) + '</th><th class="pm">&plusmn;</th></tr></thead>';
         const groups = [];
-        rows.forEach((r) => { const key = (r.division || '') + '\u0001' + (r.phase || ''); const g = groups[groups.length - 1]; if (g && g.key === key) g.rows.push(r); else groups.push({ key, rows: [r] }); });
+        list.forEach((r) => { const key = (r.division || '') + '\u0001' + (r.phase || ''); const g = groups[groups.length - 1]; if (g && g.key === key) g.rows.push(r); else groups.push({ key, rows: [r] }); });
         let body = '';
         groups.forEach((g) => {
             body += g.rows.map((r, i) => rowHtml(r, edit, i > 0)).join('');
-            const sv = g.rows.filter((r) => r.id);
-            if (sv.length > 1) body += totalRow((g.rows[0].phase ? 'Phase ' + g.rows[0].phase : 'Total') + (g.rows[0].division ? ' · ' + g.rows[0].division : ''), sv, 'sub', edit);
+            if (g.rows.length > 1) body += totalRow((g.rows[0].phase ? 'Phase ' + g.rows[0].phase : 'Subtotal') + (g.rows[0].division ? ' · ' + g.rows[0].division : ''), g.rows, 'sub', edit);
         });
-        if (saved.length) body += totalRow('Total · ' + estate, saved, 'total', edit);
-        const empty = !rows.length ? '<div class="empty" id="gridEmpty">No blocks recorded for ' + esc(estate) + ' yet.' + (edit ? '<br>Press <b>+ Add row</b> and type straight into the row, or <b>Paste from Excel</b>.' : '') + '</div>' : '';
-        const bar = edit ? '<div class="bar"><span class="sp"></span><button class="btn sm primary" id="addBtn">+ Add row</button></div>' : '';
-        $('blocksSec').innerHTML = bar + '<div class="wrap"><table class="grid"' + (rows.length ? '' : ' style="display:none"') + '>' + head + '<tbody id="gridBody">' + body + '</tbody></table>' + empty + '</div>';
-        if (!edit) return;
-        $('addBtn').onclick = addRow;
+        if (list.length) body += totalRow('Total', list, 'total', edit);
+        const empty = !list.length ? '<div class="empty" id="gridEmpty">No blocks recorded for ' + esc(estate) + ' yet.' + (canEdit() && !edit ? '<br>Press <b>Edit</b> to start.' : '') + '</div>' : '';
+        const bar = !canEdit() ? '' : edit
+            ? '<div class="bar"><button class="btn sm" id="addBtn">+ Add row</button><span class="sp"></span><button class="btn sm" id="cancelBtn">Cancel</button><button class="btn sm primary" id="saveBtn">Save</button></div>'
+            : '<div class="bar"><span class="sp"></span><button class="btn sm primary" id="editBtn">Edit</button></div>';
+        $('blocksSec').innerHTML = bar + '<div class="wrap"><table class="grid' + (edit ? ' editing' : '') + '"' + (list.length ? '' : ' style="display:none"') + '>' + head + '<tbody id="gridBody">' + body + '</tbody></table>' + empty + '</div>';
+        if (!canEdit()) return;
         $('blocksSec').querySelectorAll('button.hdate').forEach((b) => { b.onclick = () => { const inp = b.nextElementSibling; try { inp.showPicker(); } catch (e) { inp.style.position = 'static'; inp.focus(); } }; });
         $('blocksSec').querySelectorAll('input.hdate-in').forEach((inp) => { inp.onchange = () => saveMeta(inp.dataset.meta, inp.value); });
+        if (!edit) { $('editBtn').onclick = startEdit; return; }
+        $('addBtn').onclick = addRow;
+        $('cancelBtn').onclick = () => { if (!isDirty() || confirm('Discard the changes?')) { editing = false; draft = []; removed = []; drawBlocks(); } };
+        $('saveBtn').onclick = saveAll;
         const gb = $('gridBody');
-        gb.addEventListener('change', (e) => { const inp = e.target.closest('input[data-k]'); if (inp) saveCell(inp); });
-        gb.addEventListener('input', (e) => { const inp = e.target.closest('input[data-k]'); if (!inp) return; inp.classList.add('dirty'); liveCalc(inp.closest('tr')); });
+        gb.addEventListener('input', (e) => { const inp = e.target.closest('input[data-k]'); if (!inp) return; const tr = inp.closest('tr'); Object.assign(rowOf(tr), readRow(tr)); liveCalc(tr); });
         gb.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             const inp = e.target.closest('input[data-k]'); if (!inp) return;
             e.preventDefault();
             const tr = inp.closest('tr'), inputs = [...tr.querySelectorAll('input[data-k]')], n = inputs[inputs.indexOf(inp) + 1];
-            if (n) n.focus(); else { inp.blur(); addRow(); }
+            if (n) n.focus(); else addRow();
         });
         gb.addEventListener('click', (e) => { const b = e.target.closest('[data-del]'); if (b) delRow(b.closest('tr')); });
         gb.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches('input[data-k]')) e.target.select(); }); // typing replaces, like a spreadsheet
@@ -365,22 +400,23 @@
         const cell = (f) => {
             const v = r[f.k] == null ? '' : r[f.k];
             const same = repeat && f.lvl; // same division / phase as the row above: shown faint
-            if (!edit) return '<td class="' + (f.type !== 'text' ? 'calc' : f.lvl ? 'lvl' : '') + (same ? ' faint' : '') + '">' + (f.type === 'dec' ? num(v, 2) : f.type === 'int' ? (v === '' ? '—' : num(v, 0)) : (esc(v) || (f.lvl ? '' : '<span class="muted">—</span>'))) + '</td>';
+            if (!edit) return '<td class="' + (f.type !== 'text' ? 'calc' : f.lvl ? 'lvl' : '') + (same ? ' faint' : '') + '">' + (f.type === 'dec' ? num(v, 2) : f.type === 'int' ? (v === '' ? '—' : num(v, 0)) : (esc(v) || (f.lvl ? '' : '—'))) + '</td>';
             return '<td' + (f.lvl ? ' class="lvl"' : '') + '><input data-k="' + f.k + '" class="' + (f.type !== 'text' ? 'num' : '') + (same ? ' faint' : '') + '" value="' + esc(v) + '"' +
                 (f.type === 'dec' ? ' inputmode="decimal"' : f.type === 'int' ? ' inputmode="numeric"' : '') + '></td>';
         };
-        return '<tr data-id="' + esc(r.id || '') + '"' + (r.id ? '' : ' class="new"') + '><td class="hd">' + (edit && r.id ? '<span class="handle" title="Drag to move">&#8942;&#8942;</span>' : '') + '</td>' + FIELDS.map(cell).join('') +
+        return '<tr data-key="' + esc(r._key) + '"' + (r.id ? '' : ' class="new"') + '>' + (edit ? '<td class="hd"><span class="handle" title="Drag to move">&#8942;&#8942;</span></td>' : '') + FIELDS.map(cell).join('') +
             '<td class="calc" data-c="pd">' + c.pd + '</td><td class="calc" data-c="d0">' + num(c.d0, 0) + '</td><td class="calc" data-c="d1">' + num(c.d1, 0) + '</td><td class="calc" data-c="dd">' + c.dd + '</td>' +
             (edit ? '<td><button class="x" data-del title="Delete row">&times;</button></td>' : '') + '</tr>';
     }
     function totalRow(label, list, cls, edit) {
         const d0 = avgDens(list, 'area_ha_prev', 'palm_count_prev'), d1 = avgDens(list, 'area_ha', 'palm_count');
-        return '<tr class="' + cls + '"><td colspan="5">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td>' +
-            '<td class="num">' + num(sum(list, 'area_ha_prev'), 2) + '</td><td class="num">' + num(sum(list, 'area_ha'), 2) + '</td>' +
+        const ha = (v) => num(v, 2) + ' <small>ha</small>', ph = (v) => (v == null ? '—' : num(v, 0) + ' <small>palms/ha</small>');
+        return '<tr class="' + cls + '"><td colspan="' + (edit ? 5 : 4) + '">' + esc(label) + '</td>' +
+            '<td class="num">' + ha(sum(list, 'area_ha_prev')) + '</td><td class="num">' + ha(sum(list, 'area_ha')) + '</td>' +
             '<td class="num">' + num(sum(list, 'palm_count_prev'), 0) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + diff(sum(list, 'palm_count_prev'), sum(list, 'palm_count'), 0) + '</td>' +
-            '<td class="num">' + num(d0, 0) + '</td><td class="num">' + num(d1, 0) + '</td><td class="num">' + diff(d0, d1, 0) + '</td>' + (edit ? '<td></td>' : '') + '</tr>';
+            '<td class="num">' + ph(d0) + '</td><td class="num">' + ph(d1) + '</td><td class="num">' + diff(d0, d1, 0) + '</td>' + (edit ? '<td></td>' : '') + '</tr>';
     }
-    const rowOf = (tr) => rows.find((r) => tr.dataset.id ? String(r.id) === tr.dataset.id : r._tr === tr);
+    const rowOf = (tr) => draft.find((r) => r._key === tr.dataset.key);
     function readRow(tr) {
         const o = {};
         tr.querySelectorAll('input[data-k]').forEach((inp) => {
@@ -394,65 +430,36 @@
         const set = (k, v) => { const td = tr.querySelector('[data-c="' + k + '"]'); if (td) td.textContent = v; };
         set('pd', c.pd); set('d0', num(c.d0, 0)); set('d1', num(c.d1, 0)); set('dd', c.dd);
     }
-    function flash(tr, ok) { tr.querySelectorAll('input.dirty').forEach((i) => { i.classList.remove('dirty'); i.classList.toggle('bad', !ok); if (ok) { i.classList.add('saved'); setTimeout(() => i.classList.remove('saved'), 1200); } }); }
-    // One save at a time per row, so a new row is inserted once and later cells update it
-    function saveCell(inp) {
-        const tr = inp.closest('tr');
-        tr._q = (tr._q || Promise.resolve()).then(() => saveRow(tr, inp)).catch(() => {});
-        return tr._q;
+    let keyN = 0;
+    const withKey = (r) => Object.assign({}, r, { _key: 'k' + (++keyN), _orig: JSON.stringify(r) });
+    function startEdit() {
+        editing = true; removed = [];
+        draft = rows.map(withKey);
+        drawBlocks();
+        const first = $('gridBody').querySelector('input[data-k]'); if (first) first.focus();
     }
-    async function saveRow(tr, inp) {
-        const o = readRow(tr);
-        if (!o.block) { if (tr.dataset.id) { inp.classList.add('bad'); toast('Block is required'); } return; }
-        const yr = o.year_planted;
-        o.year_planted = yr === '' ? null : /^\d{4}$/.test(yr) ? +yr : null;
-        if (yr && o.year_planted == null) o.remark_year = yr; // "2009 / 2024" style stays as text in the remark
-        const body = Object.assign(o, { estate, company_id: company.id, updated_by: session.email || '', updated_at: new Date().toISOString() });
-        if (!tr.dataset.id) body.sort_order = (rowOf(tr) || {}).sort_order || 0;
-        if (body.remark_year) { body.remark = body.remark_year; delete body.remark_year; }
-        const send = async () => {
-            if (tr.dataset.id) {
-                await api('port_estate_blocks?id=eq.' + tr.dataset.id, { method: 'PATCH', body: JSON.stringify(body) });
-                Object.assign(rowOf(tr) || {}, body);
-            } else {
-                const r = await api('port_estate_blocks', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'return=representation' }), body: JSON.stringify(body) });
-                const savedRow = Array.isArray(r) ? r[0] : r;
-                const draft = rowOf(tr); if (draft) { Object.assign(draft, savedRow); delete draft._tr; } else rows.push(savedRow);
-                tr.dataset.id = savedRow.id; tr.classList.remove('new');
-            }
-        };
-        try { await send(); }
-        catch (e) {
-            if (/company_id/.test(e.message)) { delete body.company_id; try { await send(); flash(tr, true); refreshTotals(); return; } catch (e2) { e = e2; } }
-            flash(tr, false);
-            toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : /area_ha_prev|palm_count_prev/.test(e.message) ? 'Run docs/run-after-setup.sql in Supabase first (before / after columns)' : 'Save failed: ' + e.message);
-            return;
-        }
-        flash(tr, true); refreshTotals();
-    }
-    function refreshTotals() { // totals re-drawn from the saved rows; the cell being typed in keeps its text and cursor
-        if (rows.some((r) => !r.id)) return; // a new row is still being typed: leave the table alone
-        const a = document.activeElement;
-        const keep = a && a.dataset && a.dataset.k && a.closest('tr') ? { id: a.closest('tr').dataset.id, k: a.dataset.k, v: a.value, pos: a.selectionStart, dirty: a.classList.contains('dirty') } : null;
-        sortRows(); drawBlocks();
-        if (keep) {
-            const el = $('gridBody').querySelector('tr[data-id="' + keep.id + '"] input[data-k="' + keep.k + '"]');
-            if (el) { el.value = keep.v; if (keep.dirty) el.classList.add('dirty'); el.focus(); try { el.setSelectionRange(keep.pos, keep.pos); } catch (e) {} }
-        }
-    }
+    const changed = (r) => JSON.stringify(Object.assign({}, r, { _key: undefined, _orig: undefined, sort_order: undefined })) !== JSON.stringify(Object.assign({}, JSON.parse(r._orig), { _key: undefined, _orig: undefined, sort_order: undefined }));
+    const isDirty = () => removed.length > 0 || draft.some((r) => !r.id || changed(r));
     function addRow() {
-        const last = rows[rows.length - 1] || {};
-        const draft = { id: null, sort_order: (Math.max(0, ...rows.map((r) => r.sort_order || 0)) + 1), division: last.division || '', phase: last.phase || '', block: '', year_planted: null, area_ha_prev: null, area_ha: null, palm_count_prev: null, palm_count: null, remark: '' };
-        rows.push(draft);
+        const last = draft[draft.length - 1] || {};
+        const r = withKey({ id: null, estate, division: last.division || '', phase: last.phase || '', block: '', year_planted: null, area_ha_prev: null, area_ha: null, palm_count_prev: null, palm_count: null, remark: '' });
+        draft.push(r);
         $('blocksSec').querySelector('table.grid').style.display = '';
         const emp = $('gridEmpty'); if (emp) emp.remove();
-        const tmp = document.createElement('tbody'); tmp.innerHTML = rowHtml(draft, true, false);
-        const tr = tmp.firstElementChild; draft._tr = tr;
+        const tmp = document.createElement('tbody'); tmp.innerHTML = rowHtml(r, true, false);
+        const tr = tmp.firstElementChild;
         const gb = $('gridBody'), total = gb.querySelector('tr.total');
         if (total) gb.insertBefore(tr, total); else gb.appendChild(tr);
         tr.querySelector('input[data-k="block"]').focus();
     }
-    // Drag a row by its handle to move it up or down; the new order is saved (sort_order)
+    function delRow(tr) {
+        const r = rowOf(tr); if (!r) return;
+        if (r.id) removed.push(r.id);
+        draft = draft.filter((x) => x !== r);
+        tr.remove();
+        if (!draft.length) drawBlocks();
+    }
+    // Drag a row by its handle to move it up or down (order kept at Save)
     function enableRowDrag(gb) {
         let src = null, ghost = null, offY = 0;
         gb.addEventListener('pointerdown', (e) => {
@@ -466,34 +473,47 @@
         gb.addEventListener('pointermove', (e) => {
             if (!src) return;
             ghost.style.top = (e.clientY - offY) + 'px';
-            const el = document.elementFromPoint(e.clientX, e.clientY), over = el && el.closest('#gridBody tr[data-id]');
-            if (!over || over === src || !over.dataset.id) return;
+            const el = document.elementFromPoint(e.clientX, e.clientY), over = el && el.closest('#gridBody tr[data-key]');
+            if (!over || over === src) return;
             const r = over.getBoundingClientRect();
             if (e.clientY < r.top + r.height / 2) over.before(src); else over.after(src);
         });
-        const end = async () => {
+        const end = () => {
             if (!src) return;
-            src.classList.remove('ghost-src'); ghost.remove(); ghost = null; document.body.classList.remove('dragging');
-            const moved = src; src = null;
-            // new order = the order of the rows on screen
-            const ids = [...gb.querySelectorAll('tr[data-id]')].map((t) => t.dataset.id).filter(Boolean);
-            const byId = new Map(rows.map((r) => [String(r.id), r]));
-            const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
-            const changes = [];
-            ordered.forEach((r, i) => { if ((r.sort_order || 0) !== i + 1) { r.sort_order = i + 1; changes.push(r); } });
-            rows = ordered.concat(rows.filter((r) => !r.id));
-            try { for (const r of changes) await api('port_estate_blocks?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify({ sort_order: r.sort_order }) }); }
-            catch (e) { toast('Could not save the order: ' + e.message); }
-            drawBlocks();
-            void moved;
+            src.classList.remove('ghost-src'); ghost.remove(); ghost = null; document.body.classList.remove('dragging'); src = null;
+            const keys = [...gb.querySelectorAll('tr[data-key]')].map((t) => t.dataset.key);
+            draft.sort((a, b) => keys.indexOf(a._key) - keys.indexOf(b._key));
+            // subtotals follow the new order
+            const a = document.activeElement; drawBlocks(); if (a && a.dataset && a.dataset.k) { const el = $('gridBody').querySelector('tr[data-key="' + a.closest('tr').dataset.key + '"] input[data-k="' + a.dataset.k + '"]'); if (el) el.focus(); }
         };
         gb.addEventListener('pointerup', end); gb.addEventListener('pointercancel', end);
     }
-    async function delRow(tr) {
-        const r = rowOf(tr);
-        if (!tr.dataset.id) { rows = rows.filter((x) => x !== r); tr.remove(); if (!rows.length) drawBlocks(); return; }
-        if (!confirm('Delete block ' + (r ? r.block : '') + '?')) return;
-        try { await api('port_estate_blocks?id=eq.' + tr.dataset.id, { method: 'DELETE' }); rows = rows.filter((x) => String(x.id) !== tr.dataset.id); toast('Deleted'); drawBlocks(); } catch (e) { toast('Delete failed: ' + e.message); }
+    async function saveAll() {
+        // check
+        const missing = draft.find((r) => !(r.block || '').trim());
+        if (missing) { toast('Every row needs a block'); const tr = $('gridBody').querySelector('tr[data-key="' + missing._key + '"] input[data-k="block"]'); if (tr) tr.focus(); return; }
+        const seen = new Set();
+        for (const r of draft) { const k = [r.division || '', r.phase || '', r.block].join('|'); if (seen.has(k)) { toast('Block ' + r.block + ' is listed twice under the same division and phase'); return; } seen.add(k); }
+        const now = new Date().toISOString(), who = session.email || '';
+        const toBody = (r, i) => {
+            const yr = String(r.year_planted == null ? '' : r.year_planted).trim();
+            return { estate, company_id: company.id, division: r.division || '', phase: r.phase || '', block: r.block.trim(), year_planted: /^\d{4}$/.test(yr) ? +yr : null,
+                remark: /^\d{4}$/.test(yr) || !yr ? (r.remark || '') : yr, area_ha_prev: r.area_ha_prev, area_ha: r.area_ha, palm_count_prev: r.palm_count_prev, palm_count: r.palm_count, sort_order: i + 1, updated_by: who, updated_at: now };
+        };
+        $('saveBtn').disabled = true;
+        try {
+            for (const id of removed) await api('port_estate_blocks?id=eq.' + id, { method: 'DELETE' });
+            for (let i = 0; i < draft.length; i++) {
+                const r = draft[i], body = toBody(r, i);
+                if (r.id) { if (changed(r) || (r.sort_order || 0) !== i + 1) await api('port_estate_blocks?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify(body) }); }
+                else await api('port_estate_blocks', { method: 'POST', body: JSON.stringify(body) });
+            }
+            editing = false; draft = []; removed = [];
+            toast('Saved'); load();
+        } catch (e) {
+            $('saveBtn').disabled = false;
+            toast(/duplicate|unique/i.test(e.message) ? 'A block is listed twice under the same division and phase' : /area_ha_prev|palm_count_prev/.test(e.message) ? 'Run docs/run-after-setup.sql in Supabase first (before / after columns)' : 'Save failed: ' + e.message);
+        }
     }
     async function saveMeta(k, v) {
         const body = { estate, company_id: company.id, prev_map_date: meta.prev_map_date || null, map_date: meta.map_date || null, updated_by: session.email || '', updated_at: new Date().toISOString() };
