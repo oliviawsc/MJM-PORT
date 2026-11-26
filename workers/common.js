@@ -48,8 +48,34 @@
         location.href = INTRANET_URL + (company ? '?gw_company=' + encodeURIComponent(company.name) : '');
     }
 
-    /** Draws the top bar. backHref = where the back button goes (relative to this page). */
-    function drawTop(backHref) {
+    // ---- Location of the chosen company: the same list and the same remembered
+    // choice as on the front page (port_location:<company id>). "All locations"
+    // (empty) is offered where a page asks for it (the worker list).
+    const LOC_KEY = 'port_location';
+    let allowAll = false;
+    const locationsOf = (c) => (c && session && session.company_estates && Array.isArray(session.company_estates[c.id])) ? session.company_estates[c.id].filter(Boolean) : [];
+    const allPicked = new Set(); // companies where "All locations" was chosen on this page
+    function currentLocation() {
+        const locs = locationsOf(company);
+        if (!locs.length) return '';
+        if (allowAll && allPicked.has(company.id)) return '';
+        let want = params.get('gw_estate') || null;
+        if (want == null) { try { want = localStorage.getItem(LOC_KEY + ':' + company.id); } catch (e) {} }
+        if (want === '' && allowAll) return '';
+        return locs.includes(want) ? want : (allowAll ? '' : locs[0]);
+    }
+    let location_ = '';
+    function pickLocation(name) {
+        location_ = name || '';
+        if (company) { if (location_) allPicked.delete(company.id); else allPicked.add(company.id); }
+        try { if (company && location_) localStorage.setItem(LOC_KEY + ':' + company.id, location_); } catch (e) {}
+        if (session && location_) { session.estate = location_; try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
+    }
+    const locListeners = [];
+
+    /** Draws the top bar. backHref = where the back button goes; opts.allLocations adds "All locations". */
+    function drawTop(backHref, opts) {
+        allowAll = !!(opts && opts.allLocations);
         const name = session ? (session.name || session.email || '') : '';
         const photo = session && session.avatar && /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\//.test(session.avatar) ? session.avatar : '';
         document.getElementById('who').innerHTML = session
@@ -58,17 +84,48 @@
               '<button type="button" class="logout" id="logout" title="Log out" aria-label="Log out">' + LOGOUT_SVG + '</button>'
             : '';
         if (session) document.getElementById('logout').onclick = logout;
-        const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
+        // Company
+        const pick = document.getElementById('coPick');
         if (companies.length) {
             pick.style.display = '';
-            sel.innerHTML = (company ? '' : '<option value="">— Choose company —</option>') +
-                companies.map((c) => '<option value="' + esc(c.id) + '"' + (company && c.id === company.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
+            document.getElementById('coBtn').textContent = company ? company.name : '— Choose company —';
+            document.getElementById('coMenu').innerHTML = companies.map((c) => '<button type="button" data-co="' + esc(c.id) + '" class="' + (company && c.id === company.id ? 'on' : '') + '">' + esc(c.name) + '</button>').join('');
         } else pick.style.display = 'none';
+        // Location (only when the company has locations)
+        const locs = locationsOf(company), es = document.getElementById('esPick');
+        if (locs.length) {
+            location_ = currentLocation();
+            es.style.display = '';
+            document.getElementById('esBtn').textContent = location_ || (allowAll ? 'All locations' : '— Location —');
+            document.getElementById('esMenu').innerHTML = (allowAll ? '<button type="button" data-es="" class="' + (!location_ ? 'on' : '') + '">All locations</button>' : '') +
+                locs.map((n) => '<button type="button" data-es="' + esc(n) + '" class="' + (n === location_ ? 'on' : '') + '">' + esc(n) + '</button>').join('');
+        } else { location_ = ''; es.style.display = 'none'; }
         const u = new URL(backHref, location.href);
         if (company) u.searchParams.set('gw_company_id', company.id);
         document.getElementById('back').href = u.pathname + u.search;
-        sel.onchange = (e) => { company = findCompany(e.target.value); applyCompany(company); drawTop(backHref); listeners.forEach((f) => f(company)); };
+        lastBack = backHref; lastOpts = opts;
     }
+    let lastBack = '../', lastOpts = null;
+    // Menus open / close / choose (wired once)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#coBtn, #esBtn');
+        if (btn) { const m = document.getElementById(btn.id === 'coBtn' ? 'coMenu' : 'esMenu'); const open = !m.classList.contains('open'); document.querySelectorAll('.co-menu.open').forEach((x) => x.classList.remove('open')); if (open) m.classList.add('open'); return; }
+        const co = e.target.closest('#coMenu [data-co]');
+        if (co) {
+            document.getElementById('coMenu').classList.remove('open');
+            const c = findCompany(co.dataset.co);
+            if (!c || (company && c.id === company.id)) return;
+            company = c; applyCompany(company); drawTop(lastBack, lastOpts); listeners.forEach((f) => f(company));
+            return;
+        }
+        const es = e.target.closest('#esMenu [data-es]');
+        if (es) {
+            document.getElementById('esMenu').classList.remove('open');
+            pickLocation(es.dataset.es); drawTop(lastBack, lastOpts); locListeners.forEach((f) => f(location_));
+            return;
+        }
+        if (!e.target.closest('.co-pick')) document.querySelectorAll('.co-menu.open').forEach((x) => x.classList.remove('open'));
+    });
 
     window.PortWorkers = {
         esc,
@@ -77,6 +134,9 @@
         companies,
         drawTop,
         onCompanyChange: (f) => listeners.push(f),
+        onLocationChange: (f) => locListeners.push(f),
+        /** The chosen location ('' = all locations / none). */
+        get location() { return location_; },
         /** Locations of the chosen company (the company itself when none is linked). */
         locations: () => (company && session && session.company_estates && session.company_estates[company.id]) || (company ? [company.name] : []),
         /** Worker Manage, as set in PORT → User Access for the chosen company:
