@@ -32,6 +32,8 @@
         .back:hover span, .back:focus-visible span { max-width: 200px; opacity: 1; margin-left: 6px; }
         .co-pick { position: relative; }
         .co-btn { height: 36px; padding: 0 30px 0 12px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; position: relative; }
+        .es-btn { padding-left: 30px; }
+        .es-btn::before { content: ''; position: absolute; left: 11px; top: 10px; width: 9px; height: 9px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
         .co-btn::after { content: ''; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid #64748B; border-bottom: 2px solid #64748B; transform: rotate(45deg); }
         .co-menu { display: none; position: absolute; left: 0; top: 42px; min-width: 100%; width: max-content; max-width: 70vw; max-height: 60vh; overflow: auto; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,23,42,.16); padding: 6px; z-index: 40; }
         .co-menu.open { display: block; }
@@ -179,6 +181,7 @@
             <span class="back-slot"><a class="back" id="back" href="../" title="Back to Plantation Operation">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Plantation Operation</span></a></span>
             <div class="co-pick" id="coPick" style="display:none;"><button type="button" class="co-btn" id="coBtn" aria-haspopup="listbox"></button><div class="co-menu" id="coMenu" role="listbox"></div></div>
+            <div class="co-pick" id="esPick" style="display:none;"><button type="button" class="co-btn es-btn" id="esBtn" aria-haspopup="listbox" title="Location"></button><div class="co-menu" id="esMenu" role="listbox"></div></div>
         </div>
         <div class="title">Estate Info</div>
         <div class="who" id="who"></div>
@@ -209,7 +212,7 @@
     }
     const COMPANY_ID_KEY = 'port_company_id';   // shared with the front page
     const COMPANY_KEY = 'port_company';         // company name, shared with the front page
-    const ESTATE_KEY = 'port_estate_info_estate';
+    const ESTATE_KEY = 'port_location'; // same key as the front page: the location follows across pages
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const num = (v, d) => (v == null || v === '' || isNaN(+v)) ? '—' : (+v).toLocaleString('en-MY', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -290,10 +293,14 @@
     async function loadEstates() {
         estates = [];
         if (!company) return;
-        try {
-            const r = await api('port_estate_company?select=estate&company_id=eq.' + encodeURIComponent(company.id) + '&order=estate.asc');
-            estates = r.map((x) => x.estate).filter(Boolean);
-        } catch (e) { /* list not readable yet: the company itself is the location */ }
+        // the company's locations: from the sign-in session, else the estate ↔ company table
+        if (session && session.company_estates && Array.isArray(session.company_estates[company.id])) estates = session.company_estates[company.id].filter(Boolean);
+        if (!estates.length) {
+            try {
+                const r = await api('port_estate_company?select=estate&company_id=eq.' + encodeURIComponent(company.id) + '&order=estate.asc');
+                estates = r.map((x) => x.estate).filter(Boolean);
+            } catch (e) { /* list not readable yet: the company itself is the location */ }
+        }
         if (!estates.length) estates = [company.name];
         let want = ctxEstate; try { want = want || localStorage.getItem(ESTATE_KEY + ':' + company.id) || ''; } catch (e) {}
         estate = estates.includes(want) ? want : estates[0];
@@ -324,12 +331,21 @@
         try { const m = await api('port_estate_meta?select=*&estate=eq.' + encodeURIComponent(estate)); meta = m[0] || {}; } catch (e) { meta = {}; }
         drawBlocks();
     }
-    function drawCtx() {
-        $('ctx').innerHTML = estates.length > 1
-            ? '<label class="pick">Location <select id="esSel">' + estates.map((n) => '<option' + (n === estate ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>'
-            : '';
-        const es = $('esSel'); if (es) es.onchange = (e) => setEstate(e.target.value);
+    function drawCtx() { // Location dropdown in the top bar, beside the company
+        $('ctx').innerHTML = '';
+        const show = estates.length > 1 || (estates.length === 1 && estates[0] !== company.name);
+        $('esPick').style.display = show ? '' : 'none';
+        if (!show) return;
+        $('esBtn').textContent = estate || '— Location —';
+        $('esMenu').innerHTML = estates.map((n) => '<button type="button" data-es="' + esc(n) + '" class="' + (n === estate ? 'on' : '') + '">' + esc(n) + '</button>').join('');
     }
+    $('esBtn').onclick = () => $('esMenu').classList.toggle('open');
+    document.addEventListener('click', (e) => { if (!e.target.closest('#esPick')) $('esMenu').classList.remove('open'); });
+    $('esMenu').onclick = (e) => {
+        const b = e.target.closest('[data-es]'); if (!b) return;
+        $('esMenu').classList.remove('open');
+        if (b.dataset.es !== estate) { if (editing && !confirm('Discard the changes?')) return; editing = false; draft = []; removed = []; setEstate(b.dataset.es); }
+    };
 
     // =====================================================================
     // The block table: Division | Phase | Block | Year planted | Area (before, after) |
