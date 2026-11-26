@@ -27,15 +27,18 @@ export interface IntranetEstate { id: string; company_id: string; name: string; 
 
 export interface MasterData {
   companies: Company[]; links: { group_id: string; company_id: string }[];
-  estates?: IntranetEstate[]; // gw_company_estates: the locations of each company, as set in the Intranet
+  locations?: { id: string; company_id: string; name: string; location_id?: string | null; sort_order: number | null; is_active: boolean }[]; // gw_company_locations: the Locations of each company in the Intranet
+  estates?: IntranetEstate[]; // gw_company_estates (older estate list)
   module_company_ids: string[]; module_business_ids: string[];
   module_users?: { id: string; email: string; full_name: string | null; is_admin: boolean; company_ids: string[] }[];
 }
 
 /** The locations (estates) of one company, exactly as set in the Intranet; [] when it has none. */
 export function intranetEstatesOf(md: MasterData, companyId: string): string[] {
-  return (md.estates ?? [])
-    .filter((e) => e.company_id === companyId && e.is_active !== false)
+  // The Intranet's Location list of the company (Admin → Company → Locations); the older Estates list as fallback
+  const locs = (md.locations ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  const src = locs.length ? locs : (md.estates ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  return src
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
     .map((e) => e.name.trim()).filter(Boolean);
 }

@@ -312,7 +312,7 @@
     function logout() {
         localStorage.removeItem(SESSION_KEY);
         try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
-        location.href = intranetLink();
+        location.href = INTRANET_URL + '?gw_logout=1'; // the Intranet signs out too
     }
     function draw(session, errorText) {
         const who = document.getElementById('who');
