@@ -100,8 +100,10 @@
         .meta input[type=date] { height: 32px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 13px; color: var(--ink); background: #fff; }
         table.grid td { padding: 3px 4px; }
         table.grid td.lvl { background: #FAFAF9; }
-        table.grid input { width: 100%; min-width: 60px; height: 32px; border: 1px solid transparent; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; }
-        table.grid input.num { text-align: right; font-variant-numeric: tabular-nums; }
+        table.grid input { width: 100%; min-width: 56px; height: 32px; border: 1px solid transparent; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; }
+        table.grid input.num { text-align: right; font-variant-numeric: tabular-nums; width: 96px; }
+        table.grid td.lvl input { width: 84px; }
+        table.grid th, table.grid td { padding-left: 8px; padding-right: 8px; }
         table.grid input:hover { border-color: #E2E8F0; background: #fff; }
         table.grid input:focus { outline: none; border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(22,101,52,.12); }
         table.grid input.dirty { background: #FEFCE8; }
@@ -112,6 +114,12 @@
         table.grid .x { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: #94A3B8; cursor: pointer; font-size: 16px; }
         table.grid .x:hover { background: #FEF2F2; color: #B91C1C; }
         .legend { font-size: 12px; color: var(--mute); margin: 8px 0 0; }
+        table.grid thead th { text-align: center; vertical-align: middle; }
+        table.grid thead th.grp-h { background: #ECFDF5; color: #14532D; border-bottom: 1px solid #D1FAE5; }
+        table.grid thead input.hdate { height: 28px; border: 1px dashed #CBD5E1; border-radius: 8px; background: #fff; font: inherit; font-size: 12px; font-weight: 600; color: var(--ink); padding: 0 6px; width: 130px; }
+        table.grid thead input.hdate:hover { border-color: var(--brand); }
+        table.grid input.faint, table.grid td.faint { color: #CBD5E1; }
+        table.grid input.faint:focus { color: var(--ink); }
 
         /* Settings */
         .tlist { display: grid; gap: 10px; }
@@ -148,8 +156,6 @@
         <div id="note"></div>
         <div class="ctx" id="ctx"></div>
         <section id="blocksSec"></section>
-        <div id="tablesSec"></div>
-        <section id="setSec"></section>
     </main>
 
     <!-- Blocks: add / edit one block -->
@@ -163,30 +169,6 @@
         <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="pasteSave">Import</button></div>
     </div></div>
 
-    <!-- Your tables: add / edit one record -->
-    <div class="modal" id="recModal"><div class="dlg">
-        <h2 id="recTitle">Add record</h2>
-        <form id="recForm" class="form" autocomplete="off"></form>
-        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="recSave">Save</button></div>
-    </div></div>
-
-    <!-- Settings: create / edit a table -->
-    <div class="modal" id="tblModal"><div class="dlg wide">
-        <h2 id="tblTitle">New table</h2>
-        <form id="tblForm" class="form" autocomplete="off">
-            <label class="full">Table name * <input name="name" maxlength="80" placeholder="e.g. Labour Force, Machinery, Housing, Land Title"></label>
-            <label class="full">Description <textarea name="description" class="plain" placeholder="What this table records (optional)"></textarea></label>
-            <label class="full check"><input type="checkbox" name="per_estate"> Keep records per location (e.g. Mega Jutamas → Sg Rait / Suai / Ulu Niah). Unticked = one list per company.</label>
-        </form>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
-            <b style="font-size:14px">Columns</b>
-            <button class="btn sm" type="button" id="colAdd">+ Add column</button>
-        </div>
-        <div class="cols" id="colList"></div>
-        <p class="hint">Choice = a dropdown; type its options separated by commas. Renaming a column keeps the data already recorded under it.</p>
-        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="tblSave">Save table</button></div>
-    </div></div>
-
     <div class="toast" id="toast"></div>
 
 <script>
@@ -198,7 +180,6 @@
     const COMPANY_KEY = 'port_company';         // company name, shared with the front page
     const ESTATE_KEY = 'port_estate_info_estate';
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
-    const TYPES = [['text', 'Text'], ['number', 'Number'], ['date', 'Date'], ['yesno', 'Yes / No'], ['choice', 'Choice (dropdown)']];
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const num = (v, d) => (v == null || v === '' || isNaN(+v)) ? '—' : (+v).toLocaleString('en-MY', { minimumFractionDigits: d, maximumFractionDigits: d });
     const $ = (id) => document.getElementById(id);
@@ -235,7 +216,7 @@
     if (!company) { try { company = findCompany(localStorage.getItem(COMPANY_ID_KEY)) || findCompany(localStorage.getItem(COMPANY_KEY)); } catch (e) {} }
     if (!company && companies.length === 1) company = companies[0];
 
-    let estates = [], estate = '', tables = [], rows = [], records = [], editing = null, editingRec = null, editingTbl = null, colDraft = [], meta = {};
+    let estates = [], estate = '', rows = [], meta = {};
 
     async function api(path, opt) {
         const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({ headers: H }, opt || {}));
@@ -287,110 +268,82 @@
         load();
     }
 
-    // ---- Tabs: Blocks, one per table made in Settings, Settings
-    async function loadTables() {
-        try { tables = await api('port_estate_tables?select=*&is_active=eq.true&order=sort_order.asc,name.asc'); }
-        catch (e) { tables = []; if (/port_estate_tables/.test(e.message)) tables.missing = true; }
-    }
-    // ---- Load and draw the page: blocks, then the record tables, then (admins) the table designer
+    // ---- Load and draw the one table of this page
     async function load() {
-        const clear = () => { $('ctx').innerHTML = ''; $('blocksSec').innerHTML = ''; $('tablesSec').innerHTML = ''; $('setSec').innerHTML = ''; };
-        if (!session) { clear(); return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.'); }
-        if (!companies.length) { clear(); return note('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.'); }
-        if (!company) { clear(); return note('Choose a company in the top bar.'); }
+        if (!session) { $('ctx').innerHTML = ''; $('blocksSec').innerHTML = ''; return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.'); }
+        if (!companies.length) { $('ctx').innerHTML = ''; $('blocksSec').innerHTML = ''; return note('&#9888;&#65039; No company has been given to you for this module in MJM Intranet.'); }
+        if (!company) { $('ctx').innerHTML = ''; $('blocksSec').innerHTML = ''; return note('Choose a company in the top bar.'); }
         note('');
-        drawCtx(true);
+        drawCtx();
         rows = []; meta = {};
-        try { rows = await api('port_estate_blocks?select=*&estate=eq.' + encodeURIComponent(estate) + '&order=division.asc,phase.asc,sort_order.asc,block.asc'); }
+        try { rows = await api('port_estate_blocks?select=*&estate=eq.' + encodeURIComponent(estate) + '&order=division.asc,phase.asc,sort_order.asc,block.asc'); sortRows(); }
         catch (e) { note('Could not load blocks: ' + esc(e.message) + (/port_estate_blocks/.test(e.message) ? '. The table has not been created yet (run docs/run-after-setup.sql in Supabase).' : ''), 'err'); }
         try { const m = await api('port_estate_meta?select=*&estate=eq.' + encodeURIComponent(estate)); meta = m[0] || {}; } catch (e) { meta = {}; }
         drawBlocks();
-        $('tablesSec').innerHTML = tables.map((t) => '<section class="sec" id="tbl' + t.id + '"></section>').join('');
-        for (const t of tables) {
-            let recs = [];
-            try {
-                recs = await api('port_estate_records?select=*&table_id=eq.' + t.id + '&company_id=eq.' + encodeURIComponent(company.id) +
-                    (t.per_estate ? '&estate=eq.' + encodeURIComponent(estate) : '') + '&order=sort_order.asc,id.asc');
-            } catch (e) { /* shown empty */ }
-            records = recs;
-            drawTable(t, recs);
-        }
-        if (canSet()) drawSettings(); else $('setSec').innerHTML = '';
     }
-    function drawCtx(showEstate) {
-        $('ctx').innerHTML = showEstate && estates.length > 1
+    function drawCtx() {
+        $('ctx').innerHTML = estates.length > 1
             ? '<label class="pick">Location <select id="esSel">' + estates.map((n) => '<option' + (n === estate ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>'
             : '';
         const es = $('esSel'); if (es) es.onchange = (e) => setEstate(e.target.value);
     }
 
     // =====================================================================
-    // Blocks
+    // The block table: Division | Phase | Block | Year planted | Area (before, after) |
+    // Palm count (before, after, difference) | Density (before, after, difference)
+    // "before" and "after" are two map dates, set in the column titles.
     // =====================================================================
-    const dens = (r) => r.density != null && r.density !== '' ? +r.density : (r.area_ha > 0 && r.palm_count != null ? r.palm_count / r.area_ha : null);
     const sum = (list, k) => list.reduce((a, r) => a + (r[k] == null || r[k] === '' ? 0 : +r[k]), 0);
-    const avgDens = (list) => { const a = sum(list, 'area_ha'), p = sum(list.filter((r) => r.area_ha > 0 || r.palm_count), 'palm_count'); return a > 0 && p ? p / a : null; };
-
+    const densOf = (area, palms) => (area > 0 && palms != null && palms !== '' ? palms / area : null);
+    const avgDens = (list, ak, pk) => { const a = sum(list, ak), p = sum(list, pk); return a > 0 && p ? p / a : null; };
+    const diff = (a, b, d) => (a == null || b == null ? '' : (b - a < 0 ? '(' + num(a - b, d) + ')' : num(b - a, d)));
     const FIELDS = [
-        { k: 'division', label: 'Division', type: 'text', lvl: true },
-        { k: 'phase',    label: 'Phase',    type: 'text', lvl: true },
-        { k: 'block',    label: 'Block',    type: 'text' },
-        { k: 'year_planted', label: 'Year planted', type: 'int' },
-        { k: 'area_ha',  label: 'Area (ha)', type: 'dec' },
-        { k: 'palm_count', label: 'Palm count', type: 'int' },
-        { k: 'remark',   label: 'Remark',   type: 'text' },
+        { k: 'division',        label: 'Division',     type: 'text', lvl: true },
+        { k: 'phase',           label: 'Phase',        type: 'text', lvl: true },
+        { k: 'block',           label: 'Block',        type: 'text' },
+        { k: 'year_planted',    label: 'Year planted', type: 'text' },
+        { k: 'area_ha_prev',    label: 'before',       type: 'dec' },
+        { k: 'area_ha',         label: 'after',        type: 'dec' },
+        { k: 'palm_count_prev', label: 'before',       type: 'int' },
+        { k: 'palm_count',      label: 'after',        type: 'int' },
     ];
-    let showDiv = false;
-    const fmtD = (d) => { if (!d) return '—'; const x = new Date(d); return isNaN(x) ? '—' : x.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }); };
     const sortRows = () => rows.sort((a, b) => (a.division || '').localeCompare(b.division || '', undefined, { numeric: true }) || (a.phase || '').localeCompare(b.phase || '', undefined, { numeric: true }) || (a.block || '').localeCompare(b.block || '', undefined, { numeric: true }));
+    const monthLabel = (d) => { if (!d) return ''; const x = new Date(d + (d.length === 7 ? '-01' : '')); return isNaN(x) ? d : x.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' }); };
 
     function drawBlocks() {
         const edit = canEdit();
-        showDiv = showDiv || rows.some((r) => r.division);
         const saved = rows.filter((r) => r.id);
-        const years = saved.map((r) => r.year_planted).filter(Boolean);
-        const cards = [
-            ['Planted area', num(sum(saved, 'area_ha'), 2) + '<small>ha</small>'],
-            ['Blocks', saved.length.toLocaleString()],
-            ['Palms', num(sum(saved, 'palm_count'), 0)],
-            ['Avg density', num(avgDens(saved), 1) + '<small>palms/ha</small>'],
-            years.length ? ['Year planted', Math.min(...years) + (Math.max(...years) !== Math.min(...years) ? ' – ' + Math.max(...years) : '')] : null,
-        ].filter(Boolean).map((c) => '<div class="card"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
-        const last = saved.reduce((a, r) => (r.updated_at && r.updated_at > a ? r.updated_at : a), '');
-        const metaBar = '<div class="meta">' +
-            '<label>Map date ' + (edit ? '<input type="date" id="mMap" value="' + esc(meta.map_date || '') + '">' : '<span>' + fmtD(meta.map_date) + '</span>') + '</label>' +
-            '<label>Inspection date ' + (edit ? '<input type="date" id="mInsp" value="' + esc(meta.inspection_date || '') + '">' : '<span>' + fmtD(meta.inspection_date) + '</span>') + '</label>' +
-            '<span>Last updated <b>' + fmtD(last) + '</b></span></div>';
-        const bar = '<div class="bar"><span class="muted" style="font-size:13px">' + esc(estate) + ' · ' + saved.length + ' block' + (saved.length === 1 ? '' : 's') + '</span><span class="sp"></span>' +
-            (edit ? '<label class="pick" style="font-size:12.5px"><input type="checkbox" id="divToggle"' + (showDiv ? ' checked' : '') + '> Division column</label>' +
-                    '<button class="btn sm" id="pasteBtn">&#128203; Paste from Excel</button><button class="btn sm primary" id="addBtn">+ Add block</button>' : '<span class="chip">View only</span>') + '</div>';
-        const fields = FIELDS.filter((f) => f.k !== 'division' || showDiv);
-        const head = '<tr>' + fields.map((f) => '<th' + (f.type !== 'text' ? ' class="num"' : '') + '>' + f.label + '</th>' + (f.k === 'palm_count' ? '<th class="num">Density</th>' : '')).join('') + (edit ? '<th></th>' : '') + '</tr>';
-        const nCols = fields.length + 1 + (edit ? 1 : 0);
-        const subtotal = (label, list, cls) => {
-            const lead = fields.findIndex((f) => f.k === 'year_planted');
-            return '<tr class="' + cls + '"><td colspan="' + (lead + 1) + '">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td>' +
-                '<td class="num">' + num(sum(list, 'area_ha'), 2) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + num(avgDens(list), 1) + '</td><td colspan="' + (nCols - lead - 4) + '"></td></tr>';
-        };
-        let body = '';
+        const before = monthLabel(meta.prev_map_date) || 'Before', after = monthLabel(meta.map_date) || 'After';
+        const dateCell = (k, label) => edit
+            ? '<th class="num"><input type="month" class="hdate" data-meta="' + k + '" value="' + esc((meta[k] || '').slice(0, 7)) + '" title="Map date"></th>'
+            : '<th class="num">' + esc(label) + '</th>';
+        const head =
+            '<tr><th rowspan="2">Division</th><th rowspan="2">Phase</th><th rowspan="2">Block</th><th rowspan="2" class="num">Year planted</th>' +
+            '<th colspan="2" class="grp-h">Area (ha)</th><th colspan="3" class="grp-h">Palm count</th><th colspan="3" class="grp-h">Density (palms/ha)</th>' + (edit ? '<th rowspan="2"></th>' : '') + '</tr>' +
+            '<tr>' + dateCell('prev_map_date', before) + dateCell('map_date', after) +
+            dateCell('prev_map_date', before) + dateCell('map_date', after) + '<th class="num">Difference</th>' +
+            '<th class="num">' + esc(before) + '</th><th class="num">' + esc(after) + '</th><th class="num">Difference</th></tr>';
         const groups = [];
-        rows.forEach((r) => { const key = (showDiv ? (r.division || '') + ' › ' : '') + (r.phase || ''); const g = groups.find((x) => x.key === key); if (g) g.rows.push(r); else groups.push({ key, rows: [r] }); });
+        rows.forEach((r) => { const key = (r.division || '') + '\u0001' + (r.phase || ''); const g = groups.find((x) => x.key === key); if (g) g.rows.push(r); else groups.push({ key, rows: [r] }); });
+        let body = '';
         groups.forEach((g) => {
-            body += g.rows.map((r) => rowHtml(r, fields, edit)).join('');
-            if (groups.length > 1 && g.rows.length > 1) body += subtotal(g.key.replace(/^ › /, '') || 'No phase', g.rows.filter((r) => r.id), 'sub');
+            body += g.rows.map((r, i) => rowHtml(r, edit, i > 0)).join('');
+            const sv = g.rows.filter((r) => r.id);
+            if (sv.length > 1) body += totalRow((g.rows[0].phase ? 'Phase ' + g.rows[0].phase : 'Total') + (g.rows[0].division ? ' · ' + g.rows[0].division : ''), sv, 'sub', edit);
         });
-        if (saved.length) body += subtotal('Total · ' + estate, saved, 'total');
-        const empty = !rows.length ? '<div class="empty" id="gridEmpty">No blocks recorded for ' + esc(estate) + ' yet.' + (edit ? '<br>Press <b>+ Add block</b> and type straight into the row, or <b>Paste from Excel</b>.' : '') + '</div>' : '';
-        $('blocksSec').innerHTML = '<div class="cards">' + cards + '</div>' + metaBar + bar + '<div class="wrap"><table class="grid"' + (rows.length ? '' : ' style="display:none"') + '><thead>' + head + '</thead><tbody id="gridBody">' + body + '</tbody></table>' + empty + '</div>' +
-            (edit ? '<p class="legend">Type in a cell and press Enter or Tab, or click elsewhere: the change is saved at once. Density = palm count ÷ area. Enter on the last cell adds a new block.</p>' : '');
+        if (saved.length) body += totalRow('Total · ' + estate, saved, 'total', edit);
+        const empty = !rows.length ? '<div class="empty" id="gridEmpty">No blocks recorded for ' + esc(estate) + ' yet.' + (edit ? '<br>Press <b>+ Add row</b> and type straight into the row, or <b>Paste from Excel</b>.' : '') + '</div>' : '';
+        const bar = '<div class="bar"><span class="muted" style="font-size:13px">' + esc(estate) + ' · ' + saved.length + ' block' + (saved.length === 1 ? '' : 's') + '</span><span class="sp"></span>' +
+            (edit ? '<button class="btn sm" id="pasteBtn">&#128203; Paste from Excel</button><button class="btn sm primary" id="addBtn">+ Add row</button>' : '<span class="chip">View only</span>') + '</div>';
+        $('blocksSec').innerHTML = bar + '<div class="wrap"><table class="grid"' + (rows.length ? '' : ' style="display:none"') + '><thead>' + head + '</thead><tbody id="gridBody">' + body + '</tbody></table>' + empty + '</div>' +
+            (edit ? '<p class="legend">Type in a cell and press Enter or Tab, or click elsewhere: it is saved at once. Set the two map dates in the Area column titles. Density and Difference are worked out from area and palm count.</p>' : '');
         if (!edit) return;
-        $('divToggle').onchange = (e) => { showDiv = e.target.checked; drawBlocks(); };
         $('addBtn').onclick = addRow;
         $('pasteBtn').onclick = () => { $('pasteText').value = ''; $('pastePreview').textContent = ''; $('pasteModal').classList.add('open'); };
-        $('mMap').onchange = $('mInsp').onchange = saveMeta;
+        $('blocksSec').querySelectorAll('input.hdate').forEach((inp) => { inp.onchange = () => saveMeta(inp.dataset.meta, inp.value); });
         const gb = $('gridBody');
         gb.addEventListener('change', (e) => { const inp = e.target.closest('input[data-k]'); if (inp) saveCell(inp); });
-        gb.addEventListener('input', (e) => { const inp = e.target.closest('input[data-k]'); if (!inp) return; inp.classList.add('dirty'); liveDensity(inp.closest('tr')); });
+        gb.addEventListener('input', (e) => { const inp = e.target.closest('input[data-k]'); if (!inp) return; inp.classList.add('dirty'); liveCalc(inp.closest('tr')); });
         gb.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             const inp = e.target.closest('input[data-k]'); if (!inp) return;
@@ -401,15 +354,29 @@
         gb.addEventListener('click', (e) => { const b = e.target.closest('[data-del]'); if (b) delRow(b.closest('tr')); });
         gb.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches('input[data-k]')) e.target.select(); }); // typing replaces, like a spreadsheet
     }
-    function rowHtml(r, fields, edit) {
+    function calc(r) {
+        const d0 = densOf(r.area_ha_prev, r.palm_count_prev), d1 = densOf(r.area_ha, r.palm_count);
+        return { pd: diff(r.palm_count_prev, r.palm_count, 0), d0, d1, dd: diff(d0, d1, 0) };
+    }
+    function rowHtml(r, edit, repeat) {
+        const c = calc(r);
         const cell = (f) => {
             const v = r[f.k] == null ? '' : r[f.k];
-            if (!edit) return '<td class="' + (f.type !== 'text' ? 'calc' : f.lvl ? 'lvl' : '') + '">' + (f.type === 'dec' ? num(v, 2) : f.type === 'int' ? (v === '' ? '—' : num(v, 0)) : (esc(v) || '<span class="muted">—</span>')) + '</td>';
-            return '<td' + (f.lvl ? ' class="lvl"' : '') + '><input data-k="' + f.k + '" class="' + (f.type !== 'text' ? 'num' : '') + '" value="' + esc(v) + '"' +
+            const same = repeat && f.lvl; // same division / phase as the row above: shown faint
+            if (!edit) return '<td class="' + (f.type !== 'text' ? 'calc' : f.lvl ? 'lvl' : '') + (same ? ' faint' : '') + '">' + (f.type === 'dec' ? num(v, 2) : f.type === 'int' ? (v === '' ? '—' : num(v, 0)) : (esc(v) || (f.lvl ? '' : '<span class="muted">—</span>'))) + '</td>';
+            return '<td' + (f.lvl ? ' class="lvl"' : '') + '><input data-k="' + f.k + '" class="' + (f.type !== 'text' ? 'num' : '') + (same ? ' faint' : '') + '" value="' + esc(v) + '"' +
                 (f.type === 'dec' ? ' inputmode="decimal"' : f.type === 'int' ? ' inputmode="numeric"' : '') + (f.k === 'block' ? ' placeholder="Block"' : '') + '></td>';
         };
-        return '<tr data-id="' + esc(r.id || '') + '"' + (r.id ? '' : ' class="new"') + '>' + fields.map((f) => cell(f) + (f.k === 'palm_count' ? '<td class="calc" data-dens>' + num(dens(r), 1) + '</td>' : '')).join('') +
-            (edit ? '<td><button class="x" data-del title="Delete block">&times;</button></td>' : '') + '</tr>';
+        return '<tr data-id="' + esc(r.id || '') + '"' + (r.id ? '' : ' class="new"') + '>' + FIELDS.map(cell).join('') +
+            '<td class="calc" data-c="pd">' + c.pd + '</td><td class="calc" data-c="d0">' + num(c.d0, 0) + '</td><td class="calc" data-c="d1">' + num(c.d1, 0) + '</td><td class="calc" data-c="dd">' + c.dd + '</td>' +
+            (edit ? '<td><button class="x" data-del title="Delete row">&times;</button></td>' : '') + '</tr>';
+    }
+    function totalRow(label, list, cls, edit) {
+        const d0 = avgDens(list, 'area_ha_prev', 'palm_count_prev'), d1 = avgDens(list, 'area_ha', 'palm_count');
+        return '<tr class="' + cls + '"><td colspan="4">' + esc(label) + ' · ' + list.length + ' block' + (list.length === 1 ? '' : 's') + '</td>' +
+            '<td class="num">' + num(sum(list, 'area_ha_prev'), 2) + '</td><td class="num">' + num(sum(list, 'area_ha'), 2) + '</td>' +
+            '<td class="num">' + num(sum(list, 'palm_count_prev'), 0) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + diff(sum(list, 'palm_count_prev'), sum(list, 'palm_count'), 0) + '</td>' +
+            '<td class="num">' + num(d0, 0) + '</td><td class="num">' + num(d1, 0) + '</td><td class="num">' + diff(d0, d1, 0) + '</td>' + (edit ? '<td></td>' : '') + '</tr>';
     }
     const rowOf = (tr) => rows.find((r) => tr.dataset.id ? String(r.id) === tr.dataset.id : r._tr === tr);
     function readRow(tr) {
@@ -418,12 +385,12 @@
             const f = FIELDS.find((x) => x.k === inp.dataset.k), v = inp.value.trim();
             o[f.k] = f.type === 'text' ? v : (v === '' ? null : +v.replace(/,/g, ''));
         });
-        if (!('division' in o)) o.division = (rowOf(tr) || {}).division || '';
         return o;
     }
-    function liveDensity(tr) {
-        const o = readRow(tr), d = o.area_ha > 0 && o.palm_count != null ? o.palm_count / o.area_ha : null;
-        const td = tr.querySelector('[data-dens]'); if (td) td.textContent = num(d, 1);
+    function liveCalc(tr) {
+        const c = calc(readRow(tr));
+        const set = (k, v) => { const td = tr.querySelector('[data-c="' + k + '"]'); if (td) td.textContent = v; };
+        set('pd', c.pd); set('d0', num(c.d0, 0)); set('d1', num(c.d1, 0)); set('dd', c.dd);
     }
     function flash(tr, ok) { tr.querySelectorAll('input.dirty').forEach((i) => { i.classList.remove('dirty'); i.classList.toggle('bad', !ok); if (ok) { i.classList.add('saved'); setTimeout(() => i.classList.remove('saved'), 1200); } }); }
     // One save at a time per row, so a new row is inserted once and later cells update it
@@ -435,8 +402,11 @@
     async function saveRow(tr, inp) {
         const o = readRow(tr);
         if (!o.block) { if (tr.dataset.id) { inp.classList.add('bad'); toast('Block is required'); } return; }
-        if (o.year_planted != null && (isNaN(o.year_planted) || o.year_planted < 1950 || o.year_planted > 2100)) { inp.classList.add('bad'); toast('Year planted looks wrong'); return; }
+        const yr = o.year_planted;
+        o.year_planted = yr === '' ? null : /^\d{4}$/.test(yr) ? +yr : null;
+        if (yr && o.year_planted == null) o.remark_year = yr; // "2009 / 2024" style stays as text in the remark
         const body = Object.assign(o, { estate, company_id: company.id, updated_by: session.email || '', updated_at: new Date().toISOString() });
+        if (body.remark_year) { body.remark = body.remark_year; delete body.remark_year; }
         const send = async () => {
             if (tr.dataset.id) {
                 await api('port_estate_blocks?id=eq.' + tr.dataset.id, { method: 'PATCH', body: JSON.stringify(body) });
@@ -452,7 +422,7 @@
         catch (e) {
             if (/company_id/.test(e.message)) { delete body.company_id; try { await send(); flash(tr, true); refreshTotals(); return; } catch (e2) { e = e2; } }
             flash(tr, false);
-            toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : 'Save failed: ' + e.message);
+            toast(/duplicate|unique/i.test(e.message) ? 'That block already exists under this division and phase' : /area_ha_prev|palm_count_prev/.test(e.message) ? 'Run docs/run-after-setup.sql in Supabase first (before / after columns)' : 'Save failed: ' + e.message);
             return;
         }
         flash(tr, true); refreshTotals();
@@ -469,12 +439,11 @@
     }
     function addRow() {
         const last = rows[rows.length - 1] || {};
-        const draft = { id: null, division: last.division || '', phase: last.phase || '', block: '', year_planted: last.year_planted || null, area_ha: null, palm_count: null, remark: '' };
+        const draft = { id: null, division: last.division || '', phase: last.phase || '', block: '', year_planted: null, area_ha_prev: null, area_ha: null, palm_count_prev: null, palm_count: null, remark: '' };
         rows.push(draft);
         $('blocksSec').querySelector('table.grid').style.display = '';
         const emp = $('gridEmpty'); if (emp) emp.remove();
-        const fields = FIELDS.filter((f) => f.k !== 'division' || showDiv);
-        const tmp = document.createElement('tbody'); tmp.innerHTML = rowHtml(draft, fields, true);
+        const tmp = document.createElement('tbody'); tmp.innerHTML = rowHtml(draft, true, false);
         const tr = tmp.firstElementChild; draft._tr = tr;
         const gb = $('gridBody'), total = gb.querySelector('tr.total');
         if (total) gb.insertBefore(tr, total); else gb.appendChild(tr);
@@ -486,14 +455,15 @@
         if (!confirm('Delete block ' + (r ? r.block : '') + '?')) return;
         try { await api('port_estate_blocks?id=eq.' + tr.dataset.id, { method: 'DELETE' }); rows = rows.filter((x) => String(x.id) !== tr.dataset.id); toast('Deleted'); drawBlocks(); } catch (e) { toast('Delete failed: ' + e.message); }
     }
-    async function saveMeta() {
-        const body = { estate, company_id: company.id, map_date: $('mMap').value || null, inspection_date: $('mInsp').value || null, updated_by: session.email || '', updated_at: new Date().toISOString() };
-        try { await api('port_estate_meta?on_conflict=estate', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'resolution=merge-duplicates' }), body: JSON.stringify(body) }); meta = body; toast('Saved'); }
-        catch (e) { toast(/port_estate_meta/.test(e.message) ? 'Run docs/run-after-setup.sql in Supabase first (port_estate_meta table)' : 'Save failed: ' + e.message); }
+    async function saveMeta(k, v) {
+        const body = { estate, company_id: company.id, prev_map_date: meta.prev_map_date || null, map_date: meta.map_date || null, updated_by: session.email || '', updated_at: new Date().toISOString() };
+        body[k] = v ? v + '-01' : null;
+        try { await api('port_estate_meta?on_conflict=estate', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'resolution=merge-duplicates' }), body: JSON.stringify(body) }); meta = body; drawBlocks(); toast('Saved'); }
+        catch (e) { toast(/port_estate_meta|prev_map_date/.test(e.message) ? 'Run docs/run-after-setup.sql in Supabase first (map dates)' : 'Save failed: ' + e.message); }
     }
 
     // Paste from Excel (tab separated, header row names the columns)
-    const COLS = [['division', /^(division|div|bahagian)/i], ['phase', /^(phase|fasa|ph)/i], ['block', /^(block|blok|field)/i], ['area_ha', /^(area|ha|hect|luas|planted)/i], ['palm_count', /^(palm|palms|stand|pokok|count|no\.? ?of)/i], ['density', /^(dens|kepadatan|sph)/i], ['year_planted', /^(year|yop|tahun|planted)/i], ['remark', /^(remark|note|catatan)/i]];
+    const COLS = [['division', /^(division|div|bahagian)/i], ['phase', /^(phase|fasa|ph)/i], ['block', /^(block|blok|field)/i], ['area_ha', /^(area|ha|hect|luas|kawasan|planted)/i], ['palm_count', /^(palm|palms|stand|pokok|count|bilangan|no\.? ?of)/i], ['year_planted', /^(year|yop|tahun|planted)/i], ['remark', /^(remark|note|catatan)/i]];
     function parsePaste(text) {
         const lines = text.split(/\r?\n/).map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim());
         if (lines.length < 2) return { error: 'Paste the header row and at least one block row.' };
@@ -507,8 +477,9 @@
         lines.slice(1).forEach((l, i) => {
             const c = split(l), g = (k) => map[k] == null ? '' : (c[map[k]] || '');
             if (!g('block')) { bad.push(i + 2); return; }
-            if (/^total/i.test(g('block')) || /^total/i.test(g('division'))) return;
-            out.push({ estate, division: g('division'), phase: g('phase'), block: g('block'), area_ha: n(g('area_ha')), palm_count: n(g('palm_count')), density: n(g('density')), year_planted: n(g('year_planted')), remark: g('remark'), updated_by: session.email || '', updated_at: new Date().toISOString() });
+            if (/^(total|jumlah)/i.test(g('block')) || /^(total|jumlah)/i.test(g('division')) || /^(total|jumlah)/i.test(g('phase'))) return;
+            const yr = g('year_planted');
+            out.push({ estate, company_id: company.id, division: g('division'), phase: g('phase'), block: g('block'), area_ha: n(g('area_ha')), palm_count: n(g('palm_count')), year_planted: /^\d{4}$/.test(yr) ? +yr : null, remark: /^\d{4}$/.test(yr) || !yr ? g('remark') : yr, updated_by: session.email || '', updated_at: new Date().toISOString() });
         });
         return { rows: out, bad, cols: Object.keys(map) };
     }
@@ -517,187 +488,20 @@
         const p = parsePaste($('pasteText').value);
         if (p.error) { toast(p.error); return; }
         if (!p.rows.length) { toast('Nothing to import'); return; }
-        try {
-            await api('port_estate_blocks?on_conflict=estate,division,phase,block', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'resolution=merge-duplicates' }), body: JSON.stringify(p.rows) });
-            $('pasteModal').classList.remove('open'); toast(p.rows.length + ' block(s) imported'); load();
-        } catch (e) { toast('Import failed: ' + e.message); }
-    };
-
-    // =====================================================================
-    // Your tables (made in Settings)
-    // =====================================================================
-    const cellText = (c, v) => {
-        if (v == null || v === '') return '<span class="muted">—</span>';
-        if (c.type === 'number') return num(v, Number.isInteger(+v) ? 0 : 2);
-        if (c.type === 'yesno') return v === true || v === 'yes' ? 'Yes' : 'No';
-        if (c.type === 'date') { const d = new Date(v); return isNaN(d) ? esc(v) : d.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }); }
-        return esc(v);
-    };
-    function drawTable(t, records) {
-        const el = $('tbl' + t.id); if (!el) return;
-        const cols = Array.isArray(t.columns) ? t.columns : [];
-        const where = t.per_estate ? estate : company.name;
-        const bar = '<div class="bar"><span class="muted" style="font-size:13px">' + esc(where) + ' · ' + records.length + ' record' + (records.length === 1 ? '' : 's') +
-            (t.description ? ' · ' + esc(t.description) : '') + '</span><span class="sp"></span>' +
-            (canEdit() && cols.length ? '<button class="btn sm primary" id="recAdd">+ Add record</button>' : canEdit() ? '' : '<span class="chip">View only</span>') + '</div>';
-        let body;
-        if (!cols.length) body = '<div class="empty">This table has no columns yet.' + (canSet() ? '<br>Add columns under <b>Estate Info tables</b> below.' : '') + '</div>';
-        else if (!records.length) body = '<div class="empty">Nothing recorded for ' + esc(where) + ' yet.' + (canEdit() ? '<br>Use <b>+ Add record</b>.' : '') + '</div>';
-        else {
-            const numCols = cols.filter((c) => c.type === 'number');
-            body = '<table><thead><tr><th class="num" style="width:1%">#</th>' + cols.map((c) => '<th' + (c.type === 'number' ? ' class="num"' : '') + '>' + esc(c.label) + '</th>').join('') + (canEdit() ? '<th></th>' : '') + '</tr></thead><tbody>' +
-                records.map((r, i) => '<tr><td class="num muted">' + (i + 1) + '</td>' + cols.map((c) => '<td class="' + (c.type === 'number' ? 'num' : c.type === 'text' ? 'wrapcell' : '') + '">' + cellText(c, (r.data || {})[c.key]) + '</td>').join('') +
-                    (canEdit() ? '<td><div class="acts"><button class="btn sm" data-redit="' + r.id + '">Edit</button><button class="btn sm danger" data-rdel="' + r.id + '">Delete</button></div></td>' : '') + '</tr>').join('') +
-                (numCols.length ? '<tr class="total"><td>Total</td>' + cols.map((c) => c.type === 'number'
-                    ? (() => { const tot = records.reduce((a, r) => { const v = (r.data || {})[c.key]; return a + (v == null || v === '' || isNaN(+v) ? 0 : +v); }, 0); return '<td class="num">' + num(tot, Number.isInteger(tot) ? 0 : 2) + '</td>'; })() : '<td></td>').join('') + (canEdit() ? '<td></td>' : '') + '</tr>' : '') +
-                '</tbody></table>';
+        const send = (list) => api('port_estate_blocks?on_conflict=estate,division,phase,block', { method: 'POST', headers: Object.assign({}, H, { Prefer: 'resolution=merge-duplicates' }), body: JSON.stringify(list) });
+        try { await send(p.rows); }
+        catch (e) {
+            if (/company_id/.test(e.message)) { try { await send(p.rows.map((r) => { const x = Object.assign({}, r); delete x.company_id; return x; })); } catch (e2) { toast('Import failed: ' + e2.message); return; } }
+            else { toast('Import failed: ' + e.message); return; }
         }
-        el.innerHTML = '<h2>' + esc(t.name) + '</h2>' + bar.replace('id="recAdd"', 'data-recadd') + '<div class="wrap">' + body + '</div>';
-        const add = el.querySelector('[data-recadd]'); if (add) add.onclick = () => openRec(t, null);
-        el.querySelectorAll('[data-redit]').forEach((b) => { b.onclick = () => openRec(t, records.find((r) => String(r.id) === b.dataset.redit)); });
-        el.querySelectorAll('[data-rdel]').forEach((b) => { b.onclick = () => delRec(records.find((r) => String(r.id) === b.dataset.rdel)); });
-    }
-    function openRec(t, r) {
-        editingRec = { table: t, row: r || null };
-        $('recTitle').textContent = (r ? 'Edit record · ' : 'Add record · ') + t.name;
-        const d = (r && r.data) || {};
-        $('recForm').innerHTML = (t.columns || []).map((c) => {
-            const name = 'f_' + c.key, v = d[c.key] == null ? '' : d[c.key], lab = esc(c.label) + (c.required ? ' *' : '');
-            if (c.type === 'yesno') return '<label class="check full"><input type="checkbox" name="' + name + '"' + (v === true || v === 'yes' ? ' checked' : '') + '> ' + lab + '</label>';
-            if (c.type === 'choice') return '<label>' + lab + ' <select name="' + name + '"><option value=""></option>' + (c.options || []).map((o) => '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select></label>';
-            const type = c.type === 'number' ? 'number" step="any' : c.type === 'date' ? 'date' : 'text';
-            return '<label' + (c.type === 'text' ? ' class="full"' : '') + '>' + lab + ' <input type="' + type + '" name="' + name + '" value="' + esc(v) + '"></label>';
-        }).join('');
-        $('recModal').classList.add('open');
-        const first = $('recForm').querySelector('input,select'); if (first) first.focus();
-    }
-    $('recSave').onclick = async () => {
-        if (!editingRec) return;
-        const { table: t, row: r } = editingRec, f = $('recForm'), data = {};
-        for (const c of t.columns || []) {
-            const el = f.elements['f_' + c.key]; if (!el) continue;
-            let v = c.type === 'yesno' ? el.checked : el.value.trim();
-            if (c.type === 'number') v = v === '' ? null : +v;
-            if (c.required && (v === '' || v == null)) { toast(c.label + ' is required'); el.focus(); return; }
-            data[c.key] = v;
-        }
-        const body = { table_id: t.id, company_id: company.id, estate: t.per_estate ? estate : '', data, updated_by: session.email || '', updated_at: new Date().toISOString() };
-        try {
-            if (r) await api('port_estate_records?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify({ data, updated_by: body.updated_by, updated_at: body.updated_at }) });
-            else await api('port_estate_records', { method: 'POST', body: JSON.stringify(Object.assign(body, { sort_order: records.length })) });
-            $('recModal').classList.remove('open'); toast('Saved'); load();
-        } catch (e) { toast('Save failed: ' + e.message); }
+        $('pasteModal').classList.remove('open'); toast(p.rows.length + ' block(s) imported'); load();
     };
-    async function delRec(r) {
-        if (!r || !confirm('Delete this record?')) return;
-        try { await api('port_estate_records?id=eq.' + r.id, { method: 'DELETE' }); toast('Deleted'); load(); } catch (e) { toast('Delete failed: ' + e.message); }
-    }
-
-    // =====================================================================
-    // Settings: design the tables (Super Admin / Admin)
-    // =====================================================================
-    function drawSettings() {
-        if (tables.missing) {
-            $('setSec').innerHTML = '<p class="note err">The Estate Info tables are not set up in the database yet. Run <b>supabase/migrations/20261127100000_port_estate_info_tables.sql</b> in the Supabase SQL Editor, then reload this page.</p>';
-            return;
-        }
-        $('setSec').innerHTML = '<div class="sec">' +
-            '<div class="bar"><div><b style="font-size:16px">Estate Info tables</b><div class="muted" style="font-size:13px;margin-top:2px">Make your own tables to record estate information. Each table is a section on this page, used by every company.</div></div><span class="sp"></span>' +
-            '<button class="btn primary" id="tblNew">+ New table</button></div>' +
-            '<div class="tlist">' + (tables.length ? tables.map((t, i) =>
-                '<div class="titem"><div><div class="nm">' + esc(t.name) + '</div><div class="ds">' + (t.columns || []).length + ' column' + ((t.columns || []).length === 1 ? '' : 's') +
-                ' · ' + (t.per_estate ? 'per location' : 'per company') + ((t.columns || []).length ? ' · ' + esc((t.columns || []).map((c) => c.label).join(', ')) : '') + '</div></div><span class="sp"></span>' +
-                '<div class="acts" style="display:flex;gap:6px"><button class="btn sm" data-up="' + t.id + '"' + (i === 0 ? ' disabled' : '') + ' title="Move left">&#8592;</button><button class="btn sm" data-down="' + t.id + '"' + (i === tables.length - 1 ? ' disabled' : '') + ' title="Move right">&#8594;</button>' +
-                '<button class="btn sm" data-tedit="' + t.id + '">Edit</button><button class="btn sm danger" data-tdel="' + t.id + '">Delete</button></div></div>').join('')
-                : '<div class="empty" style="background:#fff;border:1px solid var(--line);border-radius:14px">No tables yet. Press <b>+ New table</b> to make the first one, e.g. <i>Labour Force</i> with columns Category, Local, Foreign, Total.</div>') + '</div></div>';
-        $('tblNew').onclick = () => openTbl(null);
-        $('setSec').querySelectorAll('[data-tedit]').forEach((b) => { b.onclick = () => openTbl(tables.find((t) => String(t.id) === b.dataset.tedit)); });
-        $('setSec').querySelectorAll('[data-tdel]').forEach((b) => { b.onclick = () => delTbl(tables.find((t) => String(t.id) === b.dataset.tdel)); });
-        $('setSec').querySelectorAll('[data-up],[data-down]').forEach((b) => { b.onclick = () => moveTbl(b.dataset.up || b.dataset.down, b.dataset.up ? -1 : 1); });
-    }
-    const newKey = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    function openTbl(t) {
-        editingTbl = t || null;
-        $('tblTitle').textContent = t ? 'Edit table · ' + t.name : 'New table';
-        const f = $('tblForm');
-        f.elements.name.value = t ? t.name : '';
-        f.elements.description.value = t ? t.description || '' : '';
-        f.elements.per_estate.checked = !!(t && t.per_estate);
-        colDraft = t ? (t.columns || []).map((c) => Object.assign({}, c, { options: (c.options || []).slice() })) : [{ key: newKey(), label: '', type: 'text', options: [], required: false }];
-        drawCols();
-        $('tblModal').classList.add('open');
-        f.elements.name.focus();
-    }
-    function readCols() {
-        $('colList').querySelectorAll('.colrow').forEach((row, i) => {
-            const c = colDraft[i]; if (!c) return;
-            c.label = row.querySelector('[data-k=label]').value;
-            c.type = row.querySelector('[data-k=type]').value;
-            c.options = row.querySelector('[data-k=options]').value.split(',').map((x) => x.trim()).filter(Boolean);
-            c.required = row.querySelector('[data-k=required]').checked;
-        });
-    }
-    function drawCols() {
-        $('colList').innerHTML = '<div class="colhead"><span>Column name</span><span>Type</span><span>Choices (for a dropdown)</span><span>Required</span><span></span></div>' +
-            (colDraft.length ? colDraft.map((c, i) => '<div class="colrow">' +
-                '<input data-k="label" value="' + esc(c.label) + '" placeholder="e.g. Category" maxlength="60">' +
-                '<select data-k="type">' + TYPES.map(([v, l]) => '<option value="' + v + '"' + (c.type === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
-                '<input data-k="options" value="' + esc((c.options || []).join(', ')) + '" placeholder="' + (c.type === 'choice' ? 'e.g. Local, Foreign' : '—') + '"' + (c.type === 'choice' ? '' : ' disabled') + '>' +
-                '<label class="req"><input type="checkbox" data-k="required"' + (c.required ? ' checked' : '') + '> Req.</label>' +
-                '<span class="mv"><button class="btn sm" type="button" data-cup="' + i + '"' + (i === 0 ? ' disabled' : '') + ' title="Move up">&#8593;</button><button class="btn sm" type="button" data-cdown="' + i + '"' + (i === colDraft.length - 1 ? ' disabled' : '') + ' title="Move down">&#8595;</button><button class="btn sm danger" type="button" data-cdel="' + i + '" title="Remove">&#10005;</button></span>' +
-                '</div>').join('') : '<div class="empty" style="padding:16px">No columns. Press <b>+ Add column</b>.</div>');
-    }
-    $('colAdd').onclick = () => { readCols(); colDraft.push({ key: newKey(), label: '', type: 'text', options: [], required: false }); drawCols(); const ins = $('colList').querySelectorAll('[data-k=label]'); if (ins.length) ins[ins.length - 1].focus(); };
-    $('colList').addEventListener('change', (e) => { if (e.target.dataset.k === 'type') { readCols(); drawCols(); } });
-    $('colList').addEventListener('click', (e) => {
-        const b = e.target.closest('[data-cup],[data-cdown],[data-cdel]'); if (!b) return;
-        readCols();
-        if (b.dataset.cdel != null) {
-            const c = colDraft[+b.dataset.cdel];
-            if (editingTbl && (editingTbl.columns || []).some((x) => x.key === c.key) && !confirm('Remove column "' + (c.label || 'untitled') + '"? Values already recorded in it will no longer show.')) return;
-            colDraft.splice(+b.dataset.cdel, 1);
-        } else {
-            const i = +(b.dataset.cup != null ? b.dataset.cup : b.dataset.cdown), j = b.dataset.cup != null ? i - 1 : i + 1;
-            [colDraft[i], colDraft[j]] = [colDraft[j], colDraft[i]];
-        }
-        drawCols();
-    });
-    $('tblSave').onclick = async () => {
-        readCols();
-        const f = $('tblForm'), name = f.elements.name.value.trim();
-        if (!name) { toast('Give the table a name'); f.elements.name.focus(); return; }
-        const columns = colDraft.filter((c) => c.label.trim()).map((c) => ({ key: c.key, label: c.label.trim(), type: c.type, options: c.type === 'choice' ? c.options : [], required: !!c.required }));
-        if (!columns.length) { toast('Add at least one column with a name'); return; }
-        const labels = columns.map((c) => c.label.toLowerCase());
-        if (new Set(labels).size !== labels.length) { toast('Two columns have the same name'); return; }
-        const bad = columns.find((c) => c.type === 'choice' && !c.options.length);
-        if (bad) { toast('Type the choices for "' + bad.label + '"'); return; }
-        const body = { name, description: f.elements.description.value.trim(), per_estate: f.elements.per_estate.checked, columns, updated_by: session.email || '', updated_at: new Date().toISOString() };
-        if (editingTbl && editingTbl.per_estate !== body.per_estate && !confirm('Changing between "per company" and "per location" hides the records already made the other way. Continue?')) return;
-        try {
-            if (editingTbl) await api('port_estate_tables?id=eq.' + editingTbl.id, { method: 'PATCH', body: JSON.stringify(body) });
-            else await api('port_estate_tables', { method: 'POST', body: JSON.stringify(Object.assign(body, { created_by: body.updated_by, sort_order: tables.length })) });
-            $('tblModal').classList.remove('open'); toast('Table saved'); await loadTables(); load();
-        } catch (e) { toast('Save failed: ' + e.message); }
-    };
-    async function delTbl(t) {
-        if (!t || !confirm('Delete table "' + t.name + '"?\n\nIts tab and ALL records in it, for every company, are deleted. This cannot be undone.')) return;
-        try { await api('port_estate_tables?id=eq.' + t.id, { method: 'DELETE' }); toast('Table deleted'); await loadTables(); load(); } catch (e) { toast('Delete failed: ' + e.message); }
-    }
-    async function moveTbl(id, dir) {
-        const i = tables.findIndex((t) => String(t.id) === String(id)), j = i + dir;
-        if (i < 0 || j < 0 || j >= tables.length) return;
-        [tables[i], tables[j]] = [tables[j], tables[i]];
-        try { await Promise.all(tables.map((t, k) => api('port_estate_tables?id=eq.' + t.id, { method: 'PATCH', body: JSON.stringify({ sort_order: k }) }))); } catch (e) { toast('Could not reorder: ' + e.message); }
-        await loadTables(); load();
-    }
 
     document.querySelectorAll('[data-close]').forEach((b) => { b.onclick = () => b.closest('.modal').classList.remove('open'); });
     document.querySelectorAll('.modal').forEach((m) => { m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); }); });
 
     (async () => {
         drawTop();
-        await loadTables();
         if (company) await setCompany(company); else load();
     })();
 })();
