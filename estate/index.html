@@ -123,7 +123,7 @@
         table.grid:not(.editing) tbody tr:not(.sub):not(.total) td { padding-top: 7px; padding-bottom: 7px; }
         table.grid small { font-size: 11px; font-weight: 500; color: var(--mute); }
         .wrap { overflow: visible; }
-        table.grid td.lvl { background: #FAFAF9; }
+        table.grid td.lvl { background: #FAFAF9; vertical-align: middle; font-weight: 600; }
         table.grid input { width: 100%; min-width: 0; height: 32px; border: 1px solid #CBD5E1; border-radius: 7px; padding: 0 6px; font: inherit; font-size: 13px; color: var(--ink); background: #fff; }
         table.grid input.num { font-variant-numeric: tabular-nums; }
         table.grid th { padding-left: 6px; padding-right: 6px; white-space: normal; font-size: 11px; }
@@ -374,9 +374,20 @@
         const groups = [];
         list.forEach((r) => { const key = (r.division || '') + '\u0001' + (r.phase || ''); const g = groups[groups.length - 1]; if (g && g.key === key) g.rows.push(r); else groups.push({ key, rows: [r] }); });
         let body = '';
-        groups.forEach((g) => {
-            body += g.rows.map((r, i) => rowHtml(r, edit, i > 0)).join('');
-            if (g.rows.length > 1) body += totalRow((g.rows[0].phase ? 'Phase ' + g.rows[0].phase : 'Subtotal') + (g.rows[0].division ? ' · ' + g.rows[0].division : ''), g.rows, 'sub', edit);
+        // View mode: one merged Division cell per run of rows with the same division
+        // (it also spans the phase subtotal rows inside the run), one merged Phase cell per group.
+        const divRuns = [];
+        groups.forEach((g) => { const d = g.rows[0].division || ''; const run = divRuns[divRuns.length - 1]; if (run && run.d === d) run.groups.push(g); else divRuns.push({ d, groups: [g] }); });
+        divRuns.forEach((run) => {
+            let first = true;
+            const span = run.groups.reduce((n, g) => n + g.rows.length + (g.rows.length > 1 ? 1 : 0), 0);
+            run.groups.forEach((g) => {
+                g.rows.forEach((r, i) => {
+                    body += rowHtml(r, edit, i > 0, edit ? null : { div: first ? span : 0, phase: i === 0 ? g.rows.length : 0 });
+                    first = false;
+                });
+                if (g.rows.length > 1) body += totalRow(g.rows[0].phase ? 'Phase ' + g.rows[0].phase : 'Subtotal', g.rows, 'sub', edit, !edit);
+            });
         });
         if (list.length) body += totalRow('Total', list, 'total', edit);
         const empty = !list.length ? '<div class="empty" id="gridEmpty">No blocks recorded for ' + esc(estate) + ' yet.' + (canEdit() && !edit ? '<br>Press <b>Edit</b> to start.' : '') + '</div>' : '';
@@ -408,11 +419,15 @@
         const d0 = densOf(r.area_ha_prev, r.palm_count_prev), d1 = densOf(r.area_ha, r.palm_count);
         return { pd: diff(r.palm_count_prev, r.palm_count, 0), d0, d1, dd: diff(d0, d1, 0) };
     }
-    function rowHtml(r, edit, repeat) {
+    function rowHtml(r, edit, repeat, merge) {
         const c = calc(r);
         const cell = (f) => {
             const v = r[f.k] == null ? '' : r[f.k];
             const same = repeat && f.lvl; // same division / phase as the row above: shown faint
+            if (!edit && f.lvl && merge) { // merged cell: once per run, "-" when empty
+                const span = f.k === 'division' ? merge.div : merge.phase;
+                return span ? '<td class="lvl" rowspan="' + span + '">' + (esc(v) || '-') + '</td>' : '';
+            }
             if (!edit) return '<td class="' + (f.type !== 'text' ? 'calc' : f.lvl ? 'lvl' : '') + (same ? ' faint' : '') + '">' + (f.type === 'dec' ? num(v, 2) : f.type === 'int' ? (v === '' ? '—' : num(v, 0)) : (esc(v) || (f.lvl ? '' : '—'))) + '</td>';
             return '<td' + (f.lvl ? ' class="lvl"' : '') + '><input data-k="' + f.k + '" class="' + (f.type !== 'text' ? 'num' : '') + (same ? ' faint' : '') + '" value="' + esc(v) + '"' +
                 (f.type === 'dec' ? ' inputmode="decimal"' : f.type === 'int' ? ' inputmode="numeric"' : '') + '></td>';
@@ -421,10 +436,10 @@
             '<td class="calc" data-c="pd">' + c.pd + '</td><td class="calc" data-c="d0">' + num(c.d0, 0) + '</td><td class="calc" data-c="d1">' + num(c.d1, 0) + '</td><td class="calc" data-c="dd">' + c.dd + '</td>' +
             (edit ? '<td><button class="x" data-del title="Delete row">&times;</button></td>' : '') + '</tr>';
     }
-    function totalRow(label, list, cls, edit) {
+    function totalRow(label, list, cls, edit, underDivision) {
         const d0 = avgDens(list, 'area_ha_prev', 'palm_count_prev'), d1 = avgDens(list, 'area_ha', 'palm_count');
         const ha = (v) => num(v, 2) + ' <small>ha</small>', ph = (v) => (v == null ? '—' : num(v, 0) + ' <small>palms/ha</small>');
-        return '<tr class="' + cls + '"><td colspan="' + (edit ? 5 : 4) + '">' + esc(label) + '</td>' +
+        return '<tr class="' + cls + '"><td colspan="' + (edit ? 5 : underDivision ? 3 : 4) + '">' + esc(label) + '</td>' +
             '<td class="num">' + ha(sum(list, 'area_ha_prev')) + '</td><td class="num">' + ha(sum(list, 'area_ha')) + '</td>' +
             '<td class="num">' + num(sum(list, 'palm_count_prev'), 0) + '</td><td class="num">' + num(sum(list, 'palm_count'), 0) + '</td><td class="num">' + diff(sum(list, 'palm_count_prev'), sum(list, 'palm_count'), 0) + '</td>' +
             '<td class="num">' + ph(d0) + '</td><td class="num">' + ph(d1) + '</td><td class="num">' + diff(d0, d1, 0) + '</td>' + (edit ? '<td></td>' : '') + '</tr>';
