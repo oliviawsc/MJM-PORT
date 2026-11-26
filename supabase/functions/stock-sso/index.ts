@@ -92,12 +92,16 @@ async function createUser(email: string, name: string, module: Module): Promise<
 /** Creates the user's Supabase Auth account if needed and returns a session for it. */
 async function issueSession(row: UserRow) {
   const admin = serviceClient().auth.admin;
-  const created = await admin.createUser({
-    email: row.email, email_confirm: true, user_metadata: { opp_user_id: row.id, name: row.name },
-  });
-  if (created.error && !/already|exists|registered/i.test(created.error.message)) throw created.error;
-
-  const link = await admin.generateLink({ type: 'magiclink', email: row.email });
+  // Returning users already have an Auth account: ask for the link first and
+  // create the account only when it is missing (one round trip less per sign-in)
+  let link = await admin.generateLink({ type: 'magiclink', email: row.email });
+  if (link.error) {
+    const created = await admin.createUser({
+      email: row.email, email_confirm: true, user_metadata: { opp_user_id: row.id, name: row.name },
+    });
+    if (created.error && !/already|exists|registered/i.test(created.error.message)) throw created.error;
+    link = await admin.generateLink({ type: 'magiclink', email: row.email });
+  }
   if (link.error) throw link.error;
   const { data, error } = await anonClient().auth.verifyOtp({ type: 'magiclink', token_hash: link.data.properties.hashed_token });
   if (error || !data.session) throw error ?? new Error('no session');
@@ -132,6 +136,9 @@ function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranet
   };
 }
 
+// When this function instance last linked old estate names to companies
+let lastLink = 0;
+
 Deno.serve(handler(async (_req, body) => {
   const token = String(body.token ?? '');
   if (!token || token.length > 4000) throw new ApiError('err_sso_invalid', 400);
@@ -154,31 +161,43 @@ Deno.serve(handler(async (_req, body) => {
   const companies = companiesForUser(email, md);
   if (!companies.length) throw new ApiError('err_no_company', 403);
 
-  let row = await findUser(email);
-  if (!row) row = await createUser(email, fullName, module);
+  // Fast path: everything that does not depend on each other runs at the same time.
+  // 1) the person's row  ‖  PORT's copy of the Intranet company list
+  const [found] = await Promise.all([
+    findUser(email),
+    saveCompanies(md).catch((e) => console.warn('[stock-sso] company list skipped:', e instanceof Error ? e.message : e)),
+  ]);
+  let row = found ?? await createUser(email, fullName, module);
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
   // The person is who the Intranet says they are: the row carries the Intranet
   // email and profile name. A row found by the legacy "<user id>@psms.app" form
   // is adopted (its rights stay) and takes the real email.
-  const fix: Record<string, string> = {};
+  const fix: Record<string, unknown> = {};
   if ((row.email ?? '').toLowerCase() !== email && /@psms\.app$/i.test(row.email ?? '')) fix.email = email;
   if ((check.user.full_name ?? '').trim() && row.name !== fullName) fix.name = fullName;
-  if (Object.keys(fix).length) {
-    const { error } = await serviceClient().from(USERS_TABLE).update(fix).eq('id', row.id);
-    if (error) console.warn('[stock-sso] profile update skipped:', error.message);
-    else row = { ...row, ...fix };
+  // The Intranet Super Admin is Super Admin in PORT: marked on the row so User
+  // Access knows it too (and unmarked when the Intranet takes it away)
+  const intranetSuper = check.user.is_super_admin === true;
+  const p0 = row.permissions && typeof row.permissions === 'object' && !Array.isArray(row.permissions) ? row.permissions as Record<string, unknown> : {};
+  if (intranetSuper && (p0.__role !== 'superadmin' || !p0.__intranet_super)) {
+    fix.permissions = { ...p0, __role: 'superadmin', __intranet_super: true, __role_before: p0.__role_before ?? p0.__role ?? 'hq_user' };
+  } else if (!intranetSuper && p0.__intranet_super) {
+    const { __intranet_super: _s, __role_before, ...rest } = p0;
+    fix.permissions = { ...rest, __role: __role_before ?? 'hq_user' };
   }
+  row = { ...row, ...fix } as UserRow;
 
-  // Keep PORT's company list and this person's access equal to the Intranet
-  await saveCompanies(md);
-  await saveUserCompanies(email, module, companies);
-  try { await linkEstates(); } catch (e) { console.warn('[stock-sso] estate link skipped:', e instanceof Error ? e.message : e); }
-  // The estates (old data names) of this person's Intranet companies: the Stock
-  // app still filters by estate, so it follows the Intranet company access too.
-  const { data: est, error: estErr } = await serviceClient().from('port_estate_company')
-    .select('estate, company_id').in('company_id', companies.map((c) => c.id)).order('estate');
-  if (estErr) throw estErr;
-  const estRows = (est ?? []) as { estate: string; company_id: string }[];
+  // 2) this person's company access  ‖  their companies' locations  ‖  per-company
+  //    User Access  ‖  the sign-in session
+  const ids = companies.map((c) => c.id);
+  const [, estRes, perCoMap, auth] = await Promise.all([
+    saveUserCompanies(email, module, companies),
+    serviceClient().from('port_estate_company').select('estate, company_id').in('company_id', ids).order('estate'),
+    companyAccessRows([email], ids),
+    issueSession(row),
+  ]);
+  if (estRes.error) throw estRes.error;
+  const estRows = (estRes.data ?? []) as { estate: string; company_id: string }[];
   const estates = estRows.map((r) => r.estate);
   // Per company: its locations (the company itself when none is linked) and the
   // access set for it in PORT → User Access (else the person's global access)
@@ -187,30 +206,28 @@ Deno.serve(handler(async (_req, body) => {
     const list = estRows.filter((r) => r.company_id === c.id).map((r) => r.estate);
     companyEstates[c.id] = list.length ? list : [c.name];
   }
-  const perCo = (await companyAccessRows([email], companies.map((c) => c.id))).get(email);
+  const perCo = perCoMap.get(email);
   const companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {};
   for (const c of companies) {
     const a = resolveAccess(row, perCo?.get(c.id));
     companyAccess[c.id] = { role: a.role, permissions: a.permissions, status: a.status };
   }
-  // The Intranet Super Admin is Super Admin in PORT: marked on the row so User
-  // Access knows it too (and unmarked when the Intranet takes it away)
-  const intranetSuper = check.user.is_super_admin === true;
-  const p0 = row.permissions && typeof row.permissions === 'object' && !Array.isArray(row.permissions) ? row.permissions as Record<string, unknown> : {};
-  if (intranetSuper && (p0.__role !== 'superadmin' || !p0.__intranet_super)) {
-    const permissions = { ...p0, __role: 'superadmin', __intranet_super: true, __role_before: p0.__role_before ?? p0.__role ?? 'hq_user' };
-    await serviceClient().from(USERS_TABLE).update({ permissions }).eq('id', row.id);
-    row = { ...row, permissions };
-  } else if (!intranetSuper && p0.__intranet_super) {
-    const { __intranet_super: _s, __role_before, ...rest } = p0;
-    const permissions = { ...rest, __role: __role_before ?? 'hq_user' };
-    await serviceClient().from(USERS_TABLE).update({ permissions }).eq('id', row.id);
-    row = { ...row, permissions };
-  }
-  await serviceClient().from(USERS_TABLE)
-    .update({ last_active: new Date().toISOString(), companies: companies.map((c) => c.id), estates }).eq('id', row.id);
   row = { ...row, estates };
 
-  const auth = await issueSession(row);
+  // 3) After the answer: one write for the row, and the old-estate → company
+  //    link (it scans every data table, so at most once every 10 minutes)
+  const after = (async () => {
+    const { error } = await serviceClient().from(USERS_TABLE)
+      .update({ ...fix, last_active: new Date().toISOString(), companies: ids, estates }).eq('id', row.id);
+    if (error) console.warn('[stock-sso] user row update skipped:', error.message);
+    if (Date.now() - lastLink > 10 * 60 * 1000) {
+      lastLink = Date.now();
+      try { await linkEstates(); } catch (e) { console.warn('[stock-sso] estate link skipped:', e instanceof Error ? e.message : e); }
+    }
+  })();
+  // deno-lint-ignore no-explicit-any
+  const rt = (globalThis as any).EdgeRuntime;
+  if (rt?.waitUntil) rt.waitUntil(after); else await after;
+
   return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), intranetSuper, companyAccess, companyEstates), auth, module };
 }));
