@@ -1086,7 +1086,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-63';
+var APP_BUILD = '20261126-64';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -18701,16 +18701,21 @@ function _renderCarlosCasesSummary(rows) {
         if (_bfCache[key] !== undefined) return _bfCache[key];
         var result = 0;
         if (m === 1) {
-            // Find if prev year exists in rows
-            var prevYrRows = rows.filter(function(x) { return x.year === yr - 1; });
-            if (prevYrRows.length > 0) {
-                var prevBF = getBF(yr - 1, 1);
-                for (var i = 1; i <= 12; i++) {
-                    prevBF = prevBF + getVal(yr - 1, i, 'opened_cases') - getVal(yr - 1, i, 'closed_cases');
-                }
-                result = Math.max(0, prevBF);
+            // Use stored bring_forward if available, else chain from previous year
+            var janRow = rows.find(function(x) { return x.year === yr && x.month === 1; });
+            if (janRow && janRow.bring_forward != null) {
+                result = Math.max(0, Number(janRow.bring_forward));
             } else {
-                result = 0;
+                var prevYrRows = rows.filter(function(x) { return x.year === yr - 1; });
+                if (prevYrRows.length > 0) {
+                    var prevBF = getBF(yr - 1, 1);
+                    for (var i = 1; i <= 12; i++) {
+                        prevBF = prevBF + getVal(yr - 1, i, 'opened_cases') - getVal(yr - 1, i, 'closed_cases');
+                    }
+                    result = Math.max(0, prevBF);
+                } else {
+                    result = 0;
+                }
             }
         } else {
             var prevPending = getBF(yr, m - 1) + getVal(yr, m - 1, 'opened_cases') - getVal(yr, m - 1, 'closed_cases');
@@ -18740,14 +18745,20 @@ function _renderCarlosCasesSummary(rows) {
         var totalBF      = bf[1];   // opening balance of Jan
         var totalPending = pending[12]; // closing balance of Dec
 
-        // Row 1: Total Bring Forward (read-only)
+        // Row 1: Total Bring Forward (Jan editable, Feb-Dec auto-calculated)
         html += '<tr style="background:' + hdrBg + ';">';
         html += '<td rowspan="4" style="text-align:center;font-weight:700;border:1px solid #c7d2fe;padding:4px 10px;vertical-align:middle;font-size:13px;">' + yr + '</td>';
         html += '<td style="padding:4px 8px;border:1px solid #c7d2fe;font-weight:600;white-space:nowrap;font-size:12px;">Total Bring Forward</td>';
         for (var m = 1; m <= 12; m++) {
-            html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 2px;font-size:12px;" id="carlosBF_' + yr + '_' + m + '">' + bf[m] + '</td>';
+            if (m === 1) {
+                html += '<td style="border:1px solid #c7d2fe;padding:2px;">';
+                html += '<input type="number" min="0" id="carlosBF_' + yr + '_1" value="' + bf[1] + '" style="' + inputStyle + 'background:#eef2ff;" oninput="carlosRecalcRow(' + yr + ')" title="Enter opening Bring Forward for January">';
+                html += '</td>';
+            } else {
+                html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 2px;font-size:12px;" id="carlosBF_' + yr + '_' + m + '">' + bf[m] + '</td>';
+            }
         }
-        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:600;font-size:12px;">' + totalBF + '</td>';
+        html += '<td style="text-align:center;border:1px solid #c7d2fe;padding:4px 4px;font-weight:600;font-size:12px;" id="carlosBFTotal_' + yr + '">' + totalBF + '</td>';
         html += '<td rowspan="4" style="text-align:center;border:1px solid #c7d2fe;padding:4px 6px;vertical-align:middle;">';
         html += '<button onclick="carlosSaveYear(' + yr + ')" id="carlosSaveBtn_' + yr + '" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 font-semibold">Save</button>';
         html += '</td></tr>';
@@ -18797,24 +18808,9 @@ function carlosRecalcRow(yr) {
         var r = rows.find(function(x) { return x.year === y && x.month === m; });
         return (r && r[type === 'open' ? 'opened_cases' : 'closed_cases'] != null) ? Number(r[type === 'open' ? 'opened_cases' : 'closed_cases']) : 0;
     }
-    // Find BF for Jan of this year (from previous year Dec pending, based on saved data)
-    var prevYrRows = rows.filter(function(x) { return x.year === yr - 1; });
-    var bf = 0;
-    if (prevYrRows.length > 0) {
-        var _bfPrev = {};
-        function getBFPrev(y, m) {
-            var k = y + '_' + m; if (_bfPrev[k] !== undefined) return _bfPrev[k];
-            var v = 0;
-            if (m === 1) { v = 0; }
-            else { v = Math.max(0, getBFPrev(y, m-1) + getLive(y, m-1, 'open') - getLive(y, m-1, 'close')); }
-            _bfPrev[k] = v; return v;
-        }
-        var prevBF = getBFPrev(yr - 1, 1);
-        for (var i = 1; i <= 12; i++) {
-            prevBF = prevBF + getLive(yr - 1, i, 'open') - getLive(yr - 1, i, 'close');
-        }
-        bf = Math.max(0, prevBF);
-    }
+    // Jan BF comes from its editable input; Feb-Dec chain from there
+    var janBFEl = document.getElementById('carlosBF_' + yr + '_1');
+    var bf = janBFEl ? Math.max(0, parseInt(janBFEl.value) || 0) : 0;
     var totalOpened = 0, totalClosed = 0;
     for (var m = 1; m <= 12; m++) {
         var open   = getLive(yr, m, 'open');
@@ -18822,18 +18818,23 @@ function carlosRecalcRow(yr) {
         var pend   = Math.max(0, bf + open - close_);
         totalOpened  += open;
         totalClosed  += close_;
-        var bfEl   = document.getElementById('carlosBF_' + yr + '_' + m);
+        // Feb-Dec BF cells are read-only spans; Jan is an input (skip updating it)
+        if (m > 1) {
+            var bfEl = document.getElementById('carlosBF_' + yr + '_' + m);
+            if (bfEl) bfEl.textContent = bf;
+        }
         var pendEl = document.getElementById('carlosPend_' + yr + '_' + m);
-        if (bfEl)   bfEl.textContent   = bf;
         if (pendEl) pendEl.textContent = pend;
         bf = pend; // next month BF = this month pending
     }
-    var oTot = document.getElementById('carlosOpenTotal_' + yr);
-    var cTot = document.getElementById('carlosCloseTotal_' + yr);
-    var pTot = document.getElementById('carlosPendTotal_' + yr);
-    if (oTot) oTot.textContent = totalOpened;
-    if (cTot) cTot.textContent = totalClosed;
-    if (pTot) pTot.textContent = bf; // bf at this point = Dec pending
+    var oTot  = document.getElementById('carlosOpenTotal_' + yr);
+    var cTot  = document.getElementById('carlosCloseTotal_' + yr);
+    var pTot  = document.getElementById('carlosPendTotal_' + yr);
+    var bfTot = document.getElementById('carlosBFTotal_' + yr);
+    if (oTot)  oTot.textContent  = totalOpened;
+    if (cTot)  cTot.textContent  = totalClosed;
+    if (pTot)  pTot.textContent  = bf; // bf at this point = Dec pending
+    if (bfTot) bfTot.textContent = janBFEl ? (parseInt(janBFEl.value) || 0) : 0;
 }
 
 function carlosAddYear() {
@@ -18851,13 +18852,17 @@ async function carlosSaveYear(year) {
     var btn = document.getElementById('carlosSaveBtn_' + year);
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     try {
+        var janBFEl = document.getElementById('carlosBF_' + year + '_1');
+        var janBF   = janBFEl ? (parseInt(janBFEl.value) || 0) : null;
         var upserts = [];
         for (var m = 1; m <= 12; m++) {
             var openEl  = document.getElementById('carlosOpen_'  + year + '_' + m);
             var closeEl = document.getElementById('carlosClose_' + year + '_' + m);
             var opened  = openEl  ? (parseInt(openEl.value)  || 0) : 0;
             var closed  = closeEl ? (parseInt(closeEl.value) || 0) : 0;
-            upserts.push({ estate: estate, year: year, month: m, opened_cases: opened, closed_cases: closed });
+            var row = { estate: estate, year: year, month: m, opened_cases: opened, closed_cases: closed };
+            if (m === 1) row.bring_forward = janBF;
+            upserts.push(row);
         }
         var { error } = await supabaseClient.from('port_carlos_cases')
             .upsert(upserts, { onConflict: 'estate,year,month' });
