@@ -1218,56 +1218,17 @@ var APP_BUILD = '20261126-60';
             <p class="login-welcome-sub">Sign in to your PSMS account</p>
 
             <!-- Email -->
-            <div class="login-field">
-                <label class="login-label" for="loginEmail">User ID</label>
-                <div class="login-input-wrap">
-                    <span class="login-icon-left">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                        </svg>
-                    </span>
-                    <input id="loginEmail" type="text" class="login-input"
-                        placeholder="Enter your User ID"
-                        onkeydown="if(event.key==='Enter')attemptLogin()"
-                        autocomplete="username"/>
-                </div>
+            <!-- Sign-in only through MJM Intranet: no User ID / password here -->
+            <div style="text-align:center;padding:8px 4px 4px;">
+                <p style="font-size:14px;color:#334155;line-height:1.55;margin:0 0 16px;">
+                    Plantation Operation opens only from <b>MJM Intranet</b>.<br>
+                    Sign in to the Intranet and open the Plantation Operation icon.
+                </p>
+                <p id="loginError" class="hidden"></p>
+                <a id="loginBtn" href="https://mjmelon.github.io/MJM-Intranet/" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
+                    <span id="loginBtnText">Go to MJM Intranet</span>
+                </a>
             </div>
-
-            <!-- Password -->
-            <div class="login-field">
-                <label class="login-label" for="loginPassword">Password</label>
-                <div class="login-input-wrap">
-                    <span class="login-icon-left">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                    </span>
-                    <input id="loginPassword" type="password" class="login-input"
-                        placeholder="Enter your password"
-                        onkeydown="if(event.key==='Enter')attemptLogin()"
-                        autocomplete="current-password"/>
-                    <button type="button" class="login-icon-right" onclick="toggleLoginPw()" aria-label="Toggle password visibility">
-                        <svg id="eyeIconShow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        <svg id="eyeIconHide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                            <line x1="1" y1="1" x2="23" y2="23"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Error message -->
-            <p id="loginError" class="hidden"></p>
-
-            <!-- Sign In button -->
-            <button id="loginBtn" onclick="attemptLogin()">
-                <span id="loginBtnText">Sign In</span>
-                <div id="loginSpinner"></div>
-            </button>
 
             <!-- Help text -->
             <p class="login-help">Need assistance? <strong>Contact your System Administrator</strong></p>
@@ -1448,9 +1409,7 @@ var APP_BUILD = '20261126-60';
                         <button onclick="closeAvatarDropdown();showUserProfile()" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:none;background:transparent;font-size:13px;font-weight:500;color:#374151;cursor:pointer;font-family:Inter,sans-serif;text-align:left;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
                             <span>&#128100;</span> <span data-i18n="avatar_my_profile">My Profile</span>
                         </button>
-                        <button onclick="closeAvatarDropdown();showChangePassword()" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:none;background:transparent;font-size:13px;font-weight:500;color:#374151;cursor:pointer;font-family:Inter,sans-serif;text-align:left;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
-                            <span>&#128274;</span> <span data-i18n="avatar_change_pw">Change Password</span>
-                        </button>
+                        <!-- Change Password removed: passwords are managed in MJM Intranet -->
                         <div style="height:1px;background:#F1F5F9;margin:4px 0;"></div>
                         <button onclick="closeAvatarDropdown();logoutUser()" style="width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:none;background:transparent;font-size:13px;font-weight:500;color:#DC2626;cursor:pointer;font-family:Inter,sans-serif;text-align:left;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='transparent'">
                             <span>&#128682;</span> <span data-i18n="avatar_log_out">Log Out</span>
@@ -10337,6 +10296,7 @@ async function sha256Hex(str) {
 // 'estate_user'= Estate User — mobile interface only, custom permissions.
 const ROLES = [
     { value: 'superadmin',  label: 'Super Admin',  icon: '⭐', badgeClass: 'bg-purple-100 text-purple-800', fullLabel: 'Super Admin — full access to everything' },
+    { value: 'admin',       label: 'Admin',        icon: '🛡️', badgeClass: 'bg-orange-100 text-orange-800', fullLabel: 'Admin — website interface, custom permissions, manages users of their companies' },
     { value: 'hq_user',     label: 'HQ User',      icon: '🏢', badgeClass: 'bg-blue-100 text-blue-800',    fullLabel: 'HQ User — website interface, custom permissions' },
     { value: 'estate_user', label: 'Estate User',  icon: '🌿', badgeClass: 'bg-green-100 text-green-800',  fullLabel: 'Estate User — mobile interface only, custom permissions' },
 ];
@@ -10734,7 +10694,7 @@ async function syncEstatesFromIntranet() {
         if (r.added.length) parts.push('added ' + r.added.join(', '));
         if (r.renamed.length) parts.push('renamed ' + r.renamed.map(x => x[0] + ' → ' + x[1]).join(', '));
         if (r.deactivated.length) parts.push('hidden ' + r.deactivated.join(', '));
-        if (msg) msg.textContent = 'Synced ' + r.total + ' estates' + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
+        if (msg) msg.textContent = 'Synced ' + r.total + ' Intranet companies' + (r.unlinked && r.unlinked.length ? ' (old estate names without a company: ' + r.unlinked.join(', ') + ')' : '') + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
         await renderEstatesList();
     } catch (e) {
         if (msg) msg.textContent = 'Sync failed: ' + e.message;
@@ -10923,6 +10883,10 @@ async function deleteEstate(name) {
 
 // ── Login attempt ──────────────────────────────────────────────────
 async function attemptLogin() {
+    // Sign-in is only through MJM Intranet (stock-sso); no password login.
+    showLoginError('Please open Plantation Operation from MJM Intranet.');
+    return;
+    // eslint-disable-next-line no-unreachable
     const rawId    = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
     const errEl    = document.getElementById('loginError');
@@ -11024,6 +10988,8 @@ const SSO_ERRORS = {
     err_sso_invalid:     'the link has expired or was already used — please open it from the Intranet again',
     err_sso_not_set_up:  'the Intranet connection is not set up yet (missing API key)',
     err_network:         'network error',
+    err_no_company:     'MJM Intranet has not given you any company for this module. Ask HR / your admin to give you access in the Intranet',
+    err_intranet_unavailable: 'MJM Intranet could not be reached to check your company access. Please try again',
 };
 
 function stripGwToken() {
@@ -11167,7 +11133,7 @@ async function signInFromIntranet(token, module, companyHints) {
     if (preAuthHide) preAuthHide.remove();
     const overlay = document.getElementById('authOverlay');
     if (overlay) { overlay.scrollTop = 0; overlay.style.display = 'flex'; }
-    showLoginError('Sign-in from MJM Intranet failed: ' + (SSO_ERRORS[code] || code) + '. Please sign in below.');
+    showLoginError('Sign-in from MJM Intranet failed: ' + (SSO_ERRORS[code] || code) + '. Please open Plantation Operation from MJM Intranet again.');
     return false;
 }
 
@@ -11416,6 +11382,9 @@ function bootApp(session) {
 function syncEstateBackBtn() { /* no-op: back button removed, bottom nav used instead */ }
 
 function navToSection(sectionId) {
+    // User Management moved to PORT → User Access (roles and page access;
+    // users and companies come from MJM Intranet)
+    if (sectionId === 'useradmin') { window.location.href = '../access/index.html'; return; }
     // Hard guard: estate_hub is ONLY for estate-mobile users.
     // Any other caller (stale link, direct call, etc.) is silently redirected to dashboard.
     if (sectionId === 'estate_hub' && !document.body.classList.contains('estate-mobile')) {
@@ -12142,7 +12111,7 @@ function getSectionAccess(session, sectionId) {
     // user can at least see data after being assigned an estate.
     // Once an admin saves the user's permissions (even as all-none),
     // __configured is set and the explicit values take over.
-    if (session.role === 'hq_user') {
+    if (session.role === 'hq_user' || session.role === 'admin') { // Admin = HQ User who also manages access (PORT → User Access)
         const rawPerms = session.permissions || {};
         if (!rawPerms.__configured) return 'view';
     }
@@ -12714,17 +12683,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Auto-boot as Super Admin — no login required
-    if (!loadSession()) {
-        const autoSession = {
-            email:       SUPER_ADMIN.email,
-            name:        SUPER_ADMIN.name,
-            estate:      '',
-            role:        'superadmin',
-            permissions: ALL_SECTIONS.map(s => s.id),
-        };
-        saveSession(autoSession);
-        bootApp(autoSession);
+    // Only a session that came from MJM Intranet (stock-sso) may open the app.
+    // Anything else (old password sign-in, old auto Super Admin) is cleared and
+    // the page shows "open from MJM Intranet".
+    {
+        const _s = loadSession();
+        if (!_s || _s.via !== 'intranet') {
+            localStorage.removeItem(AUTH_KEYS.session);
+            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            return;
+        }
     }
 
     // Quick resume from sessionStorage so the app appears instantly on refresh.
@@ -17686,6 +17654,7 @@ function printMgmtReport() {
 }
 
 function navigateToSection(target) {
+    if (target === 'useradmin') { window.location.href = '../access/index.html'; return; }
     if (target === 'toolsrecord') {
         const _trSession = loadSession();
         if (_trSession && _trSession.role !== 'superadmin') {

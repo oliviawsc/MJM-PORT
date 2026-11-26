@@ -9,7 +9,9 @@
 import {
   ApiError, anonClient, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, toAuthEmail, USERS_TABLE, type UserRow,
 } from '../_shared/common.ts';
-import { companiesForUser, intranetMasterData, syncEstatesFromIntranet } from '../_shared/masterSync.ts';
+import {
+  companiesForUser, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
+} from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
 
@@ -30,7 +32,7 @@ export const ALL_SECTION_IDS = [
 interface CheckResult {
   allowed: boolean;
   module_code?: string;
-  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null };
+  user?: { id: string; email: string; full_name?: string | null; avatar_url?: string | null; is_super_admin?: boolean };
   error?: string;
 }
 
@@ -38,7 +40,7 @@ interface CheckResult {
 function apiKeyFor(module: Module): string {
   const key = module === 'report'
     ? Deno.env.get('INTRANET_REPORT_API_KEY')
-    : Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
+    : Deno.env.get('INTRANET_PORT_API_KEY') || Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
   if (!key) throw new ApiError('err_sso_not_set_up', 500);
   return key;
 }
@@ -102,8 +104,9 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow, companies: string[], avatar = '') {
-  const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL ? 'superadmin' : roleOf(row);
+function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranetSuper = false) {
+  // The Intranet Super Admin is the Super Admin here too
+  const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL || intranetSuper ? 'superadmin' : roleOf(row);
   return {
     id: row.id,
     email: row.email,
@@ -112,11 +115,12 @@ function toSession(row: UserRow, companies: string[], avatar = '') {
     estate: '',
     role,
     permissions: role === 'superadmin' ? ALL_SECTION_IDS : (row.permissions ?? {}),
-    // Companies this person was given for the Stock icon in the Intranet (business + company)
+    // Companies this person was given for this module's icon in the Intranet
+    // (business + company), in Intranet company code order: { id, code, name, short_name }
     companies,
     // The person's Intranet profile photo (public storage URL), shown in the portal
     avatar,
-    // Signed in through MJM Intranet (not the module's own password login)
+    // Signed in through MJM Intranet: the pages open only with such a session
     via: 'intranet',
   };
 }
@@ -130,6 +134,18 @@ Deno.serve(handler(async (_req, body) => {
   if (!check.allowed || !check.user?.email) throw new ApiError('err_forbidden', 403);
   const email = check.user.email.toLowerCase();
   const fullName = (check.user.full_name ?? '').trim() || email.split('@')[0];
+
+  // Which companies the Intranet gives this person for this module's icon.
+  // No company → no entry: the Intranet decides who may open what.
+  let md;
+  try {
+    md = await intranetMasterData(module);
+  } catch (e) {
+    console.error('[stock-sso] Intranet master data:', e instanceof Error ? e.message : e);
+    throw new ApiError(e instanceof Error && e.message === 'err_sso_not_set_up' ? 'err_sso_not_set_up' : 'err_intranet_unavailable', 503);
+  }
+  const companies = companiesForUser(email, md);
+  if (!companies.length) throw new ApiError('err_no_company', 403);
 
   let row = await findUser(email);
   if (!row) row = await createUser(email, fullName, module);
@@ -146,18 +162,20 @@ Deno.serve(handler(async (_req, body) => {
     else row = { ...row, ...fix };
   }
 
+  // Keep PORT's company list and this person's access equal to the Intranet
+  await saveCompanies(md);
+  await saveUserCompanies(email, module, companies);
+  try { await linkEstates(); } catch (e) { console.warn('[stock-sso] estate link skipped:', e instanceof Error ? e.message : e); }
+  // The estates (old data names) of this person's Intranet companies: the Stock
+  // app still filters by estate, so it follows the Intranet company access too.
+  const { data: est, error: estErr } = await serviceClient().from('port_estate_company')
+    .select('estate').in('company_id', companies.map((c) => c.id)).order('estate');
+  if (estErr) throw estErr;
+  const estates = ((est ?? []) as { estate: string }[]).map((r) => r.estate);
+  await serviceClient().from(USERS_TABLE)
+    .update({ last_active: new Date().toISOString(), companies: companies.map((c) => c.id), estates }).eq('id', row.id);
+  row = { ...row, estates };
+
   const auth = await issueSession(row);
-  // The companies the Intranet gives this person for the Stock icon; remembered on the user row
-  let companies: string[] = [];
-  try {
-    const md = await intranetMasterData();
-    companies = await companiesForUser(email, md);
-    await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString(), companies }).eq('id', row.id);
-  } catch (e) {
-    console.warn('[stock-sso] companies skipped:', e instanceof Error ? e.message : e);
-    await serviceClient().from(USERS_TABLE).update({ last_active: new Date().toISOString() }).eq('id', row.id);
-  }
-  // Keep the estate list equal to the Intranet's companies (at most once every 10 minutes)
-  try { await syncEstatesFromIntranet(false); } catch (e) { console.warn('[stock-sso] estate sync skipped:', e instanceof Error ? e.message : e); }
-  return { session: toSession(row, companies, String(check.user.avatar_url ?? '')), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), check.user.is_super_admin === true), auth, module };
 }));

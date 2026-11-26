@@ -48,9 +48,7 @@ export function AvatarMenu({ session, onSignOut }: { session: Session; onSignOut
             <button type="button" role="menuitem" className="avatar-menu-item" onClick={pick(() => setModal('profile'))}>
               <span>👤</span> <span>{t('avatar_my_profile')}</span>
             </button>
-            <button type="button" role="menuitem" className="avatar-menu-item" onClick={pick(() => setModal('password'))}>
-              <span>🔒</span> <span>{t('avatar_change_pw')}</span>
-            </button>
+            {/* Change Password removed: sign-in and passwords are managed in MJM Intranet */}
             <div className="h-px bg-slate-100 my-1" />
             <button type="button" role="menuitem" className="avatar-menu-item" style={{ color: '#DC2626' }} onClick={pick(onSignOut)}>
               <span>🚪</span> <span>{t('avatar_log_out')}</span>

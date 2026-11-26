@@ -22,11 +22,11 @@
         .bg::before { width: 60vw; height: 60vw; left: -18vw; top: -22vw; background: #BBF7D0; }
         .bg::after { width: 55vw; height: 55vw; right: -20vw; bottom: -25vw; background: #BAE6FD; }
         .top { position: sticky; top: 0; z-index: 5; background: linear-gradient(90deg, rgba(224,242,254,.85), rgba(240,253,244,.85)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,.8); }
-        .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+        .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px 0 8px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
         .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-        .back-slot { position: relative; width: 36px; height: 36px; flex: none; }
+        .back-slot { position: relative; height: 36px; flex: none; } /* grows with the back button, so it never covers the company box */
         .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; color: #0F172A; }
-        .back { position: absolute; left: 0; top: 0; z-index: 2; display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
+        .back { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
                 color: #334155; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; transition: background .15s; }
         .back svg { width: 18px; height: 18px; flex: none; }
         .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
@@ -42,7 +42,7 @@
         .who .logout { width: 36px; height: 36px; border-radius: 10px; border: 0; background: transparent; color: #64748B; display: grid; place-items: center; cursor: pointer; }
         .who .logout:hover { background: rgba(241,245,249,.9); color: #0F172A; }
         .who .logout svg { width: 20px; height: 20px; }
-        main { max-width: 1180px; margin: 0 auto; padding: 44px 16px 60px; }
+        main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; justify-content: center; } /* tiles sit in the middle of the page */
         .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; user-select: none; -webkit-user-select: none; }
         .tile { width: 160px; }
         .tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 12px 18px; border-radius: 20px; background: rgba(255,255,255,.86); border: 1px solid rgba(226,232,240,.9);
@@ -57,6 +57,8 @@
         .note { margin: 0 0 18px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
         .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
         .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .note.info { background: #fff; border: 1px solid #E2E8F0; color: #0F172A; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .note.info a { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 10px; background: #0F172A; color: #fff; text-decoration: none; font-weight: 600; font-size: 13px; }
         .hint { margin: 26px 0 0; text-align: center; font-size: 12px; color: #94A3B8; }
         .splash { position: fixed; inset: 0; display: grid; place-items: center; background: #F0FDF4; z-index: 10; font-weight: 600; color: #14532D; }
         .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
@@ -93,12 +95,14 @@
     const SESSION_KEY = 'opp_auth_session';
     const APP = 'stock/index.html';
     const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
-    const CTX_KEYS = ['gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
+    const CTX_KEYS = ['gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
     const SSO_ERRORS = {
         err_forbidden:      'you do not have access to this module in the Intranet',
         err_inactive:       'your account has been deactivated',
         err_sso_invalid:    'the link has expired or was already used. Please open it from the Intranet again',
         err_sso_not_set_up: 'the Intranet connection is not set up yet (missing API key)',
+        err_no_company:     'MJM Intranet has not given you any company for this module. Ask HR / your admin to give you access in the Intranet',
+        err_intranet_unavailable: 'MJM Intranet could not be reached to check your company access. Please try again',
         err_network:        'network error',
     };
 
@@ -116,36 +120,66 @@
           icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
         { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
           icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
+        { module: 'workers',   title: 'Worker Manage',     bg: '#1D4ED8', href: 'https://mjmelon.github.io/Mantap/#/portal/workers', admin: true,
+          icon: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
+        { module: 'access',    title: 'User Access',       bg: '#7C2D12', href: 'access/index.html', admin: true,
+          icon: svg('<circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.65-8.65"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/>') },
     ];
+    // The pages (User Access section ids) behind each module card
+    const MODULE_SECTIONS = {
+        estate:    ['estateinfo'],
+        stock:     ['dashboard', 'transactions', 'summary', 'ledger', 'roundprogress', 'maintprogress', 'chemusage',
+                    'fertrecord', 'chemrecord', 'plantrecord', 'tools', 'toolsrecord'],
+        report:    ['mgmtreport'],
+        ffbrecord: ['ffbrecord'],
+        rainfall:  ['rainfall', 'rainfallreport', 'rainfallsummary'],
+    };
+    // May this person open this module card? (set in PORT → User Access)
+    function canOpen(session, m) {
+        if (!session) return false;
+        if (session.role === 'superadmin') return true;
+        if (m.admin) return session.role === 'admin';
+        const p = session.permissions;
+        if (!p || Array.isArray(p)) return true;
+        if ((session.role === 'hq_user' || session.role === 'admin') && !p.__configured) return true; // not set yet: view everything
+        if (session.role === 'estate_user') return true; // the Stock app sends estate users to the Worker Portal
+        return (MODULE_SECTIONS[m.module] || []).some((id) => p[id] === 'view' || p[id] === 'edit');
+    }
 
+    let authTokens = null; // the Supabase Auth session behind this sign-in (set below)
     const params = new URLSearchParams(location.search);
     const fromIntranetNoToken = !params.get('gw_token') && /^https:\/\/mjmelon\.github\.io/.test(document.referrer || '');
     const ctx = {};
     CTX_KEYS.forEach((k) => { const v = (params.get(k) || '').trim(); if (v) ctx[k] = v; });
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } }
+    // Only a session that came from MJM Intranet (stock-sso, via: 'intranet') counts
+    function loadSession() { try { const s = JSON.parse(localStorage.getItem(SESSION_KEY)); return s && s.via === 'intranet' ? s : null; } catch (e) { return null; } }
 
-    // Company list = the MJM Intranet companies, as synced into port_estates by
-    // stock-master-sync (one row per estate; company_name groups them).
-    const COMPANY_KEY = 'port_company';
+    // Company list = exactly the companies MJM Intranet gives this person for
+    // this module (stock-sso puts them in the session at sign-in), in Intranet
+    // company code order: { id, code, name, short_name }. Companies only — a
+    // company's locations are handled inside each module.
+    const COMPANY_KEY = 'port_company_id';
     let companies = [];
-    async function loadCompanies() {
-        try {
-            const res = await fetch(SUPABASE_URL + '/rest/v1/port_estates?select=name,company_name,is_active,sort_order&order=sort_order.asc,name.asc',
-                { headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
-            if (!res.ok) return [];
-            const rows = (await res.json()).filter((r) => r.is_active !== false);
-            const seen = new Set(), out = [];
-            rows.forEach((r) => { const c = (r.company_name || r.name || '').trim(); if (c && !seen.has(c)) { seen.add(c); out.push(c); } });
-            return out;
-        } catch (e) { return []; }
+    // The Intranet may send the company id, code, short name or name
+    function findCompany(v) {
+        const x = String(v || '').trim().toLowerCase();
+        if (!x) return null;
+        return companies.find((c) => c.id === v) ||
+            companies.find((c) => [c.code, c.short_name, c.name].some((k) => (k || '').toLowerCase() === x)) || null;
     }
-    function pickCompany(name) {
-        if (!name) return;
-        ctx.gw_company = name; ctx.gw_company_name = name;
-        delete ctx.gw_company_short; delete ctx.gw_estate; delete ctx.gw_estate_short;
-        try { localStorage.setItem(COMPANY_KEY, name); } catch (e) {}
+    function currentCompany() {
+        return findCompany(ctx.gw_company_id) || findCompany(ctx.gw_company) || findCompany(ctx.gw_company_name) || findCompany(ctx.gw_company_short);
+    }
+    function pickCompany(id) {
+        const c = companies.find((x) => x.id === id);
+        if (!c) return;
+        // gw_company / gw_company_name stay the company name for the module pages
+        ctx.gw_company_id = c.id; ctx.gw_company = c.name; ctx.gw_company_name = c.name;
+        if (c.short_name) ctx.gw_company_short = c.short_name; else delete ctx.gw_company_short;
+        delete ctx.gw_estate; delete ctx.gw_estate_short;
+        try { localStorage.setItem(COMPANY_KEY, c.id); localStorage.setItem('port_company', c.name); } catch (e) {} // port_company: name, read by Estate Info
     }
     // Back to the Intranet with the company chosen here, so its business box
     // switches to the same company (the Intranet reads gw_company on arrival).
@@ -156,6 +190,11 @@
     function appLink(module) {
         const m = MODULES.find((x) => x.module === module);
         const u = new URL((m && m.href) || APP, location.href);
+        if (m && /^https?:/.test(m.href || '')) {
+            // Another site of this system (Mantap): hand over this sign-in so no second login is needed
+            if (m.module === 'workers' && authTokens) u.hash += (u.hash.includes('?') ? '&' : '?') + 'pt=' + encodeURIComponent(authTokens.access_token) + '&pr=' + encodeURIComponent(authTokens.refresh_token);
+            return u.toString();
+        }
         if (!(m && m.href)) u.searchParams.set('module', module);
         Object.keys(ctx).forEach((k) => u.searchParams.set(k, ctx[k]));
         return u.pathname + u.search;
@@ -235,23 +274,28 @@
             : '';
         if (session) document.getElementById('logout').onclick = logout;
         document.getElementById('back').href = intranetLink();
-        const current = ctx.gw_company_name || ctx.gw_company || '';
+        const cur = currentCompany();
         const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
         const notes = [];
         if (!companies.length && session) notes.push('<p class="note warn">&#9888;&#65039; No company has been given to you for this module in MJM Intranet.</p>');
         if (companies.length) {
             pick.style.display = '';
-            sel.innerHTML = (companies.includes(current) ? '' : '<option value="">— Choose company —</option>') +
-                companies.map((c) => '<option value="' + esc(c) + '"' + (c === current ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
+            sel.innerHTML = (cur ? '' : '<option value="">— Choose company —</option>') +
+                companies.map((c) => '<option value="' + esc(c.id) + '"' + (cur && c.id === cur.id ? ' selected' : '') + '>' +
+                    esc(c.name) + '</option>').join('');
         } else pick.style.display = 'none';
-        if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. You can still open a module and sign in there.</p>');
+        if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. Please open Plantation Operation from MJM Intranet again.</p>');
         else if (!session && fromIntranetNoToken) notes.push('<p class="note err">You came from MJM Intranet but no sign-in token arrived, so the Intranet is still opening an old address. In Intranet Admin → Modules → Plantation Operation, set Address (URL) to <b>' + esc(location.origin + location.pathname) + '</b>.</p>');
-        else if (!session) notes.push('<p class="note warn">You are not signed in. Open a module and sign in, or open this page from MJM Intranet.</p>');
+        else if (!session) notes.push('<p class="note info"><span>Please sign in from MJM Intranet to open Plantation Operation.</span><a href="' + esc(INTRANET_URL) + '">Sign in from MJM Intranet &rsaquo;</a></p>');
+        // No company from the Intranet → the modules stay closed; otherwise only
+        // the modules this person has pages in (PORT → User Access)
+        const mine = companies.length ? orderedModules().filter((m) => canOpen(session, m)) : [];
+        if (session && companies.length && !mine.length) notes.push('<p class="note warn">You have no page access in Plantation Operation yet. Ask your PORT Admin to set it in User Access.</p>');
         document.getElementById('note').innerHTML = notes.join('');
-        document.getElementById('grid').innerHTML = orderedModules().map((m) =>
+        document.getElementById('grid').innerHTML = mine.map((m) =>
             '<a class="tile" draggable="false" data-module="' + esc(m.module) + '" href="' + esc(appLink(m.module)) + '">' +
             '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + '</h2></a>').join('');
-        document.getElementById('hint').style.display = '';
+        document.getElementById('hint').style.display = mine.length > 1 ? '' : 'none';
     }
 
     // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
@@ -259,7 +303,7 @@
     async function signInFromIntranet(token, module) {
         const splash = document.getElementById('splash');
         splash.style.display = '';
-        let code = 'err_network';
+        let code = 'err_network', detail = '';
         try {
             const res = await fetch(SUPABASE_URL + '/functions/v1/stock-sso', {
                 method: 'POST',
@@ -279,12 +323,13 @@
                 return { session: data.session };
             }
             code = (data && data.error) || ('http_' + res.status);
+            if (data && data.detail) detail = String(data.detail);
         } catch (e) {
             console.warn('[SSO] sign-in from Intranet failed', e);
         }
         splash.style.display = 'none';
         localStorage.removeItem(SESSION_KEY);
-        return { error: SSO_ERRORS[code] || code };
+        return { error: (SSO_ERRORS[code] || code) + (detail ? ' (' + detail + ')' : '') };
     }
 
     // The Stock app used to live at this address with a service worker; drop that
@@ -304,18 +349,26 @@
             error = r.error || '';
         }
         cleanUrl();
-        // Company list: the companies the Intranet gave this person (saved in the
-        // session at sign-in); the Super Admin sees every synced company.
-        companies = (session && Array.isArray(session.companies) && session.companies.length)
-            ? session.companies
-            : (session && session.role === 'superadmin') ? await loadCompanies() : [];
-        if (!ctx.gw_company_name && !ctx.gw_company) {
+        // Company list: only what the Intranet gave this person (saved in the
+        // session at sign-in). An old session without company ids gets none.
+        companies = (session && Array.isArray(session.companies))
+            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name) : [];
+        const fromIntranet = currentCompany();
+        if (fromIntranet) pickCompany(fromIntranet.id);
+        else {
+            // a company the Intranet did not give this person is never carried on
+            ['gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => delete ctx[k]);
             let last = ''; try { last = localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
-            if (last && companies.includes(last)) pickCompany(last);
-        } else if (ctx.gw_company_name || ctx.gw_company) {
-            try { localStorage.setItem(COMPANY_KEY, ctx.gw_company_name || ctx.gw_company); } catch (e) {}
+            if (last) pickCompany(last);
         }
-        if (session && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
+        if (session && companies.length && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
+        if (session && window.supabase) {
+            try {
+                const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+                const { data } = await sb.auth.getSession();
+                if (data && data.session) authTokens = { access_token: data.session.access_token, refresh_token: data.session.refresh_token };
+            } catch (e) {}
+        }
         draw(session, error);
         enableDrag(document.getElementById('grid'));
         document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });

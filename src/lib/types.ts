@@ -154,6 +154,10 @@ export interface Session {
   estate: string;
   role: Role;
   permissions: Permissions;
+  /** 'intranet' = signed in through MJM Intranet (stock-sso): the only way in. */
+  via?: 'intranet';
+  /** Companies MJM Intranet gives this person for the module (Intranet code order). */
+  companies?: { id: string; code: string; name: string; short_name: string }[];
 }
 
 /** Profile returned by the stock-auth Edge Function. */

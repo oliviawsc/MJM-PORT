@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>User Access · Plantation Operation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%91%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --ink: #0F172A; --mute: #64748B; --line: #E2E8F0; --brand: #166534; --soft: #F0FDF4; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); background: #F8FAFC; }
+        a { color: inherit; }
+        .top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .brand .leaf { width: 32px; height: 32px; border-radius: 9px; background: #7C2D12; color: #fff; display: grid; place-items: center; font-size: 17px; }
+        .brand a { text-decoration: none; color: var(--mute); font-weight: 600; font-size: 13px; }
+        .who { font-size: 13px; color: var(--mute); text-align: right; }
+        .who b { display: block; color: var(--ink); }
+        main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
+        h1 { font-size: 24px; margin: 0 0 4px; }
+        .sub { margin: 0 0 16px; color: var(--mute); font-size: 14px; line-height: 1.5; }
+        .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .bar .sp { flex: 1; }
+        .input, .btn, select { height: 36px; border-radius: 10px; border: 1px solid #CBD5E1; background: #fff; font: inherit; font-size: 14px; color: var(--ink); }
+        .input, select { padding: 0 10px; }
+        .btn { padding: 0 14px; font-weight: 600; cursor: pointer; }
+        .btn:hover { background: #F1F5F9; }
+        .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .btn.primary:hover { background: #14532D; }
+        .btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; border-radius: 8px; }
+        .btn:disabled { opacity: .55; cursor: default; }
+        .wrap { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+        th { background: #F8FAFC; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--mute); position: sticky; top: 0; white-space: nowrap; }
+        td .em { display: block; font-size: 12px; color: var(--mute); }
+        .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; margin: 2px 4px 2px 0; border-radius: 999px; background: #F1F5F9; border: 1px solid #E2E8F0; font-size: 12px; font-weight: 600; color: #334155; white-space: nowrap; }
+        .chip code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--mute); font-size: 11px; }
+        .role { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .role.superadmin { background: #F3E8FF; color: #6B21A8; }
+        .role.admin { background: #FFEDD5; color: #9A3412; }
+        .role.hq_user { background: #DBEAFE; color: #1E40AF; }
+        .role.estate_user { background: #DCFCE7; color: #166534; }
+        .off { color: #B91C1C; font-weight: 600; font-size: 12.5px; }
+        .muted { color: var(--mute); }
+        .note { padding: 12px 14px; border-radius: 12px; font-size: 14px; margin-bottom: 14px; }
+        .note.warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+        .note.err { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .note.info { background: #F0F9FF; border: 1px solid #BAE6FD; color: #075985; }
+        .empty { padding: 40px 20px; text-align: center; color: var(--mute); }
+        .modal { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; place-items: center; z-index: 20; padding: 16px; }
+        .modal.open { display: grid; }
+        .dlg { width: 100%; max-width: 640px; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); max-height: 92vh; overflow: auto; }
+        .dlg h2 { margin: 0 0 2px; font-size: 18px; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 14px 0; }
+        .row2 label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--mute); }
+        .grp { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+        .grp-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #F8FAFC; font-weight: 700; font-size: 13.5px; }
+        .grp-h .all { display: flex; gap: 4px; }
+        .perm { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 14px; }
+        .seg { display: inline-flex; border: 1px solid #CBD5E1; border-radius: 9px; overflow: hidden; flex: none; }
+        .seg label { padding: 5px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--mute); border-left: 1px solid #CBD5E1; }
+        .seg label:first-child { border-left: 0; }
+        .seg input { display: none; }
+        .seg input:checked + span { color: #fff; }
+        .seg label:has(input:checked) { background: #475569; color: #fff; }
+        .seg label.v:has(input:checked) { background: #2563EB; }
+        .seg label.e:has(input:checked) { background: var(--brand); }
+        .dlg .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; position: sticky; bottom: -20px; background: #fff; padding: 10px 0 0; }
+        .hint { font-size: 12.5px; color: var(--mute); margin: 6px 0 0; }
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #0F172A; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; display: none; z-index: 30; }
+        @media (max-width: 640px) { .row2 { grid-template-columns: 1fr; } .who span { display: none; } th.opt, td.opt { display: none; } }
+    </style>
+</head>
+<body>
+    <header class="top">
+        <div class="brand"><span class="leaf">&#128273;</span> User Access <a href="../">&lsaquo; Plantation Operation</a></div>
+        <div class="who" id="who"></div>
+    </header>
+
+    <main>
+        <h1>User Access</h1>
+        <p class="sub">MJM Intranet decides who can enter Plantation Operation and which companies they see. Here you set what each person can do inside PORT: their role and <b>None / View / Edit</b> for each page. The same access applies to every company they have.</p>
+        <div id="note"></div>
+        <div class="bar" id="bar" style="display:none">
+            <input class="input" id="q" placeholder="Search name or email" style="min-width:220px">
+            <select id="fCompany"><option value="">All companies</option></select>
+            <select id="fRole"><option value="">All roles</option></select>
+            <span class="sp"></span>
+            <span class="muted" id="count"></span>
+        </div>
+        <div class="wrap" id="wrap" style="display:none">
+            <table>
+                <thead><tr><th>Name</th><th>Role</th><th>Companies (from MJM Intranet)</th><th class="opt">Last active</th><th></th></tr></thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div class="modal" id="editModal"><div class="dlg">
+        <h2 id="eName"></h2>
+        <div class="muted" id="eEmail" style="font-size:13px"></div>
+        <div id="eCos" style="margin-top:8px"></div>
+        <div class="row2">
+            <label>Role <select id="eRole"></select></label>
+            <label>Status <select id="eStatus"><option value="active">Active</option><option value="inactive">Inactive (cannot open PORT)</option></select></label>
+        </div>
+        <p class="hint" id="eRoleNote" style="margin:-6px 0 12px"></p>
+        <div id="ePerms"></div>
+        <p class="hint" id="eUnconf"></p>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="eSave">Save</button></div>
+    </div></div>
+    <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+    const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
+    const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
+    const SESSION_KEY = 'opp_auth_session';
+    const FN = 'port-user-access';
+    const ROLE_LABEL = { superadmin: 'Super Admin', admin: 'Admin', hq_user: 'HQ User', estate_user: 'Estate User' };
+    const ERR = {
+        err_forbidden: 'Only the Super Admin and Admins can manage user access (Admins: users of their own companies).',
+        err_inactive: 'Your account is inactive.',
+        err_not_found: 'That user no longer exists.',
+        err_invalid: 'Something in the form is not valid.',
+    };
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const $ = (id) => document.getElementById(id);
+    const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = 'none'), 2600); };
+
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) {}
+    if (session && session.via !== 'intranet') session = null; // MJM Intranet sign-in only
+
+    let data = null, editing = null;
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, KEY) : null;
+
+    async function call(body) {
+        if (!sb) throw new Error('err_network');
+        const { data: s } = await sb.auth.getSession();
+        if (!s || !s.session) throw new Error('err_forbidden');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/' + FN, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + s.session.access_token },
+            body: JSON.stringify(body),
+        });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok || r.error) throw new Error(r.error || ('http_' + res.status));
+        return r;
+    }
+
+    function note(html, kind) { $('note').innerHTML = html ? '<div class="note ' + (kind || 'warn') + '">' + html + '</div>' : ''; }
+    const fmtDate = (s) => { if (!s) return '—'; const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }); };
+    const coChip = (c) => '<span class="chip">' + (c.code ? '<code>' + esc(c.code) + '</code>' : '') + esc(c.name) + '</span>';
+
+    function drawWho() {
+        $('who').innerHTML = session ? '<b>' + esc(session.name || session.email) + '</b><span>' + esc(ROLE_LABEL[session.role] || session.role || '') + '</span>' : '';
+    }
+
+    function drawFilters() {
+        const cos = new Map();
+        data.users.forEach((u) => u.companies.forEach((c) => cos.set(c.id, c)));
+        const list = [...cos.values()].sort((a, b) => (a.code || '').localeCompare(b.code || '', undefined, { numeric: true }) || a.name.localeCompare(b.name));
+        $('fCompany').innerHTML = '<option value="">All companies</option>' + list.map((c) => '<option value="' + esc(c.id) + '">' + esc((c.code ? c.code + ' · ' : '') + c.name) + '</option>').join('');
+        $('fRole').innerHTML = '<option value="">All roles</option>' + Object.keys(ROLE_LABEL).map((r) => '<option value="' + r + '">' + ROLE_LABEL[r] + '</option>').join('');
+    }
+
+    function drawRows() {
+        const q = $('q').value.trim().toLowerCase(), co = $('fCompany').value, role = $('fRole').value;
+        const list = data.users.filter((u) =>
+            (!q || (u.name || '').toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+            (!co || u.companies.some((c) => c.id === co)) && (!role || u.role === role));
+        $('count').textContent = list.length + ' of ' + data.users.length + ' users';
+        $('rows').innerHTML = list.length ? list.map((u) =>
+            '<tr><td><b>' + esc(u.name || '—') + '</b><span class="em">' + esc(u.email) + '</span></td>' +
+            '<td><span class="role ' + esc(u.role) + '">' + esc(ROLE_LABEL[u.role] || u.role) + '</span>' + (u.status === 'inactive' ? '<div class="off">Inactive</div>' : '') + '</td>' +
+            '<td>' + (u.companies.length ? u.companies.map(coChip).join('') : '<span class="muted">No company yet (signs in from MJM Intranet to get one)</span>') + '</td>' +
+            '<td class="opt muted">' + fmtDate(u.last_active) + '</td>' +
+            '<td style="text-align:right">' + (u.can_edit ? '<button class="btn sm" data-edit="' + u.id + '">Edit access</button>' : '') + '</td></tr>').join('')
+            : '<tr><td colspan="5" class="empty">No users match.</td></tr>';
+    }
+
+    // ── Edit dialog ────────────────────────────────────────────────
+    const groups = () => {
+        const g = new Map();
+        data.sections.forEach((s) => { if (!g.has(s.group)) g.set(s.group, []); g.get(s.group).push(s); });
+        return [...g.entries()];
+    };
+    const seg = (sid, val) => '<span class="seg">' + [['none', 'None', ''], ['view', 'View', 'v'], ['edit', 'Edit', 'e']].map(([v, l, c]) =>
+        '<label class="' + c + '"><input type="radio" name="p_' + esc(sid) + '" value="' + v + '"' + (val === v ? ' checked' : '') + '><span>' + l + '</span></label>').join('') + '</span>';
+
+    function drawPerms(perms) {
+        const mobile = $('eRole').value === 'estate_user';
+        $('ePerms').innerHTML = groups()
+            .filter(([g]) => (g === 'Estate User (mobile)') === mobile)
+            .map(([g, secs]) =>
+                '<div class="grp"><div class="grp-h"><span>' + esc(g) + '</span><span class="all">' +
+                ['none', 'view', 'edit'].map((v) => '<button type="button" class="btn sm" data-all="' + esc(g) + '" data-v="' + v + '">All ' + v + '</button>').join('') +
+                '</span></div>' + secs.map((s) => '<div class="perm"><span>' + esc(s.label) + '</span>' + seg(s.id, perms[s.id] || 'none') + '</div>').join('') + '</div>').join('');
+    }
+
+    function readPerms() {
+        const out = {};
+        $('ePerms').querySelectorAll('input[type=radio]:checked').forEach((r) => { if (r.value !== 'none') out[r.name.slice(2)] = r.value; });
+        return out;
+    }
+
+    function openEdit(id) {
+        const u = data.users.find((x) => x.id === id);
+        if (!u) return;
+        editing = u;
+        $('eName').textContent = u.name || u.email;
+        $('eEmail').textContent = u.email;
+        $('eCos').innerHTML = u.companies.length ? u.companies.map(coChip).join('') : '<span class="muted">No company from MJM Intranet yet</span>';
+        const roles = data.roles.slice();
+        if (!roles.some((r) => r.value === u.role)) roles.unshift({ value: u.role, label: ROLE_LABEL[u.role] || u.role, note: '' });
+        $('eRole').innerHTML = roles.map((r) => '<option value="' + esc(r.value) + '"' + (r.value === u.role ? ' selected' : '') + '>' + esc(r.label) + '</option>').join('');
+        $('eStatus').value = u.status === 'inactive' ? 'inactive' : 'active';
+        const roleNote = () => { const r = data.roles.find((x) => x.value === $('eRole').value); $('eRoleNote').textContent = r ? r.note : ''; };
+        roleNote();
+        $('eRole').onchange = () => { roleNote(); drawPerms(readPerms()); };
+        drawPerms(u.permissions || {});
+        $('eUnconf').textContent = !u.configured && u.role === 'hq_user'
+            ? 'Not set yet: until you save, this HQ User can VIEW every page. After saving, only what is ticked here applies.' : '';
+        $('editModal').classList.add('open');
+    }
+
+    async function save() {
+        if (!editing) return;
+        const btn = $('eSave');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+            const r = await call({ action: 'save', id: editing.id, role: $('eRole').value, status: $('eStatus').value, permissions: readPerms() });
+            Object.assign(editing, { role: r.user.role, status: r.user.status, permissions: r.user.permissions, configured: true });
+            $('editModal').classList.remove('open');
+            drawRows();
+            toast('Saved. ' + (editing.name || editing.email) + ' gets the new access the next time they open PORT.');
+        } catch (e) {
+            toast('Could not save: ' + (ERR[e.message] || e.message));
+        }
+        btn.disabled = false; btn.textContent = 'Save';
+    }
+
+    document.addEventListener('click', (e) => {
+        const ed = e.target.closest('[data-edit]');
+        if (ed) return openEdit(Number(ed.dataset.edit));
+        const all = e.target.closest('[data-all]');
+        if (all) {
+            const g = groups().find(([name]) => name === all.dataset.all);
+            if (g) g[1].forEach((s) => { const r = document.querySelector('input[name="p_' + s.id + '"][value="' + all.dataset.v + '"]'); if (r) r.checked = true; });
+            return;
+        }
+        if (e.target.closest('[data-close]') || e.target.id === 'editModal') $('editModal').classList.remove('open');
+    });
+    $('eSave').addEventListener('click', save);
+    ['q', 'fCompany', 'fRole'].forEach((id) => $(id).addEventListener('input', () => data && drawRows()));
+
+    (async () => {
+        drawWho();
+        if (!session) return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.');
+        if (session.role !== 'superadmin' && session.role !== 'admin') return note(ERR.err_forbidden);
+        note('Loading users…', 'info');
+        try {
+            data = await call({ action: 'list' });
+        } catch (e) {
+            return note('Could not load users: ' + esc(ERR[e.message] || e.message), 'err');
+        }
+        note(data.me.role === 'admin' ? 'As an Admin you see and manage only the users of your own companies (HQ Users and Estate Users).' : '', 'info');
+        $('bar').style.display = ''; $('wrap').style.display = '';
+        drawFilters();
+        drawRows();
+    })();
+})();
+</script>
+</body>
+</html>

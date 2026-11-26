@@ -1,30 +1,12 @@
-// Sign-in, sign-out, profile refresh and password change.
-//  - Super Admin: Supabase Auth (signInWithPassword), as in the legacy app.
-//  - HQ users: the stock-auth Edge Function checks password_hash on the
-//    server and returns a Supabase Auth session; the browser never sees hashes.
+// Sign-out, session restore and profile refresh.
+//  - Sign-in is ONLY through MJM Intranet: the stock-sso Edge Function gives the
+//    browser a session marked via: 'intranet'. No password sign-in here.
 //  - Estate workers are sent to the Worker Portal.
-import { ACTIVE_SECTION_KEY, AUTH_FUNCTION, SUPER_ADMIN_EMAIL, SUPER_ADMIN_NAME, WORKER_PORTAL_URL } from './config';
-import { ALL_SECTIONS } from './permissions';
+import { ACTIVE_SECTION_KEY, AUTH_FUNCTION, SUPER_ADMIN_EMAIL, WORKER_PORTAL_URL } from './config';
 import { clearSession, loadSession, saveSession, sessionFromProfile } from './session';
 import { removeKey } from './storage';
 import { callFunction, supabase } from './supabase';
 import type { Profile, Session } from './types';
-
-interface SignInResult {
-  session: { access_token: string; refresh_token: string };
-  profile: Profile;
-}
-
-function superAdminSession(id: number | undefined, prev: Session | null): Session {
-  return {
-    id,
-    email: SUPER_ADMIN_EMAIL,
-    name: SUPER_ADMIN_NAME,
-    estate: prev?.email === SUPER_ADMIN_EMAIL ? prev.estate ?? '' : '',
-    role: 'superadmin',
-    permissions: ALL_SECTIONS.map((s) => s.id),
-  };
-}
 
 /** port_users id of the Super Admin (for last_active), if the row exists. */
 async function superAdminId(): Promise<number | undefined> {
@@ -44,27 +26,10 @@ export function goToWorkerPortal() {
   window.location.replace(WORKER_PORTAL_URL);
 }
 
-/** Signs in; returns the new session. Throws Error(err_* code). */
-export async function signIn(rawId: string, password: string): Promise<Session> {
-  const id = rawId.trim().toLowerCase();
-  if (!id) throw new Error('err_empty_id');
-  if (!password) throw new Error('err_empty_pw');
-
-  if (id === SUPER_ADMIN_EMAIL) {
-    const { error } = await supabase.auth.signInWithPassword({ email: id, password });
-    if (error) throw new Error(/fetch|network/i.test(error.message) ? 'err_network' : 'err_wrong');
-    const s = superAdminSession(await superAdminId(), null);
-    touchLastActive(s.id);
-    saveSession(s);
-    return s;
-  }
-
-  const r = await callFunction<SignInResult>(AUTH_FUNCTION, { action: 'sign_in', userId: id, password });
-  const { error } = await supabase.auth.setSession(r.session);
-  if (error) throw new Error('err_network');
-  const s = sessionFromProfile(r.profile, null);
-  saveSession(s);
-  return s;
+/** Password sign-in is switched off: Plantation Operation opens only from
+ *  MJM Intranet (stock-sso). Kept so callers compile; always throws. */
+export async function signIn(_rawId: string, _password: string): Promise<Session> {
+  throw new Error('err_intranet_only');
 }
 
 /**

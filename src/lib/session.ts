@@ -17,7 +17,8 @@ function emit() {
 export function loadSession(): Session | null {
   if (cached === undefined) {
     const s = readJson<Session | null>(SESSION_KEY, null);
-    cached = s && typeof s === 'object' && typeof s.email === 'string' ? s : null;
+    // Only a session that came from MJM Intranet (stock-sso) counts
+    cached = s && typeof s === 'object' && typeof s.email === 'string' && s.via === 'intranet' ? s : null;
   }
   return cached;
 }
@@ -60,6 +61,7 @@ export function sessionFromProfile(p: Profile, prev: Session | null): Session {
     estate: prev && prev.email === p.email ? prev.estate ?? '' : '',
     role: p.role,
     permissions: p.permissions ?? {},
+    ...(prev && prev.email === p.email ? { via: prev.via, companies: prev.companies } : {}),
   };
 }
 

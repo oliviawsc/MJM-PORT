@@ -15,3 +15,7 @@ verify_jwt = false
 [functions.stock-master-sync]
 # Settings → Estates → "Sync from Intranet" (Super Admin's session required).
 verify_jwt = true
+
+[functions.port-user-access]
+# PORT → User Access module (Super Admin / Admin session required).
+verify_jwt = true
