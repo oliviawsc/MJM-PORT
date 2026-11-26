@@ -90,10 +90,12 @@
     };
     const locOf = (w) => {
         const hits = W.locations().filter((l) => atLocation(w, l));
-        const names = hits.length ? hits : (w.estates || []).map(bare);
+        const co = W.company ? norm(W.company.name) : '';
+        const names = hits.length ? hits : (w.estates || []).map(bare).filter((n) => n && norm(n) !== co);
         return names.map((n) => W.shortName(n) || n).join(', ');
     };
-    const locTitle = (w) => W.locations().filter((l) => atLocation(w, l)).join(', ') || (w.estates || []).map(bare).join(', ');
+    const locTitle = (w) => W.locations().filter((l) => atLocation(w, l)).join(', ') || 'No location set yet: choose it in Edit profile';
+    const workerLoc = (w) => W.locations().find((l) => atLocation(w, l)) || '';
     const atLocation = (w, loc) => !loc || (w.estates || []).some((e) => { const a = norm(e), b = norm(loc); return a === b || (' ' + a + ' ').includes(' ' + b + ' '); });
     const shownPins = new Map(); // worker id → PIN, while shown
 
@@ -104,7 +106,7 @@
         const res = await fetch(SUPABASE_URL + '/functions/v1/mantap-worker-admin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + s.session.access_token },
-            body: JSON.stringify(Object.assign({ company_id: W.company && W.company.id }, body)),
+            body: JSON.stringify(Object.assign({ company_id: W.company && W.company.id, locations: W.locations() }, body)),
         });
         const r = await res.json().catch(() => ({}));
         if (!res.ok || r.error) throw new Error(r.error || ('http_' + res.status));
@@ -152,7 +154,7 @@
             atLocation(w, W.location));
         $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
                 '<td class="c-no">' + (i + 1) + '</td>' +
-                (showLoc() ? '<td class="c-loc" title="' + esc(locTitle(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">—</span>') + '</td>' : '') +
+                (showLoc() ? '<td class="c-loc" title="' + esc(locTitle(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">Not set</span>') + '</td>' : '') +
                 '<td class="c-name"><b>' + esc(w.name) + '</b></td>' +
                 '<td>' + txt(w.workerNo) + '</td><td>' + txt(w.opisproId) + '</td>' +
                 '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
@@ -202,6 +204,10 @@
         $('pfBody').innerHTML =
             '<div class="pf-head"><div class="pf-face" title="Photo coming soon"><div>' + FACE + '<small>No photo</small></div></div>' +
             '<div class="pf-grid">' +
+                (W.locations().length && W.locations()[0] !== (W.company && W.company.name)
+                    ? field('Location', editing ? sel('fLoc', workerLoc(w), W.locations().map((l) => [l, W.shortName(l) ? l + ' (' + W.shortName(l) + ')' : l]))
+                        : (workerLoc(w) ? esc(workerLoc(w)) + (W.shortName(workerLoc(w)) ? ' <span class="unset">(' + esc(W.shortName(workerLoc(w))) + ')</span>' : '') : '<span class="unset">Not set</span>')) + field('', '')
+                    : '') +
                 field('Worker ID', editing ? inp('fNo', w.workerNo) : txt(w.workerNo)) +
                 field('Opispro Worker ID', editing ? inp('fOp', w.opisproId) : txt(w.opisproId)) +
                 field('Gender', editing ? sel('fGender', w.gender, [['male', 'Male'], ['female', 'Female']]) : (w.gender ? LABEL[w.gender] : '<span class="unset">Not set</span>')) +
@@ -230,9 +236,13 @@
     $('pfSave').onclick = async () => {
         if (!current) return;
         const v = { workerNo: $('fNo').value.trim(), opisproId: $('fOp').value.trim(), gender: $('fGender').value, workerType: $('fType').value };
+        const locEl = $('fLoc'), newLoc = locEl ? locEl.value : '';
+        if (locEl && newLoc && newLoc !== workerLoc(current)) v.location = newLoc;
         const btn = $('pfSave'); btn.disabled = true; btn.textContent = 'Saving…';
         try {
             await call(Object.assign({ action: 'set_details', id: current.id }, v));
+            if (v.location) { const co = W.company ? norm(W.company.name) : ''; const scope = W.locations().map(norm);
+                current.estates = (current.estates || []).filter((e) => !scope.includes(norm(e)) && norm(e) !== co && !W.locations().some((l) => atLocation({ estates: [e] }, l))).concat([v.location]); delete v.location; }
             Object.assign(current, v);
             editing = false; drawProfile(); drawRows(); toast('Saved');
         } catch (e) { toast('Could not save: ' + (ERR[e.message] || (/worker_no|opispro_id|port_worker_details/.test(e.message) ? 'run the latest worker SQL in Supabase first' : e.message))); }
