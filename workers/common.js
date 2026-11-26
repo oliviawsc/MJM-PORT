@@ -198,6 +198,7 @@
                 session.company_estates = Object.assign({}, session.company_estates, { [company.id]: r.locations });
                 session.company_location_short = Object.assign({}, session.company_location_short, { [company.id]: r.short || {} });
                 session.company_location_groups = Object.assign({}, session.company_location_groups, { [company.id]: Array.isArray(r.groups) ? r.groups : [] });
+                session.company_location_ids = Object.assign({}, session.company_location_ids, { [company.id]: r.ids || {} });
                 try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
                 drawTop(lastBack, lastOpts);
                 return true;

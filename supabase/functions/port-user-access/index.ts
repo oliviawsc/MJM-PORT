@@ -16,7 +16,7 @@
 // Users themselves are never created, deleted or given passwords here: the
 // Intranet does that. A person appears after their first Intranet sign-in.
 import { ApiError, callerEmail, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, USERS_TABLE, type UserRow } from '../_shared/common.ts';
-import { companiesForUser, intranetEstatesOf, intranetLocationGroups, intranetLocationShortNames, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
+import { companiesForUser, intranetEstatesOf, intranetLocationGroups, intranetLocationIds, intranetLocationShortNames, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 
 // Pages of PORT (ids = the classic app's section ids, plus estateinfo).
@@ -131,7 +131,7 @@ Deno.serve(handler(async (req, body) => {
       if (!given?.length) throw new ApiError('err_forbidden', 403);
     }
     const md = await intranetMasterData('stock');
-    return { locations: intranetEstatesOf(md, id), short: intranetLocationShortNames(md, id), groups: intranetLocationGroups(md, id) };
+    return { locations: intranetEstatesOf(md, id), short: intranetLocationShortNames(md, id), groups: intranetLocationGroups(md, id), ids: intranetLocationIds(md, id) };
   }
 
   if (body.action === 'list') {

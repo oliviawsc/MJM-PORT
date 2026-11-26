@@ -20,7 +20,7 @@ export type PortModule = 'stock' | 'report' | 'mantap';
 
 interface Company {
   id: string; code: string | null; name: string; short_name: string | null;
-  opispro_id?: string | null; is_active: boolean; sort_order: number | null;
+  opispro_id?: string | null; location_id?: string | null; is_active: boolean; sort_order: number | null;
 }
 
 export interface IntranetEstate { id: string; company_id: string; name: string; short_name: string | null; sort_order: number | null; is_active: boolean }
@@ -69,6 +69,24 @@ export function intranetLocationGroups(md: MasterData, companyId: string): { id:
     if (!groups.get(k)!.locations.includes(n)) groups.get(k)!.locations.push(n);
   }
   return [...groups.values()];
+}
+
+/** Opispro Location ID of each location of a company, by location name. A
+ *  company without multiple locations is its own one location: its name → its
+ *  own Location ID (Intranet → Company → Business Details). */
+export function intranetLocationIds(md: MasterData, companyId: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const locs = (md.locations ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  for (const e of locs) {
+    const n = (e.name ?? '').trim(), id = (e.location_id ?? '').trim();
+    if (n && id && !out[n]) out[n] = id;
+  }
+  if (!locs.length) {
+    const c = (md.companies ?? []).find((x) => x.id === companyId);
+    const id = (c?.location_id ?? '').trim();
+    if (c && id) out[c.name.trim()] = id;
+  }
+  return out;
 }
 
 /** Short names of a company's Intranet Locations (Admin → Company → Locations → Short name), by location name. */
@@ -146,8 +164,12 @@ export async function saveCompanies(md: MasterData): Promise<{ added: string[]; 
   const rows = list.map((c) => ({
     id: c.id, code: (c.code ?? '').trim() || null, name: c.name.trim(), short_name: (c.short_name ?? '').trim() || null,
     opispro_id: c.opispro_id ?? null, is_active: c.is_active !== false, synced_at: now,
+    location_id: (c.location_id ?? '').trim() || null, // the company's own Location ID (no multiple locations)
   }));
-  const { error: e2 } = await db.from('port_companies').upsert(rows, { onConflict: 'id' });
+  let { error: e2 } = await db.from('port_companies').upsert(rows, { onConflict: 'id' });
+  if (e2 && /location_id/.test(e2.message ?? '')) { // before the 20261209 SQL: save without it
+    ({ error: e2 } = await db.from('port_companies').upsert(rows.map(({ location_id: _l, ...r }) => r), { onConflict: 'id' }));
+  }
   if (e2) throw e2;
 
   const seen = new Set(rows.map((r) => r.id));

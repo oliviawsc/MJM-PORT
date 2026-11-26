@@ -11,7 +11,7 @@ import {
 } from '../_shared/common.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 import {
-  companiesForUser, intranetEstatesOf, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
+  companiesForUser, intranetEstatesOf, intranetLocationIds, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
 } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
@@ -112,7 +112,8 @@ async function issueSession(row: UserRow) {
 function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranetSuper = false,
   companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {},
   companyEstates: Record<string, string[]> = {},
-  companyLocationShort: Record<string, Record<string, string>> = {}) {
+  companyLocationShort: Record<string, Record<string, string>> = {},
+  companyLocationIds: Record<string, Record<string, string>> = {}) {
   // The Intranet Super Admin is the Super Admin here too
   const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL || intranetSuper ? 'superadmin' : roleOf(row);
   return {
@@ -136,6 +137,8 @@ function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranet
     company_estates: companyEstates,
     // Short name of each location (Intranet → Company → Locations), by company then location name
     company_location_short: companyLocationShort,
+    // Opispro Location ID of each location (a company without locations: its own), by company then name
+    company_location_ids: companyLocationIds,
   };
 }
 
@@ -209,6 +212,8 @@ Deno.serve(handler(async (_req, body) => {
   for (const c of companies) companyEstates[c.id] = intranetEstatesOf(md, c.id);
   const companyLocationShort: Record<string, Record<string, string>> = {};
   for (const c of companies) companyLocationShort[c.id] = intranetLocationShortNames(md, c.id);
+  const companyLocationIds: Record<string, Record<string, string>> = {};
+  for (const c of companies) companyLocationIds[c.id] = intranetLocationIds(md, c.id);
   const perCo = perCoMap.get(email);
   const companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {};
   for (const c of companies) {
@@ -232,5 +237,5 @@ Deno.serve(handler(async (_req, body) => {
   const rt = (globalThis as any).EdgeRuntime;
   if (rt?.waitUntil) rt.waitUntil(after); else await after;
 
-  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), intranetSuper, companyAccess, companyEstates, companyLocationShort), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), intranetSuper, companyAccess, companyEstates, companyLocationShort, companyLocationIds), auth, module };
 }));
