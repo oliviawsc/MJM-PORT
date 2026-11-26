@@ -181,6 +181,8 @@
         catch (e) { return note('Could not load workers: ' + esc(ERR[e.message] || e.message), 'err'); }
         shownPins.clear();
         note('');
+        // Locations and their short names fresh from the Intranet, then redraw
+        W.refreshLocations().then((ok) => { if (ok && workers) { drawHead(); drawRows(); } });
         drawHead();
         $('bar').style.display = ''; $('wrap').style.display = '';
         drawRows();

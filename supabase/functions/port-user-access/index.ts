@@ -16,7 +16,7 @@
 // Users themselves are never created, deleted or given passwords here: the
 // Intranet does that. A person appears after their first Intranet sign-in.
 import { ApiError, callerEmail, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, USERS_TABLE, type UserRow } from '../_shared/common.ts';
-import { companiesForUser, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
+import { companiesForUser, intranetEstatesOf, intranetLocationShortNames, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 
 // Pages of PORT (ids = the classic app's section ids, plus estateinfo).
@@ -118,6 +118,21 @@ function mayEdit(actor: Actor, target: UserRow, targetRole: string): boolean {
 Deno.serve(handler(async (req, body) => {
   const actor = await actorOf(req);
   const db = serviceClient();
+
+  // Any page: a company's Intranet Locations and their short names, fresh from the
+  // Intranet (no new sign-in needed after a change there). Only for a company the
+  // Intranet gave the caller (the Super Admin: any).
+  //   POST { action: 'locations', company_id } → { locations: string[], short: { [name]: short } }
+  if (body.action === 'locations') {
+    const id = String(body.company_id ?? '').trim();
+    if (!/^[0-9a-f-]{36}$/i.test(id)) throw new ApiError('err_no_company', 400);
+    if (!actor.super) {
+      const { data: given } = await db.from('port_user_companies').select('company_id').eq('email', actor.email).eq('company_id', id).limit(1);
+      if (!given?.length) throw new ApiError('err_forbidden', 403);
+    }
+    const md = await intranetMasterData('stock');
+    return { locations: intranetEstatesOf(md, id), short: intranetLocationShortNames(md, id) };
+  }
 
   if (body.action === 'list') {
     const company = await companyOf(actor, body.company_id);

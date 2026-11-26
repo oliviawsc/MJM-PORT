@@ -156,6 +156,27 @@
         drawTop,
         onCompanyChange: (f) => listeners.push(f),
         onLocationChange: (f) => locListeners.push(f),
+        /** Fresh Intranet Locations and short names for the chosen company (no new sign-in needed). */
+        refreshLocations: async () => {
+            if (!company || !session || !window.supabase) return false;
+            try {
+                const sb = window.supabase.createClient('https://pxzvayptwpvuvlenmdwp.supabase.co', 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_');
+                const { data: s } = await sb.auth.getSession();
+                if (!s || !s.session) return false;
+                const res = await fetch('https://pxzvayptwpvuvlenmdwp.supabase.co/functions/v1/port-user-access', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_', Authorization: 'Bearer ' + s.session.access_token },
+                    body: JSON.stringify({ action: 'locations', company_id: company.id }),
+                });
+                const r = await res.json().catch(() => ({}));
+                if (!res.ok || !Array.isArray(r.locations)) return false;
+                session.company_estates = Object.assign({}, session.company_estates, { [company.id]: r.locations });
+                session.company_location_short = Object.assign({}, session.company_location_short, { [company.id]: r.short || {} });
+                try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+                drawTop(lastBack, lastOpts);
+                return true;
+            } catch (e) { return false; }
+        },
         /** A location's short name from the Intranet (Company → Locations → Short name), else ''. */
         shortName: (loc) => (company && session && session.company_location_short && session.company_location_short[company.id] && session.company_location_short[company.id][loc]) || '',
         /** The chosen location ('' = all locations / none). */
