@@ -11,7 +11,7 @@ import {
 } from '../_shared/common.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 import {
-  companiesForUser, intranetEstatesOf, intranetLocationIds, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
+  companiesForUser, intranetEstatesOf, matchLocations, intranetLocationIds, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
 } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
@@ -231,6 +231,7 @@ Deno.serve(handler(async (_req, body) => {
     if (Date.now() - lastLink > 10 * 60 * 1000) {
       lastLink = Date.now();
       try { await linkEstates(); } catch (e) { console.warn('[stock-sso] estate link skipped:', e instanceof Error ? e.message : e); }
+      try { await matchLocations(md); } catch (e) { console.warn('[stock-sso] location match skipped:', e instanceof Error ? e.message : e); }
     }
   })();
   // deno-lint-ignore no-explicit-any

@@ -207,11 +207,56 @@ export async function linkEstates(): Promise<{ linked: number; filled: number; u
   return { linked: r.linked ?? 0, filled: r.filled ?? 0, unlinked: r.unlinked ?? [] };
 }
 
+/** Old estate names → MJM Intranet Locations (port_estate_company.location_name /
+ *  location_id), like the company link. Rules, only when exactly one location fits:
+ *  same name or short name; the name after the company name ("Mega Jutamas (Sg Rait)",
+ *  "Mega Jutamas - Sg Rait"); or all words of the location in the old name.
+ *  A company without Intranet locations is its own one location. Rows set by hand
+ *  (location_matched_by = 'manual') only get their Location ID refreshed. */
+export async function matchLocations(md: MasterData): Promise<{ matched: number }> {
+  const db = serviceClient();
+  const { data, error } = await db.from('port_estate_company').select('estate, company_id, location_name, location_id, location_matched_by').not('company_id', 'is', null);
+  if (error) { if (/location_name/.test(error.message ?? '')) return { matched: 0 }; throw error; } // before the 20261210 SQL
+  const norm = (x: string) => String(x ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const words = (x: string) => norm(x).split(' ').filter(Boolean);
+  let matched = 0;
+  for (const r of (data ?? []) as { estate: string; company_id: string; location_name: string | null; location_id: string | null; location_matched_by: string }[]) {
+    const co = (md.companies ?? []).find((c) => c.id === r.company_id);
+    if (!co) continue;
+    const locs = (md.locations ?? []).filter((e) => e.company_id === co.id && e.is_active !== false)
+      .map((e) => ({ name: (e.name ?? '').trim(), short: (e.short_name ?? '').trim(), id: (e.location_id ?? '').trim() })).filter((e) => e.name);
+    let hit: { name: string; id: string } | null = null;
+    if (r.location_matched_by === 'manual') {
+      const l = locs.find((x) => x.name === r.location_name);
+      if (l && l.id !== (r.location_id ?? '')) hit = l; else continue; // refresh the ID only
+    } else if (!locs.length) {
+      hit = { name: co.name.trim(), id: (co.location_id ?? '').trim() }; // the company is its own one location
+    } else {
+      const e = norm(r.estate);
+      const coNames = [co.name, co.short_name ?? ''].map(norm).filter(Boolean);
+      let rest = e;
+      for (const cn of coNames) if (rest.startsWith(cn + ' ')) { rest = rest.slice(cn.length).trim(); break; }
+      const by = (f: (l: typeof locs[number]) => boolean) => { const m = locs.filter(f); return m.length === 1 ? m[0] : null; };
+      hit = by((l) => norm(l.name) === e || (!!l.short && norm(l.short) === e))
+        ?? by((l) => norm(l.name) === rest || (!!l.short && norm(l.short) === rest))
+        ?? by((l) => { const w = words(l.name), ew = words(r.estate); return w.length > 0 && w.every((x) => ew.includes(x)); });
+    }
+    if (!hit) continue;
+    if (hit.name === r.location_name && (hit.id || null) === (r.location_id || null)) continue;
+    const { error: e2 } = await db.from('port_estate_company')
+      .update({ location_name: hit.name, location_id: hit.id || null, updated_at: new Date().toISOString() }).eq('estate', r.estate);
+    if (e2) throw e2;
+    matched++;
+  }
+  return { matched };
+}
+
 /** Full sync: Intranet companies into port_companies, then old estate names
  *  linked to them. Runs at every sign-in from the Intranet and from
  *  Settings → "Sync from Intranet". */
 export async function syncCompaniesFromIntranet(md?: MasterData): Promise<SyncResult> {
   const saved = await saveCompanies(md ?? await intranetMasterData('stock'));
   const link = await linkEstates();
+  try { await matchLocations(md ?? await intranetMasterData('stock')); } catch (e) { console.warn('[sync] location match skipped:', e instanceof Error ? e.message : e); }
   return { ok: true, ...saved, skipped: false, ...link };
 }
