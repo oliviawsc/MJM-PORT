@@ -81,11 +81,19 @@
     const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     // "All locations" in a company with locations: show each worker's location
     const showLoc = () => !W.location && W.locations().length > 0 && W.locations()[0] !== (W.company && W.company.name);
-    const locOf = (w) => {
-        const locs = W.locations();
-        const hits = locs.filter((l) => atLocation(w, l));
-        return hits.length ? hits.join(', ') : (w.estates || []).join(', ');
+    // Location only, never "Company (Location)": the Intranet short name when there is one
+    const bare = (e) => {
+        const co = W.company ? W.company.name.trim() : '';
+        let x = String(e || '').trim();
+        if (co && x.toLowerCase().startsWith(co.toLowerCase()) && x.length > co.length) x = x.slice(co.length).replace(/^[\s\-–:,(]+|[)\s]+$/g, '');
+        return x || String(e || '');
     };
+    const locOf = (w) => {
+        const hits = W.locations().filter((l) => atLocation(w, l));
+        const names = hits.length ? hits : (w.estates || []).map(bare);
+        return names.map((n) => W.shortName(n) || n).join(', ');
+    };
+    const locTitle = (w) => W.locations().filter((l) => atLocation(w, l)).join(', ') || (w.estates || []).map(bare).join(', ');
     const atLocation = (w, loc) => !loc || (w.estates || []).some((e) => { const a = norm(e), b = norm(loc); return a === b || (' ' + a + ' ').includes(' ' + b + ' '); });
     const shownPins = new Map(); // worker id → PIN, while shown
 
@@ -144,7 +152,7 @@
             atLocation(w, W.location));
         $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
                 '<td class="c-no">' + (i + 1) + '</td>' +
-                (showLoc() ? '<td class="c-loc" title="' + esc(locOf(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">—</span>') + '</td>' : '') +
+                (showLoc() ? '<td class="c-loc" title="' + esc(locTitle(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">—</span>') + '</td>' : '') +
                 '<td class="c-name"><b>' + esc(w.name) + '</b></td>' +
                 '<td>' + txt(w.workerNo) + '</td><td>' + txt(w.opisproId) + '</td>' +
                 '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
@@ -154,6 +162,12 @@
                 (W.canEdit() ? '<button class="ibtn" data-edit="' + w.id + '" title="Edit profile" aria-label="Edit profile">' + I_EDIT + '</button>' : '') + '</div></td></tr>').join('')
             : '<tr><td class="nodata" colspan="' + (TOTAL_COLS + (showLoc() ? 1 : 0)) + '">No data</td></tr>';
         document.querySelector('table.wl').classList.toggle('with-loc', showLoc());
+        // Name stays right after No. (and Location) while scrolling sideways
+        requestAnimationFrame(() => {
+            const no = document.querySelector('#head .c-no'), lc = document.querySelector('#head .c-loc');
+            const left = (no ? no.getBoundingClientRect().width : 52) + (lc ? lc.getBoundingClientRect().width : 0);
+            document.querySelectorAll('table.wl .c-name').forEach((c) => { c.style.left = left + 'px'; });
+        });
     }
 
     async function load() {

@@ -135,6 +135,8 @@
         drawTop,
         onCompanyChange: (f) => listeners.push(f),
         onLocationChange: (f) => locListeners.push(f),
+        /** A location's short name from the Intranet (Company → Locations → Short name), else ''. */
+        shortName: (loc) => (company && session && session.company_location_short && session.company_location_short[company.id] && session.company_location_short[company.id][loc]) || '',
         /** The chosen location ('' = all locations / none). */
         get location() { return location_; },
         /** Locations of the chosen company (the company itself when none is linked). */
