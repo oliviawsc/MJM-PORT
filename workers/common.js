@@ -57,7 +57,7 @@
     function logout() {
         localStorage.removeItem(SESSION_KEY);
         try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
-        location.href = INTRANET_URL + (company ? '?gw_company=' + encodeURIComponent(company.name) : '');
+        location.href = INTRANET_URL + '?gw_logout=1'; // the Intranet signs out too
     }
 
     // ---- Location of the chosen company: the same list and the same remembered
