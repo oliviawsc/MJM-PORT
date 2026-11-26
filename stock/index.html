@@ -10774,8 +10774,9 @@ async function loadEstatesFromSupabase() {
 function refreshEstateSidebar(session) {
     if (!session) return;
     const isSA = session.role === 'superadmin';
-    const allowed = isSA
-        ? GLOBAL_ESTATES
+    // A company chosen on the PORT front page: only its locations, for everyone
+    const allowed = (session.company_id && session.estates && session.estates.length) ? session.estates
+        : isSA ? GLOBAL_ESTATES
         : (session.estates && session.estates.length > 0 ? session.estates : []);
     const html = '<option value="">— Select estate —</option>' +
         allowed.map(e => `<option value="${e}">${e}</option>`).join('');
@@ -11275,8 +11276,9 @@ function bootApp(session) {
     const estateSelectVisible = document.getElementById('sidebarEstateVisible');
     const isSuperAdmin = session.role === 'superadmin';
 
-    const allowedEstates = isSuperAdmin
-        ? GLOBAL_ESTATES
+    // A company chosen on the PORT front page: only its locations, for everyone
+    const allowedEstates = (session.company_id && session.estates && session.estates.length) ? session.estates
+        : isSuperAdmin ? GLOBAL_ESTATES
         : (session.estates && session.estates.length > 0 ? session.estates : []);
 
     const estateOptionsHtml = '<option value="">— Select estate —</option>' +
@@ -12787,18 +12789,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const user = await fetchUserByEmail(email);
             if (user) {
-                const freshSession = {
-                    id:          user.id,
-                    email:       user.email,
-                    name:        user.name,
-                    estates:     user.estates || [],
-                    // Carry the previously-selected estate forward — this
-                    // refresh is just re-syncing permissions from Supabase,
-                    // it shouldn't reset which estate the user was viewing.
-                    estate:      (localSession && localSession.estate) || '',
-                    role:        user.role || 'user',
-                    permissions: user.permissions || {},
-                };
+                // Role, page access and locations come from the MJM Intranet sign-in and
+                // PORT → User Access for the company chosen on the front page; they are
+                // kept as they are (changes apply at the next Intranet sign-in). Only the
+                // name is refreshed here. Keeping the whole session also keeps its
+                // "signed in from MJM Intranet" mark.
+                const freshSession = Object.assign({}, localSession || {}, {
+                    id:    user.id,
+                    email: user.email,
+                    name:  user.name,
+                });
+                if (!localSession) {
+                    freshSession.estates = user.estates || [];
+                    freshSession.estate = '';
+                    freshSession.role = user.role || 'user';
+                    freshSession.permissions = user.permissions || {};
+                }
                 saveSession(freshSession);
 
                 if (!localSession) {

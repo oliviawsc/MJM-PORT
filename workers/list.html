@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#166534">
+    <title>Worker List · Plantation Operation</title>
+    <link rel="icon" type="image/png" href="../public/palm-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="workers.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="bg"></div>
+    <header class="top"><div class="in">
+        <div class="left">
+            <span class="back-slot"><a class="back" id="back" href="index.html" title="Back to Worker Manage">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Worker Manage</span></a></span>
+            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect" aria-label="Company"></select></label>
+        </div>
+        <div class="title">Worker List</div>
+        <div class="who" id="who"></div>
+    </div></header>
+
+    <main>
+        <div id="note"></div>
+        <div class="bar" id="bar" style="display:none">
+            <input class="input search" id="q" type="search" placeholder="Search" autocomplete="off">
+            <select id="loc" aria-label="Location" style="display:none"></select>
+        </div>
+        <div class="wrap" id="wrap" style="display:none">
+            <table class="wl">
+                <thead id="head"></thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Edit worker profile -->
+    <div class="modal" id="editModal"><div class="dlg">
+        <h2 id="eName"></h2>
+        <div class="muted" id="eId" style="font-size:13px"></div>
+        <label>Gender
+            <select id="eGender"><option value="">— Not set —</option><option value="male">Male</option><option value="female">Female</option></select></label>
+        <label>Type
+            <select id="eType"><option value="">— Not set —</option><option value="local">Local</option><option value="foreign">Foreign</option></select></label>
+        <div class="acts"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="button" id="eSave">Save</button></div>
+    </div></div>
+
+    <!-- View worker profile -->
+    <div class="modal" id="viewModal"><div class="dlg profile" role="dialog" aria-modal="true" aria-labelledby="pfName">
+        <div class="pf-top"><h2 id="pfName"></h2><button class="pf-x" type="button" data-close aria-label="Close">&times;</button></div>
+        <div class="pf-body" id="pfBody"></div>
+    </div></div>
+    <div class="toast" id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+(function () {
+    const W = window.PortWorkers, esc = W.esc, $ = (id) => document.getElementById(id);
+    const SUPABASE_URL = 'https://pxzvayptwpvuvlenmdwp.supabase.co';
+    const KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
+    const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = 'none'), 2600); };
+    const ERR = {
+        err_forbidden: 'You do not have access to Worker Manage in this company. Ask your Admin to set it in User Access.',
+        err_invalid: 'Something in the form is not valid.',
+        err_network: 'Could not connect. Please try again.',
+    };
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, KEY) : null;
+
+    // Columns, in order. "mantap" = the MANTAP group (light), "soon" = coming later (grey).
+    const MANTAP = [{ k: 'login_id', label: 'Login ID' }, { k: 'login_pin', label: 'Login PIN' }];
+    const SOON = ['Join Date', '1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'Passport Number', 'Passport Expiry',
+        'SOCSO Number', 'Permit Issued Date', 'Levy Expiry Date', 'Levy Number', 'Levy Status', 'Labour License Expiry Date', 'Resign Date',
+        'Service Period', 'Status', 'EPF Claim', 'Remark'];
+    const TOTAL_COLS = 4 + MANTAP.length + SOON.length + 1; // No., Name, Gender, Type … Action
+    const LABEL = { male: 'Male', female: 'Female', local: 'Local', foreign: 'Foreign' };
+
+    let workers = null, editing = null, loc = '';
+
+    async function call(body) {
+        if (!sb) throw new Error('err_network');
+        const { data: s } = await sb.auth.getSession();
+        if (!s || !s.session) throw new Error('err_forbidden');
+        const res = await fetch(SUPABASE_URL + '/functions/v1/mantap-worker-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + s.session.access_token },
+            body: JSON.stringify(Object.assign({ company_id: W.company && W.company.id }, body)),
+        });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok || r.error) throw new Error(r.error || ('http_' + res.status));
+        return r;
+    }
+    const note = (html, kind) => { $('note').innerHTML = html ? '<p class="note ' + (kind || 'warn') + '">' + html + '</p>' : ''; };
+    const loginId = (email) => String(email || '').replace(/@psms\.app$/i, '');
+    const pill = (v) => v ? '<span class="pill ' + esc(v) + '">' + LABEL[v] + '</span>' : '<span class="unset">Not set</span>';
+    // The PIN is stored scrambled (one-way), so nobody can read it back; it is reset in Mantap
+    const PIN = '<span class="pin" title="Hidden for security. Reset it in Mantap if forgotten.">••••••</span>';
+
+    function drawLocations() {
+        const list = W.locations();
+        if (!list.includes(loc)) loc = '';
+        $('loc').style.display = list.length > 1 ? '' : 'none'; // only when the company has more than one location
+        $('loc').innerHTML = '<option value="">All locations</option>' + list.map((n) => '<option' + (n === loc ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+    }
+
+    function drawHead() {
+        $('head').innerHTML =
+            '<tr><th class="c-no" rowspan="2">No.</th><th class="c-name" rowspan="2">Name</th><th rowspan="2">Gender</th><th rowspan="2">Type</th>' +
+            '<th class="grp mantap" colspan="' + MANTAP.length + '">MANTAP</th>' +
+            '<th class="soon" colspan="' + SOON.length + '">Coming soon in worker management system</th>' +
+            '<th class="c-act" rowspan="2">Action</th></tr>' +
+            '<tr>' + MANTAP.map((c) => '<th class="mantap">' + esc(c.label) + '</th>').join('') + SOON.map((l) => '<th class="later">' + esc(l) + '</th>').join('') + '</tr>';
+        // the second header row sticks right under the first one
+        requestAnimationFrame(() => {
+            const h = $('head').rows[0].getBoundingClientRect().height;
+            [...$('head').rows[1].cells].forEach((c) => { c.style.top = h + 'px'; });
+        });
+    }
+
+    function drawRows() {
+        const q = $('q').value.trim().toLowerCase();
+        const list = (workers || []).filter((w) =>
+            (!q || w.name.toLowerCase().includes(q) || loginId(w.email).toLowerCase().includes(q)) &&
+            (!loc || w.estates.includes(loc)));
+        $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
+                '<td class="c-no">' + (i + 1) + '</td>' +
+                '<td class="c-name"><b>' + esc(w.name) + '</b><span class="em">' + esc(w.estates.join(', ')) + '</span></td>' +
+                '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
+                '<td class="mantap">' + esc(loginId(w.email)) + '</td><td class="mantap">' + PIN + '</td>' +
+                SOON.map(() => '<td class="later">—</td>').join('') +
+                '<td class="c-act"><div class="acts"><button class="btn sm" data-view="' + w.id + '">View profile</button>' +
+                (W.canEdit() ? '<button class="btn sm" data-edit="' + w.id + '">Edit profile</button>' : '') + '</div></td></tr>').join('')
+            : '<tr><td class="nodata" colspan="' + TOTAL_COLS + '">No data</td></tr>';
+    }
+
+    async function load() {
+        W.drawTop('index.html');
+        $('bar').style.display = 'none'; $('wrap').style.display = 'none';
+        if (!W.session) return note('You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.');
+        if (!W.company) return note('Choose a company in the top bar.');
+        if (!W.canView()) return note(ERR.err_forbidden);
+        note('Loading…', 'info');
+        try {
+            const r = await call({ action: 'list' });
+            workers = r.workers || [];
+        } catch (e) {
+            return note('Could not load workers: ' + esc(ERR[e.message] || e.message), 'err');
+        }
+        note('');
+        drawLocations(); drawHead();
+        $('bar').style.display = ''; $('wrap').style.display = '';
+        drawRows();
+    }
+
+    // ---- View worker profile (floating window)
+    const FACE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+    const field = (k, v) => '<div class="pf-f"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>';
+    function openView(id) {
+        const w = workers.find((x) => x.id === id); if (!w) return;
+        $('pfName').textContent = w.name;
+        const soon = (labels) => labels.map((l) => field(l, '—')).join('');
+        $('pfBody').innerHTML =
+            '<div class="pf-head"><div class="pf-face" title="Photo coming soon"><div>' + FACE + '<small>No photo</small></div></div>' +
+            '<div class="pf-grid">' +
+                field('Gender', w.gender ? LABEL[w.gender] : '<span class="unset">Not set</span>') +
+                field('Type', w.workerType ? LABEL[w.workerType] : '<span class="unset">Not set</span>') +
+                field('MANTAP Login ID', esc(loginId(w.email))) +
+                field('MANTAP Login PIN', PIN) +
+            '</div></div>' +
+            '<div class="pf-sec soon"><h3>Employment <small>Coming soon</small></h3><div class="pf-grid">' + soon(['Join Date', 'Service Period', 'Resign Date', 'Status']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Identity &amp; Work Permit Documents <small>Coming soon</small></h3><div class="pf-grid">' +
+                soon(['Passport Number', 'Passport Expiry', 'Permit Issued Date', 'Labour License Expiry Date', 'Levy Number', 'Levy Status', 'Levy Expiry Date', 'SOCSO Number']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Claims <small>Coming soon</small></h3><div class="pf-grid">' +
+                soon(['1st Recruitment Claim', '2nd Recruitment Claim', '3rd Recruitment Claim', 'EPF Claim']) + '</div></div>' +
+            '<div class="pf-sec soon"><h3>Remark <small>Coming soon</small></h3><div class="pf-grid">' + field('Remark', '—') + '</div></div>';
+        $('viewModal').classList.add('open');
+    }
+
+    // ---- Edit worker profile (gender, type for now)
+    function openEdit(id) {
+        const w = workers.find((x) => x.id === id); if (!w) return;
+        editing = w;
+        $('eName').textContent = 'Edit profile · ' + w.name;
+        $('eId').textContent = 'MANTAP Login ID: ' + loginId(w.email);
+        $('eGender').value = w.gender || '';
+        $('eType').value = w.workerType || '';
+        $('editModal').classList.add('open');
+    }
+    $('eSave').onclick = async () => {
+        if (!editing) return;
+        const btn = $('eSave'); btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+            await call({ action: 'set_details', id: editing.id, gender: $('eGender').value, workerType: $('eType').value });
+            editing.gender = $('eGender').value; editing.workerType = $('eType').value;
+            $('editModal').classList.remove('open'); drawRows(); toast('Saved');
+        } catch (e) { toast('Could not save: ' + (ERR[e.message] || (/port_worker_details/.test(e.message) ? 'run the 20261129 SQL in Supabase first' : e.message))); }
+        btn.disabled = false; btn.textContent = 'Save';
+    };
+
+    document.addEventListener('click', (e) => {
+        const vw = e.target.closest('[data-view]'); if (vw) return openView(Number(vw.dataset.view));
+        const ed = e.target.closest('[data-edit]'); if (ed) return openEdit(Number(ed.dataset.edit));
+        if (e.target.closest('[data-close]') || e.target.classList.contains('modal')) document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open'));
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach((m) => m.classList.remove('open')); });
+    $('q').addEventListener('input', () => workers && drawRows());
+    $('loc').addEventListener('change', (e) => { loc = e.target.value; drawRows(); });
+    W.onCompanyChange(() => { loc = ''; load(); });
+    load();
+})();
+</script>
+</body>
+</html>

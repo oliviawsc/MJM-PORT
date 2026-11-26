@@ -32,7 +32,16 @@
         .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
         .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
         .back:hover span, .back:focus-visible span { max-width: 160px; opacity: 1; margin-left: 6px; }
-        .co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 40vw; }
+        .co-pick { position: relative; }
+        .co-btn { height: 36px; padding: 0 30px 0 12px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: #0F172A; max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; position: relative; }
+        .co-btn::after { content: ''; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid #64748B; border-bottom: 2px solid #64748B; transform: rotate(45deg); }
+        .co-menu { display: none; position: absolute; left: 0; top: 42px; min-width: 100%; width: max-content; max-width: 70vw; max-height: 60vh; overflow: auto; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,23,42,.16); padding: 6px; z-index: 40; }
+        .co-menu.open { display: block; }
+        .co-menu button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 9px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: #0F172A; cursor: pointer; white-space: nowrap; }
+        .co-menu button:hover { background: #F1F5F9; }
+        .co-menu button.on { font-weight: 700; color: #14532D; }
+        .co-menu button.on::before { content: '\2713'; color: #16A34A; }
+        .co-menu button:not(.on)::before { content: ''; width: 12px; }
         .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
         .who .me { text-align: right; line-height: 1.25; min-width: 0; }
         .who .me b { display: block; font-size: 14px; font-weight: 500; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -43,13 +52,13 @@
         .who .logout:hover { background: rgba(241,245,249,.9); color: #0F172A; }
         .who .logout svg { width: 20px; height: 20px; }
         main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; justify-content: center; } /* tiles sit in the middle of the page */
-        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; user-select: none; -webkit-user-select: none; }
-        .tile { width: 160px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 160px); justify-content: center; gap: 18px; user-select: none; -webkit-user-select: none; }
         .tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 12px 18px; border-radius: 20px; background: rgba(255,255,255,.86); border: 1px solid rgba(226,232,240,.9);
                 box-shadow: 0 2px 10px rgba(15,23,42,.05); text-decoration: none; color: inherit; transition: transform .12s, box-shadow .12s; -webkit-touch-callout: none; touch-action: manipulation; }
         .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
         .tile .ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: #fff; }
         .tile .ic svg { width: 28px; height: 28px; }
+        .tile h2 small { display: block; font-size: 12.5px; font-weight: 500; color: #64748B; margin-top: 2px; }
         .tile h2 { margin: 0; font-size: 14.5px; font-weight: 600; text-align: center; color: #0F172A; }
         .tile.ghost { opacity: .35; border-style: dashed; }
         .tile.lift { position: fixed; margin: 0; z-index: 30; pointer-events: none; transform: scale(1.05); box-shadow: 0 18px 36px rgba(15,23,42,.22); transition: none; }
@@ -64,7 +73,7 @@
         .spin { width: 28px; height: 28px; border: 3px solid #BBF7D0; border-top-color: #166534; border-radius: 50%; animation: s 1s linear infinite; margin: 0 auto 10px; }
         @keyframes s { to { transform: rotate(360deg); } }
         footer { text-align: center; font-size: 12px; color: #94A3B8; padding: 10px; }
-        @media (max-width: 640px) { .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; } .grid { gap: 12px; } .tile { width: calc(50% - 6px); } }
+        @media (max-width: 640px) { .who .me { display: none; } .top .in { grid-template-columns: auto 1fr auto; } .title { font-size: 16px; } .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
     </style>
 </head>
 <body>
@@ -74,7 +83,7 @@
         <div class="left">
             <span class="back-slot"><a class="back" id="back" href="https://mjmelon.github.io/MJM-Intranet/" title="Back to MJM Intranet">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Intranet</span></a></span>
-            <label class="co-pick" id="coPick" style="display:none;"><select id="coSelect"></select></label>
+            <div class="co-pick" id="coPick" style="display:none;"><button type="button" class="co-btn" id="coBtn" aria-haspopup="listbox"></button><div class="co-menu" id="coMenu" role="listbox"></div></div>
         </div>
         <div class="title">Plantation Operation</div>
         <div class="who" id="who"></div>
@@ -82,9 +91,7 @@
     <main>
         <div id="note"></div>
         <div class="grid" id="grid"></div>
-        <p class="hint" id="hint" style="display:none;">Press and hold a module to move it.</p>
     </main>
-    <footer>MJM Group · Plantation Operation</footer>
 
 <script>
 (function () {
@@ -120,7 +127,7 @@
           icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
         { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
           icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
-        { module: 'workers',   title: 'Worker Manage',     bg: '#1D4ED8', href: 'https://mjmelon.github.io/Mantap/#/portal/workers', admin: true,
+        { module: 'workers',   title: 'Worker Manage', sub: '(Mantap)', bg: '#1D4ED8', href: 'workers/index.html',
           icon: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
         { module: 'access',    title: 'User Access',       bg: '#7C2D12', href: 'access/index.html', admin: true,
           icon: svg('<circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.65-8.65"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/>') },
@@ -133,12 +140,18 @@
         report:    ['mgmtreport'],
         ffbrecord: ['ffbrecord'],
         rainfall:  ['rainfall', 'rainfallreport', 'rainfallsummary'],
+        workers:   ['workers'],
     };
     // May this person open this module card? (set in PORT → User Access)
     function canOpen(session, m) {
         if (!session) return false;
         if (session.role === 'superadmin') return true;
         if (m.admin) return session.role === 'admin';
+        if (m.module === 'workers') { // Worker Manage: Admins, or Worker list = View / Edit in User Access
+            if (session.role === 'admin') return true;
+            const wp = session.permissions && !Array.isArray(session.permissions) ? session.permissions : {};
+            return wp.workers === 'view' || wp.workers === 'edit';
+        }
         const p = session.permissions;
         if (!p || Array.isArray(p)) return true;
         if ((session.role === 'hq_user' || session.role === 'admin') && !p.__configured) return true; // not set yet: view everything
@@ -172,9 +185,23 @@
     function currentCompany() {
         return findCompany(ctx.gw_company_id) || findCompany(ctx.gw_company) || findCompany(ctx.gw_company_name) || findCompany(ctx.gw_company_short);
     }
+    // ---- One company at a time: the chosen company's access and locations become the session's
+    let liveSession = null; // set at start; pickCompany() applies the company to it
+    function applyCompany(s, c) {
+        if (!s || !c) return s;
+        const acc = s.company_access && s.company_access[c.id];
+        if (acc && s.role !== 'superadmin') { s.role = acc.role; s.permissions = acc.permissions; }
+        // Stock, Rainfall, FFB, Management Report: only this company's locations
+        const est = s.company_estates && s.company_estates[c.id];
+        if (Array.isArray(est) && est.length) { s.estates = est; if (!est.includes(s.estate)) s.estate = ''; }
+        s.company_id = c.id; s.company_name = c.name;
+        try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {}
+        return s;
+    }
     function pickCompany(id) {
         const c = companies.find((x) => x.id === id);
         if (!c) return;
+        applyCompany(liveSession, c);
         // gw_company / gw_company_name stay the company name for the module pages
         ctx.gw_company_id = c.id; ctx.gw_company = c.name; ctx.gw_company_name = c.name;
         if (c.short_name) ctx.gw_company_short = c.short_name; else delete ctx.gw_company_short;
@@ -193,6 +220,8 @@
         if (m && /^https?:/.test(m.href || '')) {
             // Another site of this system (Mantap): hand over this sign-in so no second login is needed
             if (m.module === 'workers' && authTokens) u.hash += (u.hash.includes('?') ? '&' : '?') + 'pt=' + encodeURIComponent(authTokens.access_token) + '&pr=' + encodeURIComponent(authTokens.refresh_token);
+            // ...and the chosen company, so Worker Manage shows only that company's workers
+            if (m.module === 'workers' && ctx.gw_company_id) u.hash += (u.hash.includes('?') ? '&' : '?') + 'co=' + encodeURIComponent(ctx.gw_company_id) + '&con=' + encodeURIComponent(ctx.gw_company_name || '');
             return u.toString();
         }
         if (!(m && m.href)) u.searchParams.set('module', module);
@@ -275,14 +304,13 @@
         if (session) document.getElementById('logout').onclick = logout;
         document.getElementById('back').href = intranetLink();
         const cur = currentCompany();
-        const pick = document.getElementById('coPick'), sel = document.getElementById('coSelect');
+        const pick = document.getElementById('coPick');
         const notes = [];
         if (!companies.length && session) notes.push('<p class="note warn">&#9888;&#65039; No company has been given to you for this module in MJM Intranet.</p>');
         if (companies.length) {
             pick.style.display = '';
-            sel.innerHTML = (cur ? '' : '<option value="">— Choose company —</option>') +
-                companies.map((c) => '<option value="' + esc(c.id) + '"' + (cur && c.id === cur.id ? ' selected' : '') + '>' +
-                    esc(c.name) + '</option>').join('');
+            document.getElementById('coBtn').textContent = cur ? cur.name : '— Choose company —';
+            document.getElementById('coMenu').innerHTML = companies.map((c) => '<button type="button" data-co="' + esc(c.id) + '" class="' + (cur && c.id === cur.id ? 'on' : '') + '">' + esc(c.name) + '</button>').join('');
         } else pick.style.display = 'none';
         if (errorText) notes.push('<p class="note err">Sign-in from MJM Intranet failed: ' + esc(errorText) + '. Please open Plantation Operation from MJM Intranet again.</p>');
         else if (!session && fromIntranetNoToken) notes.push('<p class="note err">You came from MJM Intranet but no sign-in token arrived, so the Intranet is still opening an old address. In Intranet Admin → Modules → Plantation Operation, set Address (URL) to <b>' + esc(location.origin + location.pathname) + '</b>.</p>');
@@ -294,8 +322,7 @@
         document.getElementById('note').innerHTML = notes.join('');
         document.getElementById('grid').innerHTML = mine.map((m) =>
             '<a class="tile" draggable="false" data-module="' + esc(m.module) + '" href="' + esc(appLink(m.module)) + '">' +
-            '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + '</h2></a>').join('');
-        document.getElementById('hint').style.display = mine.length > 1 ? '' : 'none';
+            '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + (m.sub ? '<small>' + esc(m.sub) + '</small>' : '') + '</h2></a>').join('');
     }
 
     // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
@@ -351,8 +378,11 @@
         cleanUrl();
         // Company list: only what the Intranet gave this person (saved in the
         // session at sign-in). An old session without company ids gets none.
+        liveSession = session;
+        // A company where this person was set Inactive in User Access is not offered
         companies = (session && Array.isArray(session.companies))
-            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name) : [];
+            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name &&
+                !(session.role !== 'superadmin' && session.company_access && session.company_access[c.id] && session.company_access[c.id].status === 'inactive')) : [];
         const fromIntranet = currentCompany();
         if (fromIntranet) pickCompany(fromIntranet.id);
         else {
@@ -371,7 +401,18 @@
         }
         draw(session, error);
         enableDrag(document.getElementById('grid'));
-        document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });
+        document.getElementById('coBtn').onclick = () => document.getElementById('coMenu').classList.toggle('open');
+        document.addEventListener('click', (e) => { if (!e.target.closest('#coPick')) document.getElementById('coMenu').classList.remove('open'); });
+        document.getElementById('coMenu').onclick = (e) => {
+            const b = e.target.closest('[data-co]'); if (!b) return;
+            document.getElementById('coMenu').classList.remove('open');
+            const c = companies.find((x) => x.id === b.dataset.co), cur = currentCompany();
+            if (!c || (cur && cur.id === c.id)) return;
+            // Switching a company: brief "switching" screen, then the page for that company
+            pickCompany(c.id);
+            const sp = document.getElementById('splash'); sp.querySelector('div').lastChild.textContent = 'Switching to ' + c.name + '…'; sp.style.display = '';
+            setTimeout(() => { location.href = location.pathname + '?gw_company_id=' + encodeURIComponent(c.id); }, 350);
+        };
     })();
 })();
 </script>
