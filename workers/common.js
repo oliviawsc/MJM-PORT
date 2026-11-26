@@ -66,6 +66,12 @@
     const LOC_KEY = 'port_location';
     let allowAll = false;
     const locationsOf = (c) => (c && session && session.company_estates && Array.isArray(session.company_estates[c.id])) ? session.company_estates[c.id].filter(Boolean) : [];
+    // Locations grouped by Intranet Business (from the Worker list's fresh fetch); a
+    // business can be chosen as a whole on the worker list: value 'biz:<business id>'
+    const groupsOf = (c) => (c && session && session.company_location_groups && Array.isArray(session.company_location_groups[c.id])) ? session.company_location_groups[c.id] : [];
+    const isBiz = (v) => typeof v === 'string' && v.startsWith('biz:');
+    const bizOf = (v) => groupsOf(company).find((g) => 'biz:' + g.id === v) || null;
+    const valid = (v, locs) => locs.includes(v) || (allowAll && isBiz(v) && !!bizOf(v));
     const allPicked = new Set(); // companies where "All locations" was chosen on this page
     const pinned = new Map();    // company → location chosen on this page
     let urlLocUsed = false;
@@ -74,8 +80,8 @@
         if (!locs.length) return '';
         if (allowAll) {
             // Worker list: All locations unless this page's address says otherwise (refresh)
-            if (!urlLocUsed && urlLoc != null) { urlLocUsed = true; if (urlLoc === '' || locs.includes(urlLoc)) { if (urlLoc) pinned.set(company.id, urlLoc); else allPicked.add(company.id); } }
-            if (pinned.has(company.id) && locs.includes(pinned.get(company.id))) return pinned.get(company.id);
+            if (!urlLocUsed && urlLoc != null && (urlLoc === '' || valid(urlLoc, locs))) { urlLocUsed = true; if (urlLoc) pinned.set(company.id, urlLoc); else allPicked.add(company.id); }
+            if (pinned.has(company.id) && valid(pinned.get(company.id), locs)) return pinned.get(company.id);
             return '';
         }
         if (allPicked.has(company.id)) return '';
@@ -88,6 +94,7 @@
     function pickLocation(name) {
         location_ = name || '';
         if (company) { if (location_) { allPicked.delete(company.id); pinned.set(company.id, location_); } else { allPicked.add(company.id); pinned.delete(company.id); } }
+        if (isBiz(location_)) return; // a whole business: only on this page
         try { if (company && location_) localStorage.setItem(LOC_KEY + ':' + company.id, location_); } catch (e) {}
         if (session && location_) { session.estate = location_; try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
     }
@@ -116,9 +123,27 @@
         if (locs.length) {
             location_ = currentLocation();
             es.style.display = '';
-            document.getElementById('esBtn').textContent = location_ || (allowAll ? 'All locations' : '— Location —');
-            document.getElementById('esMenu').innerHTML = (allowAll ? '<button type="button" data-es="" class="' + (!location_ ? 'on' : '') + '">All locations</button>' : '') +
-                locs.map((n) => '<button type="button" data-es="' + esc(n) + '" class="' + (n === location_ ? 'on' : '') + '">' + esc(n) + '</button>').join('');
+            const biz = isBiz(location_) ? bizOf(location_) : null;
+            document.getElementById('esBtn').textContent = biz ? biz.name : (location_ || (allowAll ? 'All locations' : '— Location —'));
+            const item = (n) => '<button type="button" data-es="' + esc(n) + '" class="loc-item' + (n === location_ ? ' on' : '') + '">' + esc(n) + '</button>';
+            const groups = groupsOf(company).filter((g) => g.locations.some((n) => locs.includes(n)));
+            const named = groups.some((g) => g.name);
+            let menu = allowAll ? '<button type="button" data-es="" class="' + (!location_ ? 'on' : '') + '">All locations</button>' : '';
+            if (named) {
+                // Business by business: the business (all its locations) — on the worker list — then each location
+                const listed = new Set();
+                groups.forEach((g) => {
+                    const ls = g.locations.filter((n) => locs.includes(n));
+                    ls.forEach((n) => listed.add(n));
+                    menu += allowAll && g.id
+                        ? '<button type="button" data-es="biz:' + esc(g.id) + '" class="biz-item' + (location_ === 'biz:' + g.id ? ' on' : '') + '">' + esc(g.name || 'Other') + '<small>' + ls.length + ' location' + (ls.length === 1 ? '' : 's') + '</small></button>'
+                        : '<div class="biz-label">' + esc(g.name || 'Other') + '</div>';
+                    menu += ls.map(item).join('');
+                });
+                const rest = locs.filter((n) => !listed.has(n));
+                if (rest.length) menu += '<div class="biz-label">Other</div>' + rest.map(item).join('');
+            } else menu += locs.map(item).join('');
+            document.getElementById('esMenu').innerHTML = menu;
         } else { location_ = ''; es.style.display = 'none'; }
         const u = new URL(backHref, location.href);
         if (company) u.searchParams.set('gw_company_id', company.id);
@@ -172,6 +197,7 @@
                 if (!res.ok || !Array.isArray(r.locations)) return false;
                 session.company_estates = Object.assign({}, session.company_estates, { [company.id]: r.locations });
                 session.company_location_short = Object.assign({}, session.company_location_short, { [company.id]: r.short || {} });
+                session.company_location_groups = Object.assign({}, session.company_location_groups, { [company.id]: Array.isArray(r.groups) ? r.groups : [] });
                 try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
                 drawTop(lastBack, lastOpts);
                 return true;
@@ -179,6 +205,12 @@
         },
         /** A location's short name from the Intranet (Company → Locations → Short name), else ''. */
         shortName: (loc) => (company && session && session.company_location_short && session.company_location_short[company.id] && session.company_location_short[company.id][loc]) || '',
+        /** The locations the worker list shows: null = all; a business = its locations; else the one location. */
+        locationSet: () => {
+            if (!location_) return null;
+            const b = isBiz(location_) ? bizOf(location_) : null;
+            return b ? b.locations.slice() : [location_];
+        },
         /** The chosen location ('' = all locations / none). */
         get location() { return location_; },
         /** Locations of the chosen company (the company itself when none is linked). */

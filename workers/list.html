@@ -80,7 +80,7 @@
     // location name, e.g. "Mega Jutamas (Sg Rait)" for location "Sg Rait".
     const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     // "All locations" in a company with locations: show each worker's location
-    const showLoc = () => !W.location && W.locations().length > 0 && W.locations()[0] !== (W.company && W.company.name);
+    const showLoc = () => (!W.location || (W.locationSet() || []).length > 1) && W.locations().length > 0 && W.locations()[0] !== (W.company && W.company.name);
     // Location only, never "Company (Location)": the Intranet short name when there is one
     const bare = (e) => {
         const co = W.company ? W.company.name.trim() : '';
@@ -151,7 +151,7 @@
         const q = $('q').value.trim().toLowerCase();
         const list = (workers || []).filter((w) =>
             (!q || [w.name, loginId(w.email), w.workerNo, w.opisproId].some((v) => String(v || '').toLowerCase().includes(q))) &&
-            atLocation(w, W.location));
+            (!W.locationSet() || W.locationSet().some((l) => atLocation(w, l))));
         $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
                 '<td class="c-no">' + (i + 1) + '</td>' +
                 (showLoc() ? '<td class="c-loc" title="' + esc(locTitle(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">Not set</span>') + '</td>' : '') +

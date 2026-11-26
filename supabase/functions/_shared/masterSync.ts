@@ -53,6 +53,24 @@ export function intranetEstatesOf(md: MasterData, companyId: string): string[] {
   return out;
 }
 
+/** A company's Intranet Locations grouped by Business, in the Intranet's business
+ *  and location order: [{ id, name, locations: [location name, …] }]. Locations
+ *  without a business come last under id '' (name ''). */
+export function intranetLocationGroups(md: MasterData, companyId: string): { id: string; name: string; locations: string[] }[] {
+  const locs = (md.locations ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  const bizName = new Map((md.businesses ?? []).map((b) => [b.id, b.name]));
+  const bizOrder = new Map((md.businesses ?? []).map((b, i) => [b.id, i]));
+  const key = (e: { group_id?: string | null }) => (e.group_id && bizName.has(e.group_id) ? e.group_id : '');
+  const groups = new Map<string, { id: string; name: string; locations: string[] }>();
+  for (const e of locs.sort((a, b) => (bizOrder.get(key(a)) ?? 1e6) - (bizOrder.get(key(b)) ?? 1e6) || (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))) {
+    const k = key(e), n = (e.name ?? '').trim();
+    if (!n) continue;
+    if (!groups.has(k)) groups.set(k, { id: k, name: k ? String(bizName.get(k)) : '', locations: [] });
+    if (!groups.get(k)!.locations.includes(n)) groups.get(k)!.locations.push(n);
+  }
+  return [...groups.values()];
+}
+
 /** Short names of a company's Intranet Locations (Admin → Company → Locations → Short name), by location name. */
 export function intranetLocationShortNames(md: MasterData, companyId: string): Record<string, string> {
   const out: Record<string, string> = {};

@@ -162,3 +162,9 @@ table.wl .c-loc { position: sticky; left: 52px; z-index: 1; white-space: nowrap;
 table.wl thead .c-loc { z-index: 3; }
 .locpill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
 .locpill::before { content: ''; width: 7px; height: 7px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex: none; }
+
+/* Location menu: business headers (choose a whole business on the worker list), locations under them */
+.co-menu .biz-label { padding: 8px 12px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); }
+.co-menu button.biz-item { font-weight: 700; margin-top: 4px; }
+.co-menu button.biz-item small { margin-left: auto; padding-left: 14px; font-weight: 500; font-size: 11.5px; color: var(--mute); }
+.co-menu button.loc-item { padding-left: 30px; }
