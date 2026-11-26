@@ -1153,7 +1153,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-74';
+var APP_BUILD = '20261126-75';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -3809,7 +3809,7 @@ var APP_BUILD = '20261126-74';
                     <!-- Filter row -->
                     <div class="wb-filter-row">
                         <span class="wb-filter-label">Period</span>
-                        <select id="wbFilterMonth" class="wb-form-input" style="width:130px;">
+                        <select id="wbFilterMonth" class="wb-form-input" style="width:130px;" onchange="loadWeighbridgeData()">
                             <option value="1">January</option><option value="2">February</option>
                             <option value="3">March</option><option value="4">April</option>
                             <option value="5">May</option><option value="6">June</option>
@@ -3817,8 +3817,7 @@ var APP_BUILD = '20261126-74';
                             <option value="9">September</option><option value="10">October</option>
                             <option value="11">November</option><option value="12">December</option>
                         </select>
-                        <select id="wbFilterYear" class="wb-form-input" style="width:88px;"></select>
-                        <button class="wb-btn wb-btn-load" onclick="loadWeighbridgeData()">Load</button>
+                        <select id="wbFilterYear" class="wb-form-input" style="width:88px;" onchange="loadWeighbridgeData()"></select>
                         <div style="margin-left:auto;">
                             <button class="wb-btn wb-btn-primary" onclick="showWeighbridgeAddForm(null)">&#xFF0B; Add Entry</button>
                         </div>
@@ -17989,7 +17988,7 @@ function navigateToSection(target) {
     if (target === 'plantrecord') renderPlantRecord();
     if (target === 'ffbrecord') renderFfbModule();
     if (target === 'carlos') renderCarlosModule();
-    if (target === 'weighbridge') { showWeighbridgeMain(); if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters(); }
+    if (target === 'weighbridge') { showWeighbridgeMain(); if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters(); if (typeof loadWeighbridgeData === 'function') loadWeighbridgeData(); }
     if (target === 'rainfall') {
         const rfDate = document.getElementById('rfDate');
         if (rfDate && !rfDate.value) rfDate.valueAsDate = new Date();
