@@ -79,6 +79,13 @@
     // A worker's location names (older data) may be longer than the Intranet's
     // location name, e.g. "Mega Jutamas (Sg Rait)" for location "Sg Rait".
     const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    // "All locations" in a company with locations: show each worker's location
+    const showLoc = () => !W.location && W.locations().length > 0 && W.locations()[0] !== (W.company && W.company.name);
+    const locOf = (w) => {
+        const locs = W.locations();
+        const hits = locs.filter((l) => atLocation(w, l));
+        return hits.length ? hits.join(', ') : (w.estates || []).join(', ');
+    };
     const atLocation = (w, loc) => !loc || (w.estates || []).some((e) => { const a = norm(e), b = norm(loc); return a === b || (' ' + a + ' ').includes(' ' + b + ' '); });
     const shownPins = new Map(); // worker id → PIN, while shown
 
@@ -119,7 +126,7 @@
 
     function drawHead() {
         $('head').innerHTML =
-            '<tr><th class="c-no" rowspan="2">No.</th><th class="c-name" rowspan="2">Name</th><th rowspan="2">Worker ID</th><th rowspan="2">Opispro Worker ID</th>' +
+            '<tr><th class="c-no" rowspan="2">No.</th>' + (showLoc() ? '<th class="c-loc" rowspan="2">Location</th>' : '') + '<th class="c-name" rowspan="2">Name</th><th rowspan="2">Worker ID</th><th rowspan="2">Opispro Worker ID</th>' +
             '<th rowspan="2">Gender</th><th rowspan="2">Type</th>' +
             '<th class="grp mantap" colspan="' + MANTAP.length + '">MANTAP</th>' +
             '<th class="soon" colspan="' + SOON.length + '">Coming soon in worker management system</th>' +
@@ -137,6 +144,7 @@
             atLocation(w, W.location));
         $('rows').innerHTML = list.length ? list.map((w, i) => '<tr>' +
                 '<td class="c-no">' + (i + 1) + '</td>' +
+                (showLoc() ? '<td class="c-loc" title="' + esc(locOf(w)) + '">' + (locOf(w) ? '<span class="locpill">' + esc(locOf(w)) + '</span>' : '<span class="unset">—</span>') + '</td>' : '') +
                 '<td class="c-name"><b>' + esc(w.name) + '</b></td>' +
                 '<td>' + txt(w.workerNo) + '</td><td>' + txt(w.opisproId) + '</td>' +
                 '<td>' + pill(w.gender) + '</td><td>' + pill(w.workerType) + '</td>' +
@@ -144,7 +152,8 @@
                 SOON.map(() => '<td class="later">—</td>').join('') +
                 '<td class="c-act"><div class="acts"><button class="ibtn" data-view="' + w.id + '" title="View profile" aria-label="View profile">' + I_VIEW + '</button>' +
                 (W.canEdit() ? '<button class="ibtn" data-edit="' + w.id + '" title="Edit profile" aria-label="Edit profile">' + I_EDIT + '</button>' : '') + '</div></td></tr>').join('')
-            : '<tr><td class="nodata" colspan="' + TOTAL_COLS + '">No data</td></tr>';
+            : '<tr><td class="nodata" colspan="' + (TOTAL_COLS + (showLoc() ? 1 : 0)) + '">No data</td></tr>';
+        document.querySelector('table.wl').classList.toggle('with-loc', showLoc());
     }
 
     async function load() {
@@ -222,7 +231,7 @@
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('viewModal').classList.contains('open')) { if (editing) { editing = false; drawProfile(); } else closeProfile(); } });
     $('q').addEventListener('input', () => workers && drawRows());
-    W.onLocationChange(() => workers && drawRows());
+    W.onLocationChange(() => { if (workers) { drawHead(); drawRows(); } });
     W.onCompanyChange(() => load());
     load();
 })();
