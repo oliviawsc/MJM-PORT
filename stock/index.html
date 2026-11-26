@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-83';
+var APP_BUILD = '20261126-84';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11602,6 +11602,30 @@ function bootApp(session) {
         }
     }
 
+    // Apply gw_company_id from URL (passed by portal) so the right company is active —
+    // identical to how estate/index.html initialises: read → apply → strip from URL.
+    (function() {
+        var _p = new URLSearchParams(window.location.search);
+        var _coId = _p.get('gw_company_id');
+        if (!_coId) return;
+        var _companies = Array.isArray(session.companies) ? session.companies : [];
+        var _co = _companies.find(function(c) { return c.id === _coId; });
+        if (!_co || _co.id === session.company_id) return;
+        var _acc = session.company_access && session.company_access[_co.id];
+        if (_acc && session.role !== 'superadmin') { session.role = _acc.role; session.permissions = _acc.permissions; }
+        var _est = session.company_estates && session.company_estates[_co.id];
+        if (Array.isArray(_est) && _est.length) { session.estates = _est; session.estate = ''; }
+        session.company_id = _co.id;
+        session.company_name = _co.name;
+        saveSession(session);
+        try { localStorage.setItem('port_company_id', _co.id); localStorage.setItem('port_company', _co.name); } catch(e2) {}
+        try {
+            var _u = new URL(window.location.href);
+            _u.searchParams.delete('gw_company_id');
+            history.replaceState(null, '', _u.pathname + _u.search + _u.hash);
+        } catch(e3) {}
+    })();
+
     // Remove the pre-auth flash-prevention style (no longer needed once booted)
     const _preAuthHide = document.getElementById('pre-auth-hide');
     if (_preAuthHide) _preAuthHide.remove();
@@ -11643,12 +11667,14 @@ function bootApp(session) {
 
     // Resume the estate the user had selected before the page reloaded
     // (session.estate, persisted by onSidebarEstateChange) if it's still one
-    // they're allowed to access. Otherwise — first login, or that estate was
-    // revoked — fall back to their first available estate so they're never
-    // forced to pick one manually every time.
+    // they're allowed to access. Also check the per-company key estate/index.html
+    // uses ('port_location:<companyId>') as a cross-module fallback.
+    var _portLocFallback = '';
+    if (session.company_id) { try { _portLocFallback = localStorage.getItem('port_location:' + session.company_id) || ''; } catch(e) {} }
     const defaultEstate = (session.estate && allowedEstates.includes(session.estate))
         ? session.estate
-        : (allowedEstates.length > 0 ? allowedEstates[0] : '');
+        : (_portLocFallback && allowedEstates.includes(_portLocFallback) ? _portLocFallback
+        : (allowedEstates.length > 0 ? allowedEstates[0] : ''));
     estateSelect.value = defaultEstate;
     if (estateSelectVisible) estateSelectVisible.value = defaultEstate;
     if (topEstateLabelEl && topEstateLabelEl.tagName === 'SELECT') {
@@ -11792,7 +11818,7 @@ function bootApp(session) {
         else if (_module === 'carlos') navigateToSection('carlos');
         else if (_module === 'weighbridge') navigateToSection('weighbridge');
         const _url = new URL(window.location.href);
-        ['module', 'gw_estate', 'gw_estate_short', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => _url.searchParams.delete(k));
+        ['module', 'gw_company_id', 'gw_estate', 'gw_estate_short', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => _url.searchParams.delete(k));
         history.replaceState(null, '', _url.pathname + _url.search + _url.hash);
     }
 }
@@ -12343,6 +12369,7 @@ function onSidebarEstateChange() {
     activeEstate    = newEstate;
     session.estate  = newEstate;
     saveSession(session);
+    if (session.company_id) { try { localStorage.setItem('port_location:' + session.company_id, newEstate); } catch(e) {} }
 
     // Update the app title
     updateAppTitle(newEstate);
@@ -19014,34 +19041,19 @@ function switchTopCompany(id) {
     if (!sess) return;
     var companies = Array.isArray(sess.companies) ? sess.companies : [];
     var c = companies.find(function(x) { return x.id === id; });
-    if (!c) return;
-    var acc = sess.company_access && sess.company_access[c.id];
-    if (acc && sess.role !== 'superadmin') { sess.role = acc.role; sess.permissions = acc.permissions; }
-    var est = sess.company_estates && sess.company_estates[c.id];
-    if (Array.isArray(est) && est.length) { sess.estates = est; sess.estate = ''; }
-    sess.company_id = c.id; sess.company_name = c.name;
-    saveSession(sess);
-    populateTopCompanyPicker(sess);
-    // Re-populate estate selectors: only the new company's locations (mirror portal —
-    // no GLOBAL_ESTATES fallback; if the company has no locations, hide the picker).
-    var companyLocs = (Array.isArray(est) && est.length) ? est : [];
-    var opts = '<option value="">— Select estate —</option>' +
-        companyLocs.map(function(e) { return '<option value="' + e + '">' + e + '</option>'; }).join('');
-    ['sidebarEstate', 'sidebarEstateVisible', 'topEstateLabel'].forEach(function(elId) {
-        var sel = document.getElementById(elId);
-        if (sel && sel.tagName === 'SELECT') { sel.innerHTML = opts; sel.value = ''; }
-    });
-    activeEstate = '';
-    var first = companyLocs[0] || '';
-    if (first) {
-        ['sidebarEstate', 'sidebarEstateVisible', 'topEstateLabel'].forEach(function(elId) {
-            var sel = document.getElementById(elId);
-            if (sel && sel.tagName === 'SELECT') sel.value = first;
-        });
-        activeEstate = first;
-    }
-    populateTopEstatePicker(companyLocs, first);
-    if (first) onSidebarEstateChange();
+    if (!c || (sess.company_id && c.id === sess.company_id)) return;
+    // Mirror estate/index.html: save shared keys then reload (clean state for new company)
+    try { localStorage.setItem('port_company_id', c.id); localStorage.setItem('port_company', c.name); } catch(e) {}
+    var sw = document.createElement('div');
+    sw.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(248,250,252,.92);backdrop-filter:blur(6px);font-family:Inter,sans-serif;font-weight:600;color:#14532D;font-size:15px;';
+    sw.textContent = 'Switching to ' + c.name + '…';
+    document.body.appendChild(sw);
+    var _url = new URL(window.location.href);
+    _url.searchParams.set('gw_company_id', c.id);
+    var _sec = sessionStorage.getItem('opp_active_section') || '';
+    var _modMap = { mgmtreport: 'report', ffbrecord: 'ffbrecord', rainfall: 'rainfall', carlos: 'carlos', weighbridge: 'weighbridge' };
+    if (_modMap[_sec]) _url.searchParams.set('module', _modMap[_sec]);
+    setTimeout(function() { location.href = _url.pathname + _url.search; }, 350);
 }
 // Close menus when clicking outside
 document.addEventListener('click', function(e) {
