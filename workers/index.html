@@ -30,11 +30,11 @@
         <div class="grid" id="grid">
             <a class="tile" id="tMobile" href="https://mjmelon.github.io/Mantap/#/m">
                 <span class="ic" style="background:#0F766E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
-                <h2>Mantap mobile view<small>Workers sign in here</small></h2>
+                <h2>MANTAP mobile view</h2>
             </a>
             <a class="tile" id="tList" href="list.html">
                 <span class="ic" style="background:#1D4ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-                <h2>Worker list<small>This company's workers</small></h2>
+                <h2>Worker list</h2>
             </a>
         </div>
     </main>
@@ -64,10 +64,9 @@
         } catch (e) {}
         const a = document.getElementById('tMobile');
         if (!W.session || !tok) return;
-        // an admin from PORT sees the mobile app inside the Mantap portal (no worker login)
-        a.href = 'https://mjmelon.github.io/Mantap/#/portal/mobile?pt=' + encodeURIComponent(tok.access_token) + '&pr=' + encodeURIComponent(tok.refresh_token) +
+        // straight into the MANTAP mobile home as this person (no worker login)
+        a.href = 'https://mjmelon.github.io/Mantap/#/m?pt=' + encodeURIComponent(tok.access_token) + '&pr=' + encodeURIComponent(tok.refresh_token) +
             (W.company ? '&co=' + encodeURIComponent(W.company.id) + '&con=' + encodeURIComponent(W.company.name) : '');
-        a.querySelector('small').textContent = 'Open as ' + (W.session.name || W.session.email);
     })();
 })();
 </script>
