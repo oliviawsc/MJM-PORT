@@ -9,6 +9,7 @@
 import {
   ApiError, anonClient, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, toAuthEmail, USERS_TABLE, type UserRow,
 } from '../_shared/common.ts';
+import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 import {
   companiesForUser, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
 } from '../_shared/masterSync.ts';
@@ -104,7 +105,9 @@ async function issueSession(row: UserRow) {
 }
 
 /** The session object exactly as the classic app's attemptLogin builds it. */
-function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranetSuper = false) {
+function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranetSuper = false,
+  companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {},
+  companyEstates: Record<string, string[]> = {}) {
   // The Intranet Super Admin is the Super Admin here too
   const role = row.email.toLowerCase() === SUPER_ADMIN_EMAIL || intranetSuper ? 'superadmin' : roleOf(row);
   return {
@@ -122,6 +125,10 @@ function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranet
     avatar,
     // Signed in through MJM Intranet: the pages open only with such a session
     via: 'intranet',
+    // PORT → User Access, per company: the front page applies the chosen
+    // company's role / permissions / locations to this session
+    company_access: companyAccess,
+    company_estates: companyEstates,
   };
 }
 
@@ -169,13 +176,41 @@ Deno.serve(handler(async (_req, body) => {
   // The estates (old data names) of this person's Intranet companies: the Stock
   // app still filters by estate, so it follows the Intranet company access too.
   const { data: est, error: estErr } = await serviceClient().from('port_estate_company')
-    .select('estate').in('company_id', companies.map((c) => c.id)).order('estate');
+    .select('estate, company_id').in('company_id', companies.map((c) => c.id)).order('estate');
   if (estErr) throw estErr;
-  const estates = ((est ?? []) as { estate: string }[]).map((r) => r.estate);
+  const estRows = (est ?? []) as { estate: string; company_id: string }[];
+  const estates = estRows.map((r) => r.estate);
+  // Per company: its locations (the company itself when none is linked) and the
+  // access set for it in PORT → User Access (else the person's global access)
+  const companyEstates: Record<string, string[]> = {};
+  for (const c of companies) {
+    const list = estRows.filter((r) => r.company_id === c.id).map((r) => r.estate);
+    companyEstates[c.id] = list.length ? list : [c.name];
+  }
+  const perCo = (await companyAccessRows([email], companies.map((c) => c.id))).get(email);
+  const companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {};
+  for (const c of companies) {
+    const a = resolveAccess(row, perCo?.get(c.id));
+    companyAccess[c.id] = { role: a.role, permissions: a.permissions, status: a.status };
+  }
+  // The Intranet Super Admin is Super Admin in PORT: marked on the row so User
+  // Access knows it too (and unmarked when the Intranet takes it away)
+  const intranetSuper = check.user.is_super_admin === true;
+  const p0 = row.permissions && typeof row.permissions === 'object' && !Array.isArray(row.permissions) ? row.permissions as Record<string, unknown> : {};
+  if (intranetSuper && (p0.__role !== 'superadmin' || !p0.__intranet_super)) {
+    const permissions = { ...p0, __role: 'superadmin', __intranet_super: true, __role_before: p0.__role_before ?? p0.__role ?? 'hq_user' };
+    await serviceClient().from(USERS_TABLE).update({ permissions }).eq('id', row.id);
+    row = { ...row, permissions };
+  } else if (!intranetSuper && p0.__intranet_super) {
+    const { __intranet_super: _s, __role_before, ...rest } = p0;
+    const permissions = { ...rest, __role: __role_before ?? 'hq_user' };
+    await serviceClient().from(USERS_TABLE).update({ permissions }).eq('id', row.id);
+    row = { ...row, permissions };
+  }
   await serviceClient().from(USERS_TABLE)
     .update({ last_active: new Date().toISOString(), companies: companies.map((c) => c.id), estates }).eq('id', row.id);
   row = { ...row, estates };
 
   const auth = await issueSession(row);
-  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), check.user.is_super_admin === true), auth, module };
+  return { session: toSession(row, companies, String(check.user.avatar_url ?? ''), intranetSuper, companyAccess, companyEstates), auth, module };
 }));

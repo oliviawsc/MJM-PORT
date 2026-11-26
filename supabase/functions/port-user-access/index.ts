@@ -1,22 +1,23 @@
-// PORT → User Access module (access/index.html).
+// PORT → User Access module (access/index.html), ONE COMPANY AT A TIME.
 //
 // MJM Intranet decides WHO may enter PORT and WHICH companies they see (saved
 // in port_user_companies at every Intranet sign-in). This function manages
-// WHAT each person may do inside PORT: their role and None / View / Edit per
-// page. One permission set per person, used for every company they have.
+// WHAT each person may do inside PORT for one company: their role and
+// None / View / Edit per page (port_user_company_access). Setting it for one
+// company does not change any other company.
 //
-//   POST { action: 'list' }  → { me, roles, sections, users }
-//   POST { action: 'save', id, role, permissions, status } → { ok, user }
+//   POST { action: 'list', company_id }  → { me, company, roles, sections, users }
+//   POST { action: 'save', company_id, id, role, permissions, status } → { ok, user }
 //
 // Who may use it (caller = the signed-in Supabase session from the Intranet sign-in):
-//   Super Admin  every user; may give any role except Super Admin
-//   Admin        only users who share at least one Intranet company with them;
-//                not Super Admins, not other Admins, not themselves; may give
-//                HQ User / Estate User only
+//   Super Admin  every company; may give Admin / HQ User / Estate User
+//   Admin        only a company where they are Admin; not Super Admins, not
+//                other Admins, not themselves; may give HQ User / Estate User
 // Users themselves are never created, deleted or given passwords here: the
 // Intranet does that. A person appears after their first Intranet sign-in.
 import { ApiError, callerEmail, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, USERS_TABLE, type UserRow } from '../_shared/common.ts';
 import { companiesForUser, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
+import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 
 // Pages of PORT (ids = the classic app's section ids, plus estateinfo).
 export const SECTIONS = [
@@ -55,23 +56,11 @@ export const ROLES = [
 ];
 const ROLE_VALUES = new Set(ROLES.map((r) => r.value));
 
-type Actor = { row: UserRow | null; email: string; role: 'superadmin' | 'admin'; companies: Set<string> };
+type Actor = { row: UserRow | null; email: string; super: boolean };
 
+/** Super Admin: the built-in one, or marked so (the Intranet Super Admin is marked at sign-in). */
 function isSuper(email: string, row: UserRow | null): boolean {
   return email === SUPER_ADMIN_EMAIL.toLowerCase() || (!!row && roleOf(row) === 'superadmin');
-}
-
-/** Companies the Intranet gave each email (any module), as id sets. */
-async function companiesByEmail(emails: string[]): Promise<Map<string, Set<string>>> {
-  const out = new Map<string, Set<string>>();
-  if (!emails.length) return out;
-  const { data, error } = await serviceClient().from('port_user_companies').select('email, company_id').in('email', emails);
-  if (error) throw error;
-  for (const r of (data ?? []) as { email: string; company_id: string }[]) {
-    if (!out.has(r.email)) out.set(r.email, new Set());
-    out.get(r.email)!.add(r.company_id);
-  }
-  return out;
 }
 
 async function actorOf(req: Request): Promise<Actor> {
@@ -81,43 +70,47 @@ async function actorOf(req: Request): Promise<Actor> {
   if (error) throw error;
   const row = ((data ?? []) as UserRow[]).find((r) => r.email.toLowerCase() === email) ?? null;
   if (row && row.status === 'inactive') throw new ApiError('err_inactive', 403);
-  const companies = (await companiesByEmail([email])).get(email) ?? new Set<string>();
-  if (isSuper(email, row)) return { row, email, role: 'superadmin', companies };
-  if (row && roleOf(row) === 'admin') return { row, email, role: 'admin', companies };
-  throw new ApiError('err_forbidden', 403);
+  return { row, email, super: isSuper(email, row) };
 }
 
-const shares = (a: Set<string>, b: Set<string> | undefined) => !!b && [...b].some((x) => a.has(x));
-
-/** May this actor change this user? */
-function mayEdit(actor: Actor, target: UserRow, targetCompanies: Set<string> | undefined): boolean {
-  const email = target.email.toLowerCase();
-  if (actor.role === 'superadmin') return email !== SUPER_ADMIN_EMAIL.toLowerCase(); // the built-in Super Admin stays as is
-  if (email === actor.email) return false;
-  const r = roleOf(target);
-  if (r === 'superadmin' || r === 'admin' || isSuper(email, target)) return false;
-  return shares(actor.companies, targetCompanies);
+/** The company this call is about; the caller must be Super Admin or Admin of it. */
+async function companyOf(actor: Actor, v: unknown) {
+  const id = String(v ?? '').trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new ApiError('err_no_company', 400);
+  const db = serviceClient();
+  const { data: co } = await db.from('port_companies').select('id, code, name').eq('id', id).maybeSingle();
+  if (!co) throw new ApiError('err_no_company', 404);
+  if (actor.super) return co as { id: string; code: string | null; name: string };
+  const { data: given } = await db.from('port_user_companies').select('company_id').eq('email', actor.email).eq('company_id', id).limit(1);
+  if (!given?.length || !actor.row) throw new ApiError('err_forbidden', 403);
+  const mine = resolveAccess(actor.row, (await companyAccessRows([actor.email], [id])).get(actor.email)?.get(id));
+  if (mine.role !== 'admin' || mine.status === 'inactive') throw new ApiError('err_forbidden', 403);
+  return co as { id: string; code: string | null; name: string };
 }
 
 /** Only known pages, only 'view' / 'edit'; 'none' is simply left out. */
-function cleanPermissions(role: string, raw: unknown): Record<string, unknown> {
-  const perms: Record<string, unknown> = { __role: role };
-  if (role === 'superadmin') return perms;
+function cleanPermissions(raw: unknown): Record<string, string> {
+  const perms: Record<string, string> = {};
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
       if (SECTION_IDS.has(k) && (v === 'view' || v === 'edit')) perms[k] = v;
     }
   }
-  perms.__configured = true; // explicit values win over the "view everything" default
   return perms;
 }
-
-function sectionValues(row: UserRow): Record<string, string> {
-  const p = row.permissions;
-  if (!p || typeof p !== 'object' || Array.isArray(p)) return {};
+function sectionValues(p: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(p)) if (SECTION_IDS.has(k) && (v === 'view' || v === 'edit')) out[k] = v as string;
+  for (const [k, v] of Object.entries(p ?? {})) if (SECTION_IDS.has(k) && (v === 'view' || v === 'edit')) out[k] = v as string;
   return out;
+}
+
+/** May this actor change this person's access in this company? */
+function mayEdit(actor: Actor, target: UserRow, targetRole: string): boolean {
+  const email = target.email.toLowerCase();
+  if (isSuper(email, target)) return false;              // Super Admins are set in the Intranet
+  if (actor.super) return true;
+  if (email === actor.email) return false;               // not yourself
+  return targetRole !== 'admin';                         // an Admin manages HQ / Estate Users only
 }
 
 Deno.serve(handler(async (req, body) => {
@@ -125,6 +118,7 @@ Deno.serve(handler(async (req, body) => {
   const db = serviceClient();
 
   if (body.action === 'list') {
+    const company = await companyOf(actor, body.company_id);
     // Everyone the Intranet lets into Plantation Operation is listed, signed in
     // before or not: people new to PORT get a row (HQ user) and their companies now.
     try {
@@ -135,70 +129,80 @@ Deno.serve(handler(async (req, body) => {
       let n = 0;
       for (const u of md.module_users ?? []) {
         const email = (u.email || '').toLowerCase();
-        if (!email || known.has(email)) continue;
-        const name = (u.full_name ?? '').trim() || email.split('@')[0];
-        const { error: e1 } = await db.from(USERS_TABLE).insert({
-          id: Date.now() + n++, name, email, password_hash: '', estates: [], permissions: { __role: 'hq_user' }, status: 'active',
-        });
-        if (e1) { console.warn('[port-user-access] add from Intranet skipped:', e1.message); continue; }
-        known.add(email);
+        if (!email) continue;
+        if (!known.has(email)) {
+          const name = (u.full_name ?? '').trim() || email.split('@')[0];
+          const { error: e1 } = await db.from(USERS_TABLE).insert({
+            id: Date.now() + n++, name, email, password_hash: '', estates: [], permissions: { __role: 'hq_user' }, status: 'active',
+          });
+          if (e1) { console.warn('[port-user-access] add from Intranet skipped:', e1.message); continue; }
+          known.add(email);
+        }
         await saveUserCompanies(email, 'stock', companiesForUser(email, md));
       }
     } catch (e) {
       console.warn('[port-user-access] Intranet list skipped:', e instanceof Error ? e.message : e);
     }
-    const { data, error } = await db.from(USERS_TABLE).select('id, name, email, permissions, status, last_active').order('name');
+    // The people the Intranet gave THIS company
+    const { data: given, error: gErr } = await db.from('port_user_companies').select('email').eq('company_id', company.id);
+    if (gErr) throw gErr;
+    const emails = [...new Set(((given ?? []) as { email: string }[]).map((r) => r.email.toLowerCase()))];
+    const { data, error } = emails.length
+      ? await db.from(USERS_TABLE).select('id, name, email, permissions, status, last_active').in('email', emails).order('name')
+      : { data: [], error: null };
     if (error) throw error;
     // Only people who sign in from the Intranet: Mantap workers (User ID accounts, <id>@psms.app) are managed in Worker Manage
     const rows = ((data ?? []) as UserRow[]).filter((r) => !/@psms\.app$/i.test(r.email ?? ''));
-    const byEmail = await companiesByEmail(rows.map((r) => r.email.toLowerCase()));
-    const { data: cos } = await db.from('port_companies').select('id, code, name');
-    const coById = new Map(((cos ?? []) as { id: string; code: string | null; name: string }[]).map((c) => [c.id, c]));
-    const users = rows
-      .map((r) => {
-        const set = byEmail.get(r.email.toLowerCase());
-        return {
-          id: r.id, name: r.name, email: r.email,
-          role: isSuper(r.email.toLowerCase(), r) ? 'superadmin' : roleOf(r),
-          configured: !!(r.permissions && typeof r.permissions === 'object' && !Array.isArray(r.permissions) && (r.permissions as { __configured?: boolean }).__configured),
-          permissions: sectionValues(r),
-          status: r.status ?? 'active',
-          last_active: r.last_active,
-          companies: [...(set ?? [])].map((id) => coById.get(id)).filter(Boolean)
-            .sort((a, b) => (a!.code ?? '').localeCompare(b!.code ?? '', undefined, { numeric: true }) || a!.name.localeCompare(b!.name)),
-          can_edit: mayEdit(actor, r, set),
-        };
-      })
-      // An Admin sees only the people of their own companies
-      .filter((u) => actor.role === 'superadmin' || u.email.toLowerCase() === actor.email || shares(actor.companies, byEmail.get(u.email.toLowerCase())));
+    const access = await companyAccessRows(rows.map((r) => r.email), [company.id]);
+    const users = rows.map((r) => {
+      const em = r.email.toLowerCase();
+      const sup = isSuper(em, r);
+      const a = resolveAccess(r, access.get(em)?.get(company.id));
+      return {
+        id: r.id, name: r.name, email: r.email,
+        role: sup ? 'superadmin' : a.role,
+        configured: a.set || !!(a.permissions as { __configured?: boolean }).__configured,
+        set_here: a.set,
+        permissions: sup ? {} : sectionValues(a.permissions),
+        status: a.status,
+        can_edit: mayEdit(actor, r, a.role),
+      };
+    });
     return {
-      me: { email: actor.email, role: actor.role },
-      roles: actor.role === 'superadmin' ? ROLES.filter((r) => r.value !== 'superadmin') : ROLES.filter((r) => r.value === 'hq_user' || r.value === 'estate_user'),
+      me: { email: actor.email, role: actor.super ? 'superadmin' : 'admin' },
+      company,
+      roles: actor.super ? ROLES.filter((r) => r.value !== 'superadmin') : ROLES.filter((r) => r.value === 'hq_user' || r.value === 'estate_user'),
       sections: SECTIONS,
       users,
     };
   }
 
   if (body.action === 'save') {
+    const company = await companyOf(actor, body.company_id);
     const id = Number(body.id);
     if (!Number.isFinite(id)) throw new ApiError('err_invalid');
     const role = String(body.role ?? '');
     if (!ROLE_VALUES.has(role) || role === 'superadmin') throw new ApiError('err_invalid');
-    if (actor.role === 'admin' && role !== 'hq_user' && role !== 'estate_user') throw new ApiError('err_forbidden', 403);
+    if (!actor.super && role !== 'hq_user' && role !== 'estate_user') throw new ApiError('err_forbidden', 403);
     const status = body.status === 'inactive' ? 'inactive' : 'active';
 
     const { data, error } = await db.from(USERS_TABLE).select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     const target = data as UserRow | null;
     if (!target) throw new ApiError('err_not_found', 404);
-    const targetCompanies = (await companiesByEmail([target.email.toLowerCase()])).get(target.email.toLowerCase());
-    if (!mayEdit(actor, target, targetCompanies)) throw new ApiError('err_forbidden', 403);
+    const email = target.email.toLowerCase();
+    const { data: given } = await db.from('port_user_companies').select('company_id').eq('email', email).eq('company_id', company.id).limit(1);
+    if (!given?.length) throw new ApiError('err_forbidden', 403); // the Intranet did not give them this company
+    const before = resolveAccess(target, (await companyAccessRows([email], [company.id])).get(email)?.get(company.id));
+    if (!mayEdit(actor, target, before.role)) throw new ApiError('err_forbidden', 403);
 
-    const permissions = cleanPermissions(role, body.permissions);
-    const { error: e2 } = await db.from(USERS_TABLE).update({ permissions, status }).eq('id', id);
-    if (e2) throw e2;
-    console.log('[port-user-access]', actor.email, 'set', target.email, role, status, JSON.stringify(permissions));
-    return { ok: true, user: { id, role, status, permissions: sectionValues({ ...target, permissions }) } };
+    const permissions = cleanPermissions(body.permissions);
+    const { error: e2 } = await db.from('port_user_company_access').upsert({
+      email, company_id: company.id, role, permissions, status, updated_by: actor.email, updated_at: new Date().toISOString(),
+    }, { onConflict: 'email,company_id' });
+    if (e2) throw /port_user_company_access/.test(e2.message ?? '') ? new ApiError('err_not_set_up', 500) : e2;
+    console.log('[port-user-access]', actor.email, 'set', email, 'in', company.name, role, status, JSON.stringify(permissions));
+    return { ok: true, user: { id, role, status, permissions, set_here: true } };
   }
 
   throw new ApiError('err_invalid');

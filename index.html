@@ -81,9 +81,7 @@
     <main>
         <div id="note"></div>
         <div class="grid" id="grid"></div>
-        <p class="hint" id="hint" style="display:none;">Press and hold a module to move it.</p>
     </main>
-    <footer>MJM Group · Plantation Operation</footer>
 
 <script>
 (function () {
@@ -171,9 +169,23 @@
     function currentCompany() {
         return findCompany(ctx.gw_company_id) || findCompany(ctx.gw_company) || findCompany(ctx.gw_company_name) || findCompany(ctx.gw_company_short);
     }
+    // ---- One company at a time: the chosen company's access and locations become the session's
+    let liveSession = null; // set at start; pickCompany() applies the company to it
+    function applyCompany(s, c) {
+        if (!s || !c) return s;
+        const acc = s.company_access && s.company_access[c.id];
+        if (acc && s.role !== 'superadmin') { s.role = acc.role; s.permissions = acc.permissions; }
+        // Stock, Rainfall, FFB, Management Report: only this company's locations
+        const est = s.company_estates && s.company_estates[c.id];
+        if (Array.isArray(est) && est.length) { s.estates = est; if (!est.includes(s.estate)) s.estate = ''; }
+        s.company_id = c.id; s.company_name = c.name;
+        try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {}
+        return s;
+    }
     function pickCompany(id) {
         const c = companies.find((x) => x.id === id);
         if (!c) return;
+        applyCompany(liveSession, c);
         // gw_company / gw_company_name stay the company name for the module pages
         ctx.gw_company_id = c.id; ctx.gw_company = c.name; ctx.gw_company_name = c.name;
         if (c.short_name) ctx.gw_company_short = c.short_name; else delete ctx.gw_company_short;
@@ -192,6 +204,8 @@
         if (m && /^https?:/.test(m.href || '')) {
             // Another site of this system (Mantap): hand over this sign-in so no second login is needed
             if (m.module === 'workers' && authTokens) u.hash += (u.hash.includes('?') ? '&' : '?') + 'pt=' + encodeURIComponent(authTokens.access_token) + '&pr=' + encodeURIComponent(authTokens.refresh_token);
+            // ...and the chosen company, so Worker Manage shows only that company's workers
+            if (m.module === 'workers' && ctx.gw_company_id) u.hash += (u.hash.includes('?') ? '&' : '?') + 'co=' + encodeURIComponent(ctx.gw_company_id) + '&con=' + encodeURIComponent(ctx.gw_company_name || '');
             return u.toString();
         }
         if (!(m && m.href)) u.searchParams.set('module', module);
@@ -294,7 +308,6 @@
         document.getElementById('grid').innerHTML = mine.map((m) =>
             '<a class="tile" draggable="false" data-module="' + esc(m.module) + '" href="' + esc(appLink(m.module)) + '">' +
             '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + '</h2></a>').join('');
-        document.getElementById('hint').style.display = mine.length > 1 ? '' : 'none';
     }
 
     // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
@@ -350,8 +363,11 @@
         cleanUrl();
         // Company list: only what the Intranet gave this person (saved in the
         // session at sign-in). An old session without company ids gets none.
+        liveSession = session;
+        // A company where this person was set Inactive in User Access is not offered
         companies = (session && Array.isArray(session.companies))
-            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name) : [];
+            ? session.companies.filter((c) => c && typeof c === 'object' && c.id && c.name &&
+                !(session.role !== 'superadmin' && session.company_access && session.company_access[c.id] && session.company_access[c.id].status === 'inactive')) : [];
         const fromIntranet = currentCompany();
         if (fromIntranet) pickCompany(fromIntranet.id);
         else {
