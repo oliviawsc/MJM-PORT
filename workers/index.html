@@ -51,6 +51,23 @@
     };
     draw();
     W.onCompanyChange(draw);
+    // Signed in from the Intranet: Mantap takes over this sign-in (no second login).
+    // The Supabase Auth session behind PORT's sign-in is in this site's storage.
+    (function handoff() {
+        let tok = null;
+        try {
+            const k = Object.keys(localStorage).find((x) => /^sb-.*-auth-token$/.test(x));
+            const v = k && JSON.parse(localStorage.getItem(k));
+            const sess = v && (v.currentSession || v);
+            if (sess && sess.access_token && sess.refresh_token) tok = sess;
+        } catch (e) {}
+        const a = document.getElementById('tMobile');
+        if (!W.session || !tok) return;
+        // an admin from PORT sees the mobile app inside the Mantap portal (no worker login)
+        a.href = 'https://mjmelon.github.io/Mantap/#/portal/mobile?pt=' + encodeURIComponent(tok.access_token) + '&pr=' + encodeURIComponent(tok.refresh_token) +
+            (W.company ? '&co=' + encodeURIComponent(W.company.id) + '&con=' + encodeURIComponent(W.company.name) : '');
+        a.querySelector('small').textContent = 'Open as ' + (W.session.name || W.session.email);
+    })();
 })();
 </script>
 </body>
