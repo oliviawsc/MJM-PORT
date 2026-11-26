@@ -1099,7 +1099,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-69';
+var APP_BUILD = '20261126-70';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11337,8 +11337,13 @@ function bootApp(session) {
         resizeTopEstateSelect(topEstateLabelEl);
     }
 
-    // Location picker in top bar (portal style)
-    if (typeof populateTopEstatePicker === 'function') populateTopEstatePicker(allowedEstates, defaultEstate);
+    // Location picker: only show when this company has locations (mirror portal).
+    // company_estates[companyId] is the authoritative list; fall back to
+    // allowedEstates only when no company is selected (direct access, no portal).
+    const companyLocs = (session.company_id && session.company_estates && Array.isArray(session.company_estates[session.company_id]))
+        ? session.company_estates[session.company_id].filter(Boolean)
+        : (session.company_id ? [] : allowedEstates);
+    if (typeof populateTopEstatePicker === 'function') populateTopEstatePicker(companyLocs, defaultEstate);
 
     activeEstate = defaultEstate;
 
@@ -18691,17 +18696,17 @@ function switchTopCompany(id) {
     sess.company_id = c.id; sess.company_name = c.name;
     saveSession(sess);
     populateTopCompanyPicker(sess);
-    // Re-populate estate selectors for the new company
-    var allowedEstates = (Array.isArray(est) && est.length) ? est
-        : (sess.role === 'superadmin' ? GLOBAL_ESTATES : []);
+    // Re-populate estate selectors: only the new company's locations (mirror portal —
+    // no GLOBAL_ESTATES fallback; if the company has no locations, hide the picker).
+    var companyLocs = (Array.isArray(est) && est.length) ? est : [];
     var opts = '<option value="">— Select estate —</option>' +
-        allowedEstates.map(function(e) { return '<option value="' + e + '">' + e + '</option>'; }).join('');
+        companyLocs.map(function(e) { return '<option value="' + e + '">' + e + '</option>'; }).join('');
     ['sidebarEstate', 'sidebarEstateVisible', 'topEstateLabel'].forEach(function(elId) {
         var sel = document.getElementById(elId);
         if (sel && sel.tagName === 'SELECT') { sel.innerHTML = opts; sel.value = ''; }
     });
     activeEstate = '';
-    var first = allowedEstates[0] || '';
+    var first = companyLocs[0] || '';
     if (first) {
         ['sidebarEstate', 'sidebarEstateVisible', 'topEstateLabel'].forEach(function(elId) {
             var sel = document.getElementById(elId);
@@ -18709,7 +18714,7 @@ function switchTopCompany(id) {
         });
         activeEstate = first;
     }
-    populateTopEstatePicker(allowedEstates, first);
+    populateTopEstatePicker(companyLocs, first);
     if (first) onSidebarEstateChange();
 }
 // Close menus when clicking outside
