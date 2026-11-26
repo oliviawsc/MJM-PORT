@@ -19,7 +19,19 @@ a { color: inherit; }
 .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
 .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
 .back:hover span, .back:focus-visible span { max-width: 200px; opacity: 1; margin-left: 6px; }
-.co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; }
+/* Company and location: button dropdowns, as on the front page */
+.co-pick { position: relative; }
+.co-btn { height: 36px; padding: 0 30px 0 12px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; position: relative; }
+.es-btn { padding-left: 30px; }
+.es-btn::before { content: ''; position: absolute; left: 11px; top: 10px; width: 9px; height: 9px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.co-btn::after { content: ''; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid #64748B; border-bottom: 2px solid #64748B; transform: rotate(45deg); }
+.co-menu { display: none; position: absolute; left: 0; top: 42px; min-width: 100%; width: max-content; max-width: 70vw; max-height: 60vh; overflow: auto; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,23,42,.16); padding: 6px; z-index: 40; }
+.co-menu.open { display: block; }
+.co-menu button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 9px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.co-menu button:hover { background: #F1F5F9; }
+.co-menu button.on { font-weight: 700; color: #14532D; }
+.co-menu button.on::before { content: '\2713'; color: #16A34A; }
+.co-menu button:not(.on)::before { content: ''; width: 12px; }
 .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; }
 .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .who .me { text-align: right; line-height: 1.25; min-width: 0; }
