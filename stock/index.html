@@ -1099,7 +1099,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-68';
+var APP_BUILD = '20261126-69';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11315,8 +11315,8 @@ function bootApp(session) {
     const topEstateLabelEl = document.getElementById('topEstateLabel');
     if (topEstateLabelEl && topEstateLabelEl.tagName === 'SELECT') {
         topEstateLabelEl.innerHTML = estateOptionsHtml;
-        topEstateLabelEl.style.display = '';
-        resizeTopEstateSelect(topEstateLabelEl);
+        // keep display:none — it's a hidden data-binding SELECT; the visible
+        // portal-style picker (topEstatePick) is used instead
     }
 
     // Company + location pickers in top bar (portal style)
