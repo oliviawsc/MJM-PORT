@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="workers.css?v=20261126-6">
+    <link rel="stylesheet" href="workers.css?v=20261126-8">
 </head>
 <body>
     <div class="bg"></div>
@@ -39,7 +39,7 @@
         </div>
     </main>
 
-<script src="common.js?v=20261126-6"></script>
+<script src="common.js?v=20261126-8"></script>
 <script>
 (function () {
     const W = window.PortWorkers;
@@ -48,7 +48,7 @@
         // Worker list opens for this company, on All locations
         document.getElementById('tList').href = 'list.html' + (W.company ? '?gw_company_id=' + encodeURIComponent(W.company.id) + '&loc=' : '');
         const n = document.getElementById('note');
-        if (!W.session) { n.innerHTML = '<p class="note warn">You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.</p>'; document.getElementById('grid').style.display = 'none'; }
+        if (!W.session) { n.innerHTML = '<p class="note warn">You are not signed in. Please open Plantation Operation from <a href="https://mjm.opispro.com/">MJM Intranet</a>.</p>'; document.getElementById('grid').style.display = 'none'; }
         else if (!W.company) n.innerHTML = '<p class="note warn">Choose a company in the top bar.</p>';
         else n.innerHTML = '';
     };

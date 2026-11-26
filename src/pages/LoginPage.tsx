@@ -6,7 +6,7 @@ import { useI18n } from '../i18n';
 import type { Session } from '../lib/types';
 
 const logoUrl = `${import.meta.env.BASE_URL}palm-logo.png`;
-const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+const INTRANET_URL = 'https://mjm.opispro.com/';
 
 interface Props {
   /** Kept for App.tsx; nobody signs in on this screen any more. */

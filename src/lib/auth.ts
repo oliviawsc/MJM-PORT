@@ -89,7 +89,7 @@ export async function signOut() {
 /** Sign out of PORT and of MJM Intranet (the Intranet reads ?gw_logout=1). */
 export async function signOutEverywhere() {
   await signOut();
-  window.location.href = 'https://mjmelon.github.io/MJM-Intranet/?gw_logout=1';
+  window.location.href = 'https://mjm.opispro.com/?gw_logout=1';
 }
 
 /** Throws Error(cp_err_* | err_*). */

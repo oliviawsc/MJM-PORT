@@ -83,7 +83,7 @@
     <div id="splash" class="splash" style="display:none;"><div><div class="spin"></div>Signing in from MJM Intranet…</div></div>
     <header class="top"><div class="in">
         <div class="left">
-            <span class="back-slot"><a class="back" id="back" href="https://mjmelon.github.io/MJM-Intranet/" title="Back to MJM Intranet">
+            <span class="back-slot"><a class="back" id="back" href="https://mjm.opispro.com/" title="Back to MJM Intranet">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Back to Intranet</span></a></span>
             <div class="co-pick" id="coPick" style="display:none;"><button type="button" class="co-btn" id="coBtn" aria-haspopup="listbox"></button><div class="co-menu" id="coMenu" role="listbox"></div></div>
             <div class="co-pick" id="esPick" style="display:none;"><button type="button" class="co-btn es-btn" id="esBtn" aria-haspopup="listbox" title="Location"></button><div class="co-menu" id="esMenu" role="listbox"></div></div>
@@ -104,7 +104,7 @@
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_tKap42sXnzGzmVUoLAw4xQ__bkXq8l_';
     const SESSION_KEY = 'opp_auth_session';
     const APP = 'stock/index.html';
-    const INTRANET_URL = 'https://mjmelon.github.io/MJM-Intranet/';
+    const INTRANET_URL = 'https://mjm.opispro.com/';
     const CTX_KEYS = ['gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'];
     const SSO_ERRORS = {
         err_forbidden:      'you do not have access to this module in the Intranet',
@@ -170,7 +170,7 @@
 
     let authTokens = null; // the Supabase Auth session behind this sign-in (set below)
     const params = new URLSearchParams(location.search);
-    const fromIntranetNoToken = !params.get('gw_token') && /^https:\/\/mjmelon\.github\.io/.test(document.referrer || '');
+    const fromIntranetNoToken = !params.get('gw_token') && /^https:\/\/(mjm\.opispro\.com|mjmelon\.github\.io)/.test(document.referrer || '');
     const ctx = {};
     CTX_KEYS.forEach((k) => { const v = (params.get(k) || '').trim(); if (v) ctx[k] = v; });
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
