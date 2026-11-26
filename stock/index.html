@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-87';
+var APP_BUILD = '20261126-88';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11616,7 +11616,10 @@ function bootApp(session) {
         var _acc = session.company_access && session.company_access[_co.id];
         if (_acc && session.role !== 'superadmin') { session.role = _acc.role; session.permissions = _acc.permissions; }
         var _est = session.company_estates && session.company_estates[_co.id];
-        if (Array.isArray(_est) && _est.length) { session.estates = _est; session.estate = ''; }
+        // Always reset estates on company switch — prevents stale estates from the
+        // previous company bleeding through when the new company has no estates mapped.
+        session.estates = (Array.isArray(_est) && _est.length) ? _est : [];
+        session.estate = '';
         session.company_id = _co.id;
         session.company_name = _co.name;
         saveSession(session);
@@ -11644,9 +11647,12 @@ function bootApp(session) {
     const estateSelectVisible = document.getElementById('sidebarEstateVisible');
     const isSuperAdmin = session.role === 'superadmin';
 
-    // A company chosen on the PORT front page: only its locations, for everyone
+    // A company chosen on the PORT front page: only its locations, for everyone.
+    // When a specific company is active, never fall back to GLOBAL_ESTATES — that
+    // would mix estates from other companies. GLOBAL_ESTATES is only for superadmin
+    // with no company selected (direct access, no portal navigation).
     const allowedEstates = (session.company_id && session.estates && session.estates.length) ? session.estates
-        : isSuperAdmin ? GLOBAL_ESTATES
+        : (isSuperAdmin && !session.company_id) ? GLOBAL_ESTATES
         : (session.estates && session.estates.length > 0 ? session.estates : []);
 
     const estateOptionsHtml = '<option value="">— Select estate —</option>' +
