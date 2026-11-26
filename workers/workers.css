@@ -19,7 +19,19 @@ a { color: inherit; }
 .back span { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .2s ease, opacity .15s, margin .2s; }
 .back:hover, .back:focus-visible { background: #fff; box-shadow: 0 6px 18px rgba(15,23,42,.18); }
 .back:hover span, .back:focus-visible span { max-width: 200px; opacity: 1; margin-left: 6px; }
-.co-pick select { height: 36px; padding: 0 10px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; }
+/* Company and location: button dropdowns, as on the front page */
+.co-pick { position: relative; }
+.co-btn { height: 36px; padding: 0 30px 0 12px; border: 1px solid #CBD5E1; border-radius: 10px; background: #fff; font: inherit; font-weight: 600; color: var(--ink); max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; position: relative; }
+.es-btn { padding-left: 30px; }
+.es-btn::before { content: ''; position: absolute; left: 11px; top: 10px; width: 9px; height: 9px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.co-btn::after { content: ''; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid #64748B; border-bottom: 2px solid #64748B; transform: rotate(45deg); }
+.co-menu { display: none; position: absolute; left: 0; top: 42px; min-width: 100%; width: max-content; max-width: 70vw; max-height: 60vh; overflow: auto; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,23,42,.16); padding: 6px; z-index: 40; }
+.co-menu.open { display: block; }
+.co-menu button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 9px 12px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.co-menu button:hover { background: #F1F5F9; }
+.co-menu button.on { font-weight: 700; color: #14532D; }
+.co-menu button.on::before { content: '\2713'; color: #16A34A; }
+.co-menu button:not(.on)::before { content: ''; width: 12px; }
 .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; text-align: center; white-space: nowrap; }
 .who { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .who .me { text-align: right; line-height: 1.25; min-width: 0; }
@@ -126,3 +138,45 @@ table.wl td.nodata { text-align: center; color: var(--mute); padding: 28px 12px;
 .pf-sec .pf-grid { padding: 12px 14px; }
 .pf-sec.soon .v { color: var(--greyText); font-weight: 500; }
 @media (max-width: 640px) { .pf-head { flex-direction: column; align-items: flex-start; } .pf-grid { grid-template-columns: 1fr; } }
+
+/* Icon buttons (Action column, profile window) */
+.ibtn { width: 32px; height: 30px; display: inline-grid; place-items: center; border-radius: 8px; border: 1px solid #CBD5E1; background: #fff; color: #334155; cursor: pointer; padding: 0; }
+.ibtn:hover { background: #F1F5F9; color: var(--ink); }
+.ibtn svg { width: 16px; height: 16px; }
+.ibtn.ghost { border-color: transparent; background: transparent; }
+.ibtn.ghost:hover { background: rgba(255,255,255,.8); }
+.ibtn.on { background: #ECFDF5; border-color: #A7F3D0; color: #166534; }
+.pinbox { display: inline-flex; align-items: center; gap: 6px; }
+.pinbox .ibtn { width: 26px; height: 24px; border-radius: 7px; }
+.pinbox .ibtn svg { width: 14px; height: 14px; }
+.pinval { font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.pf-top .tools { display: flex; gap: 4px; }
+.pf-f input, .pf-f select { width: 100%; height: 34px; margin-top: 3px; border-radius: 9px; border: 1px solid #CBD5E1; padding: 0 9px; font: inherit; font-size: 14px; color: var(--ink); background: #fff; }
+.pf-foot { display: none; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: #fff; }
+.dlg.profile.editing .pf-foot { display: flex; }
+.edit-tag { display: none; font-size: 11.5px; font-weight: 700; color: #166534; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+.dlg.profile.editing .edit-tag { display: inline-block; }
+
+/* "All locations": a Location column between No. and Name (kept in view with them) */
+table.wl .c-loc { position: sticky; left: 52px; z-index: 1; white-space: nowrap; color: #334155; } /* full name, never cut */
+table.wl thead .c-loc { z-index: 3; }
+.locpill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
+.locpill::before { content: ''; width: 7px; height: 7px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex: none; }
+
+/* Location menu: business headers (choose a whole business on the worker list), locations under them */
+.co-menu .biz-label { padding: 8px 12px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--mute); }
+.co-menu button.biz-item { font-weight: 700; margin-top: 4px; }
+.co-menu button.biz-item small { margin-left: auto; padding-left: 14px; font-weight: 500; font-size: 11.5px; color: var(--mute); }
+.co-menu button.loc-item { padding-left: 30px; }
+
+/* Location menu: "All locations" and each business are clear, clickable cards;
+   the locations under a business are plain rows. Hover and the chosen one are green. */
+.co-menu button.all-item, .co-menu button.biz-item {
+    font-weight: 700; background: #F8FAFC; border: 1px solid #E2E8F0; margin: 4px 0 2px;
+}
+.co-menu button.all-item:first-child { margin-top: 0; }
+.co-menu button.all-item:hover, .co-menu button.biz-item:hover { background: #ECFDF5; border-color: #A7F3D0; }
+.co-menu button.loc-item:hover { background: #F1F5F9; }
+.co-menu button.all-item.on, .co-menu button.biz-item.on { background: #DCFCE7; border-color: #86EFAC; color: #14532D; }
+.co-menu button.loc-item.on { background: #F0FDF4; color: #14532D; }
+.co-menu button:active { transform: translateY(1px); }

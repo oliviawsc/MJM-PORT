@@ -86,6 +86,12 @@ export async function signOut() {
   await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
 }
 
+/** Sign out of PORT and of MJM Intranet (the Intranet reads ?gw_logout=1). */
+export async function signOutEverywhere() {
+  await signOut();
+  window.location.href = 'https://mjmelon.github.io/MJM-Intranet/?gw_logout=1';
+}
+
 /** Throws Error(cp_err_* | err_*). */
 export async function changePassword(current: string, next: string): Promise<void> {
   const s = loadSession();

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { EstateDataProvider, useEstateData } from '../data/EstateDataProvider';
 import { useI18n } from '../i18n';
-import { goToWorkerPortal, refreshProfile, signOut } from '../lib/auth';
+import { goToWorkerPortal, refreshProfile, signOutEverywhere } from '../lib/auth';
 import { DEFAULT_ESTATES } from '../lib/config';
 import { allowedEstates, defaultEstate, fetchEstateNames } from '../lib/estates';
 import { updateSession } from '../lib/session';
@@ -77,8 +77,8 @@ export function AppShell({ session, onForcedOut, onSignedOut }: Props) {
 
   const onSignOut = useCallback(async () => {
     if (!window.confirm(t('sign_out_q'))) return;
-    await signOut();
     onSignedOut();
+    await signOutEverywhere(); // PORT and MJM Intranet
     navigate('/', { replace: true });
   }, [t, navigate, onSignedOut]);
 

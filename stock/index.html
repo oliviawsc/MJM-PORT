@@ -11849,36 +11849,12 @@ function logoutUser() {
     if (!confirm('Sign out?')) return;
     stopStatusWatcher();
     clearSession();
-    supabaseClient.auth.signOut().catch(e => console.warn('[Auth] signOut error', e));
-    document.getElementById('sidebarEstate').value = '';
-    // Reset app title back to default
-    updateAppTitle('');
-    document.body.classList.remove('estate-mobile');
-    // Re-boot as Super Admin instead of showing login screen
-    const autoSession = {
-        email:       SUPER_ADMIN.email,
-        name:        SUPER_ADMIN.name,
-        estate:      '',
-        role:        'superadmin',
-        permissions: ALL_SECTIONS.map(s => s.id),
-    };
-    saveSession(autoSession);
-    bootApp(autoSession);
-
-    // Reset which page section is "active" back to the Dashboard so the
-    // next person to log in on this device — who may have far fewer
-    // permissions than whoever just logged out — never lands on a
-    // restricted section (e.g. User Management) just because that's
-    // whatever page was left open before logging out.
-    document.querySelectorAll('.page-section').forEach(sec => {
-        sec.classList.toggle('active', sec.id === 'dashboard');
-    });
-    document.querySelectorAll('.nav-item[data-target]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-target') === 'dashboard');
-    });
-    // Also forget the last-viewed section so the next login starts fresh
-    // instead of resuming whatever page this user was last on.
     sessionStorage.removeItem('opp_active_section');
+    try { Object.keys(localStorage).filter((k) => /^sb-.*-auth-token$/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+    // Sign out of PORT and of MJM Intranet (no automatic Super Admin sign-in any more)
+    supabaseClient.auth.signOut().catch(e => console.warn('[Auth] signOut error', e)).finally(() => {
+        window.location.href = 'https://mjmelon.github.io/MJM-Intranet/?gw_logout=1';
+    });
 }
 
 // Auto-logout when an admin deactivates the currently logged-in user.

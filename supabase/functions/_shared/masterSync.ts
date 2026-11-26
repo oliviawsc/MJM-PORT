@@ -23,10 +23,63 @@ interface Company {
   opispro_id?: string | null; is_active: boolean; sort_order: number | null;
 }
 
+export interface IntranetEstate { id: string; company_id: string; name: string; short_name: string | null; sort_order: number | null; is_active: boolean }
+
 export interface MasterData {
   companies: Company[]; links: { group_id: string; company_id: string }[];
+  businesses?: { id: string; name: string; sort_order: number | null }[];
+  locations?: { id: string; company_id: string; group_id?: string | null; name: string; short_name?: string | null; location_id?: string | null; sort_order: number | null; is_active: boolean }[]; // gw_company_locations: the Locations of each company in the Intranet
+  estates?: IntranetEstate[]; // gw_company_estates (older estate list)
   module_company_ids: string[]; module_business_ids: string[];
   module_users?: { id: string; email: string; full_name: string | null; is_admin: boolean; company_ids: string[] }[];
+}
+
+/** The locations (estates) of one company, exactly as set in the Intranet; [] when it has none. */
+export function intranetEstatesOf(md: MasterData, companyId: string): string[] {
+  // The Intranet's Location list of the company (Admin → Company → Locations); the older Estates list as fallback
+  const locs = (md.locations ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  if (!locs.length) {
+    return (md.estates ?? []).filter((e) => e.company_id === companyId && e.is_active !== false)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+      .map((e) => e.name.trim()).filter(Boolean);
+  }
+  // Business by business (in the Intranet's business order), then the location order within it
+  const bizOrder = new Map((md.businesses ?? []).map((b, i) => [b.id, i]));
+  const biz = (e: { group_id?: string | null }) => (e.group_id && bizOrder.has(e.group_id) ? bizOrder.get(e.group_id)! : 1e6);
+  const out: string[] = [];
+  for (const e of locs.sort((a, b) => biz(a) - biz(b) || (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))) {
+    const n = e.name.trim(); if (n && !out.includes(n)) out.push(n);
+  }
+  return out;
+}
+
+/** A company's Intranet Locations grouped by Business, in the Intranet's business
+ *  and location order: [{ id, name, locations: [location name, …] }]. Locations
+ *  without a business come last under id '' (name ''). */
+export function intranetLocationGroups(md: MasterData, companyId: string): { id: string; name: string; locations: string[] }[] {
+  const locs = (md.locations ?? []).filter((e) => e.company_id === companyId && e.is_active !== false);
+  const bizName = new Map((md.businesses ?? []).map((b) => [b.id, b.name]));
+  const bizOrder = new Map((md.businesses ?? []).map((b, i) => [b.id, i]));
+  const key = (e: { group_id?: string | null }) => (e.group_id && bizName.has(e.group_id) ? e.group_id : '');
+  const groups = new Map<string, { id: string; name: string; locations: string[] }>();
+  for (const e of locs.sort((a, b) => (bizOrder.get(key(a)) ?? 1e6) - (bizOrder.get(key(b)) ?? 1e6) || (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))) {
+    const k = key(e), n = (e.name ?? '').trim();
+    if (!n) continue;
+    if (!groups.has(k)) groups.set(k, { id: k, name: k ? String(bizName.get(k)) : '', locations: [] });
+    if (!groups.get(k)!.locations.includes(n)) groups.get(k)!.locations.push(n);
+  }
+  return [...groups.values()];
+}
+
+/** Short names of a company's Intranet Locations (Admin → Company → Locations → Short name), by location name. */
+export function intranetLocationShortNames(md: MasterData, companyId: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const e of md.locations ?? []) {
+    if (e.company_id !== companyId || e.is_active === false) continue;
+    const n = (e.name ?? '').trim(), sn = (e.short_name ?? '').trim();
+    if (n && sn && !out[n]) out[n] = sn;
+  }
+  return out;
 }
 
 /** A company as PORT sends it to the browser (session.companies). */
