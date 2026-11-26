@@ -16,6 +16,7 @@
 // Users themselves are never created, deleted or given passwords here: the
 // Intranet does that. A person appears after their first Intranet sign-in.
 import { ApiError, callerEmail, handler, roleOf, serviceClient, SUPER_ADMIN_EMAIL, USERS_TABLE, type UserRow } from '../_shared/common.ts';
+import { companiesForUser, intranetMasterData, saveCompanies, saveUserCompanies } from '../_shared/masterSync.ts';
 
 // Pages of PORT (ids = the classic app's section ids, plus estateinfo).
 export const SECTIONS = [
@@ -124,6 +125,28 @@ Deno.serve(handler(async (req, body) => {
   const db = serviceClient();
 
   if (body.action === 'list') {
+    // Everyone the Intranet lets into Plantation Operation is listed, signed in
+    // before or not: people new to PORT get a row (HQ user) and their companies now.
+    try {
+      const md = await intranetMasterData('stock');
+      await saveCompanies(md);
+      const { data: have } = await db.from(USERS_TABLE).select('email');
+      const known = new Set(((have ?? []) as { email: string }[]).map((r) => (r.email || '').toLowerCase()));
+      let n = 0;
+      for (const u of md.module_users ?? []) {
+        const email = (u.email || '').toLowerCase();
+        if (!email || known.has(email)) continue;
+        const name = (u.full_name ?? '').trim() || email.split('@')[0];
+        const { error: e1 } = await db.from(USERS_TABLE).insert({
+          id: Date.now() + n++, name, email, password_hash: '', estates: [], permissions: { __role: 'hq_user' }, status: 'active',
+        });
+        if (e1) { console.warn('[port-user-access] add from Intranet skipped:', e1.message); continue; }
+        known.add(email);
+        await saveUserCompanies(email, 'stock', companiesForUser(email, md));
+      }
+    } catch (e) {
+      console.warn('[port-user-access] Intranet list skipped:', e instanceof Error ? e.message : e);
+    }
     const { data, error } = await db.from(USERS_TABLE).select('id, name, email, permissions, status, last_active').order('name');
     if (error) throw error;
     // Only people who sign in from the Intranet: Mantap workers (User ID accounts, <id>@psms.app) are managed in Worker Manage
