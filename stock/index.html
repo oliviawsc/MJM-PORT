@@ -1143,6 +1143,13 @@
     .wb-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;}
     .wb-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;}
     .wb-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    /* Stone Weighbridge */
+    .sw-po-block{margin-bottom:24px;}
+    .sw-po-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px 12px 0 0;padding:13px 16px;border-bottom:none;}
+    .sw-tbl-wrap{overflow-x:auto;border:1px solid #FDE68A;border-top:none;border-radius:0 0 12px 12px;}
+    .sw-tbl-wrap .wb-table th{font-size:11px;}
+    .sw-col-del{color:#0F766E;font-weight:600;}
+    @media(max-width:680px){.sw-po-header{flex-direction:column;}.sw-entry-grid{grid-template-columns:1fr!important;}}
     </style>
 </head>
 <body>
@@ -1153,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-75';
+var APP_BUILD = '20261126-80';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -3803,9 +3810,11 @@ var APP_BUILD = '20261126-75';
                 <p class="text-sm text-indigo-700 mb-4">Compare FFB weights between Estate and Mill Weighbridges.</p>
                 <!-- Tab bar -->
                 <div class="flex gap-1 border-b-2 border-indigo-200 mb-0">
-                    <button class="htab-btn active" style="background:#4338CA;color:#fff;border-radius:8px 8px 0 0;padding:9px 20px;font-size:13px;font-weight:600;border:1px solid #C7D2FE;border-bottom:none;cursor:pointer;font-family:Inter,sans-serif;position:relative;bottom:-2px;">FFB Weighbridge Variance</button>
+                    <button id="wbTabFfb" class="htab-btn active" onclick="wbShowTab('ffb')" style="background:#4338CA;color:#fff;border-radius:8px 8px 0 0;padding:9px 20px;font-size:13px;font-weight:600;border:1px solid #C7D2FE;border-bottom:none;cursor:pointer;font-family:Inter,sans-serif;position:relative;bottom:-2px;">FFB Weighbridge Variance</button>
+                    <button id="wbTabStone" class="htab-btn" onclick="wbShowTab('stone')" style="border-radius:8px 8px 0 0;padding:9px 20px;font-size:13px;font-weight:600;border:1px solid transparent;border-bottom:none;cursor:pointer;font-family:Inter,sans-serif;position:relative;bottom:-2px;background:transparent;color:#475569;">Stone Weighbridge Variance</button>
                 </div>
                 <div style="background:#fff;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 14px 14px;padding:20px;">
+                    <div id="wbFfbPanel">
                     <!-- Filter row -->
                     <div class="wb-filter-row">
                         <span class="wb-filter-label">Period</span>
@@ -3860,6 +3869,123 @@ var APP_BUILD = '20261126-75';
                         <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#DC2626;"></div>Negative — Mill &lt; Estate</div>
                         <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#EAB308;"></div>Yellow — Individual variance &lt; −2%</div>
                         <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#3B82F6;"></div>Blue — Monthly total variance &lt; −1%</div>
+                    </div>
+                    </div><!-- /wbFfbPanel -->
+                    <!-- Stone Weighbridge Variance panel -->
+                    <div id="wbStonePanel" style="display:none;">
+                        <div class="wb-filter-row">
+                            <span class="wb-filter-label">PO Year</span>
+                            <select id="swFilterYear" class="wb-form-input" style="width:88px;" onchange="loadStonePOs()"></select>
+                            <div style="margin-left:auto;">
+                                <button class="wb-btn" style="background:#B45309;color:#fff;" onclick="showStoneAddPO(null)">&#xFF0B; Add PO</button>
+                            </div>
+                        </div>
+                        <div id="swPOBlocks"></div>
+                        <div class="wb-legend" style="margin-top:20px;">
+                            <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#15803D;"></div>Positive — Estate &ge; Supplier</div>
+                            <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#DC2626;"></div>Negative — Estate &lt; Supplier</div>
+                            <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#EAB308;"></div>Yellow — Individual variance &lt; −3%</div>
+                        </div>
+                    </div><!-- /wbStonePanel -->
+                </div>
+            </div>
+            <!-- Stone: Add / Edit PO sub-page -->
+            <div id="stoneAddPOPage" style="display:none;">
+                <div class="wb-sub-header">
+                    <button class="wb-btn wb-btn-ghost" onclick="showStoneMain()">&#8592; Back</button>
+                    <div>
+                        <div style="font-size:20px;font-weight:700;color:#0F172A;" id="swAddPOTitle">Add Purchase Order</div>
+                        <div style="font-size:13px;color:#475569;margin-top:2px;">Stone Weighbridge Variance</div>
+                    </div>
+                </div>
+                <div class="wb-form-card">
+                    <div class="wb-form-section">
+                        <div class="wb-col-header" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;">&#128203; PO Details</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;" class="sw-entry-grid">
+                            <div style="display:flex;flex-direction:column;gap:14px;">
+                                <div class="wb-form-group">
+                                    <label class="wb-form-label">PO No.</label>
+                                    <input type="text" id="swPONo" class="wb-form-input" placeholder="e.g. PO-2026-044" maxlength="50">
+                                </div>
+                                <div class="wb-form-group">
+                                    <label class="wb-form-label">PO Date</label>
+                                    <input type="date" id="swPODate" class="wb-form-input">
+                                </div>
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Supplier Name</label>
+                                <input type="text" id="swSupplierName" class="wb-form-input" placeholder="e.g. Syarikat Batu Sdn Bhd" maxlength="150">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Stone Size</label>
+                                <input type="text" id="swStoneSize" class="wb-form-input" placeholder="e.g. 20mm, 40mm" maxlength="50">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Qty Ordered (MT)</label>
+                                <input type="number" id="swQtyOrdered" class="wb-form-input" placeholder="0.000" min="0" step="0.001">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wb-actions-bar">
+                        <button class="wb-btn wb-btn-ghost" onclick="showStoneMain()">Cancel</button>
+                        <button class="wb-btn" id="swSavePOBtn" onclick="saveStoneAddPO()" style="background:#B45309;color:#fff;">Save PO</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Stone: Add / Edit Entry sub-page -->
+            <div id="stoneAddEntryPage" style="display:none;">
+                <div class="wb-sub-header">
+                    <button class="wb-btn wb-btn-ghost" onclick="showStoneMain()">&#8592; Back</button>
+                    <div>
+                        <div style="font-size:20px;font-weight:700;color:#0F172A;">Add Delivery Entry</div>
+                        <div style="font-size:13px;color:#475569;margin-top:2px;">Stone Weighbridge Variance</div>
+                    </div>
+                </div>
+                <div class="wb-form-card">
+                    <!-- PO Reference (read-only) -->
+                    <div class="wb-form-section" style="background:#FFFBEB;border-bottom:1px solid #FDE68A;">
+                        <div class="wb-col-header" style="background:transparent;color:#B45309;border:none;padding-left:0;margin-bottom:10px;">&#128203; PO Reference</div>
+                        <div id="swEntryPORef" style="display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;color:#475569;"></div>
+                    </div>
+                    <!-- Delivery details -->
+                    <div class="wb-form-section">
+                        <div class="wb-col-header" style="background:#F0FDFA;color:#0F766E;border:1px solid #99F6E4;">&#128666; Delivery Details</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;" class="sw-entry-grid">
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Supplier DO Date</label>
+                                <input type="date" id="swEntrySupDoDate" class="wb-form-input">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Supplier DO No.</label>
+                                <input type="text" id="swEntrySupDoNo" class="wb-form-input" placeholder="e.g. DO-61280" maxlength="100">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Supplier Net Wt (MT)</label>
+                                <input type="number" id="swEntrySupNetWt" class="wb-form-input" placeholder="0.000" min="0" step="0.001" oninput="calcStoneEntryVariance()">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Estate Net Wt (MT)</label>
+                                <input type="number" id="swEntryEstNetWt" class="wb-form-input" placeholder="0.000" min="0" step="0.001" oninput="calcStoneEntryVariance()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Variance auto -->
+                    <div class="wb-form-section">
+                        <div class="wb-col-header wb-col-calc">&#128202; Variance (auto-calculated)</div>
+                        <div class="wb-calc-grid">
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Variance (MT) = Estate &minus; Supplier</label>
+                                <div id="swEntryVarMT" class="wb-calc-field wb-zero">&#8212;</div>
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Variance (%) = Variance &divide; Supplier &times; 100</label>
+                                <div id="swEntryVarPct" class="wb-calc-field wb-zero">&#8212;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wb-actions-bar">
+                        <button class="wb-btn wb-btn-ghost" onclick="showStoneMain()">Cancel</button>
+                        <button class="wb-btn wb-btn-primary" id="swSaveEntryBtn" onclick="saveStoneEntry()">Save Entry</button>
                     </div>
                 </div>
             </div>
@@ -17988,7 +18114,7 @@ function navigateToSection(target) {
     if (target === 'plantrecord') renderPlantRecord();
     if (target === 'ffbrecord') renderFfbModule();
     if (target === 'carlos') renderCarlosModule();
-    if (target === 'weighbridge') { showWeighbridgeMain(); if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters(); if (typeof loadWeighbridgeData === 'function') loadWeighbridgeData(); }
+    if (target === 'weighbridge') { showWeighbridgeMain(); wbShowTab('ffb'); if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters(); if (typeof loadWeighbridgeData === 'function') loadWeighbridgeData(); }
     if (target === 'rainfall') {
         const rfDate = document.getElementById('rfDate');
         if (rfDate && !rfDate.value) rfDate.valueAsDate = new Date();
@@ -18939,6 +19065,8 @@ function _wbGetEstate() {
 function showWeighbridgeMain() {
     document.getElementById('weighbridgeMain').style.display = '';
     document.getElementById('weighbridgeAddPage').style.display = 'none';
+    document.getElementById('stoneAddPOPage').style.display = 'none';
+    document.getElementById('stoneAddEntryPage').style.display = 'none';
     _wbCurrentEditId = null;
 }
 
@@ -19123,6 +19251,301 @@ async function deleteWeighbridgeEntry(id) {
     var res = await supabaseClient.from('ffb_weighbridge_variance').delete().eq('id', id);
     if (res.error) { alert('Error deleting: ' + res.error.message); return; }
     loadWeighbridgeData();
+}
+// ── Stone Weighbridge Variance ─────────────────────────────────────────
+var _swCurrentEditPOId = null;
+var _swCurrentEntryPoId = null;
+var _swCurrentEditEntryId = null;
+var _wbActiveTab = 'ffb';
+
+function wbShowTab(tab) {
+    _wbActiveTab = tab;
+    var ffbPanel = document.getElementById('wbFfbPanel');
+    var stonePanel = document.getElementById('wbStonePanel');
+    var tabFfb = document.getElementById('wbTabFfb');
+    var tabStone = document.getElementById('wbTabStone');
+    if (!ffbPanel || !stonePanel) return;
+    ffbPanel.style.display = tab === 'ffb' ? '' : 'none';
+    stonePanel.style.display = tab === 'stone' ? '' : 'none';
+    if (tabFfb) { tabFfb.style.background = tab === 'ffb' ? '#4338CA' : 'transparent'; tabFfb.style.color = tab === 'ffb' ? '#fff' : '#475569'; tabFfb.style.borderColor = tab === 'ffb' ? '#C7D2FE' : 'transparent'; }
+    if (tabStone) { tabStone.style.background = tab === 'stone' ? '#4338CA' : 'transparent'; tabStone.style.color = tab === 'stone' ? '#fff' : '#475569'; tabStone.style.borderColor = tab === 'stone' ? '#C7D2FE' : 'transparent'; }
+    if (tab === 'stone') { initSwFilters(); loadStonePOs(); }
+}
+
+function _swGetEstate() {
+    var el = document.getElementById('estateSelect');
+    if (el && el.tagName === 'SELECT' && el.value) return el.value;
+    return typeof activeEstate !== 'undefined' ? (activeEstate || '') : '';
+}
+
+function showStoneMain() {
+    document.getElementById('weighbridgeMain').style.display = '';
+    document.getElementById('stoneAddPOPage').style.display = 'none';
+    document.getElementById('stoneAddEntryPage').style.display = 'none';
+    wbShowTab('stone');
+}
+
+function showStoneAddPO(editId) {
+    _swCurrentEditPOId = editId || null;
+    document.getElementById('weighbridgeMain').style.display = 'none';
+    document.getElementById('weighbridgeAddPage').style.display = 'none';
+    document.getElementById('stoneAddPOPage').style.display = '';
+    document.getElementById('stoneAddEntryPage').style.display = 'none';
+    var titleEl = document.getElementById('swAddPOTitle');
+    var saveBtn = document.getElementById('swSavePOBtn');
+    if (titleEl) titleEl.textContent = editId ? 'Edit Purchase Order' : 'Add Purchase Order';
+    if (saveBtn) saveBtn.textContent = editId ? 'Update PO' : 'Save PO';
+    if (!editId) {
+        document.getElementById('swPONo').value = '';
+        document.getElementById('swPODate').value = new Date().toISOString().slice(0,10);
+        document.getElementById('swSupplierName').value = '';
+        document.getElementById('swStoneSize').value = '';
+        document.getElementById('swQtyOrdered').value = '';
+    } else {
+        _swLoadPOForEdit(editId);
+    }
+}
+
+function showStoneAddEntry(poId) {
+    _swCurrentEntryPoId = poId;
+    _swCurrentEditEntryId = null;
+    document.getElementById('weighbridgeMain').style.display = 'none';
+    document.getElementById('stoneAddPOPage').style.display = 'none';
+    document.getElementById('stoneAddEntryPage').style.display = '';
+    document.getElementById('swEntrySupDoDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('swEntrySupDoNo').value = '';
+    document.getElementById('swEntrySupNetWt').value = '';
+    document.getElementById('swEntryEstNetWt').value = '';
+    calcStoneEntryVariance();
+    _swLoadPORef(poId);
+}
+
+function showStoneEditEntry(entryId, poId) {
+    _swCurrentEditEntryId = entryId;
+    _swCurrentEntryPoId = poId;
+    document.getElementById('weighbridgeMain').style.display = 'none';
+    document.getElementById('stoneAddPOPage').style.display = 'none';
+    document.getElementById('stoneAddEntryPage').style.display = '';
+    _swLoadPORef(poId);
+    _swLoadEntryForEdit(entryId);
+}
+
+async function _swLoadPORef(poId) {
+    var res = await supabaseClient.from('stone_weighbridge_po').select('*').eq('id', poId).single();
+    if (res.error || !res.data) return;
+    var po = res.data;
+    var ref = document.getElementById('swEntryPORef');
+    if (!ref) return;
+    ref.innerHTML = '<span>PO No.: <strong>' + _swEsc(po.po_no) + '</strong></span>'
+        + '<span>PO Date: <strong>' + (po.po_date ? _swFmtDate(po.po_date) : '—') + '</strong></span>'
+        + '<span>Supplier: <strong>' + _swEsc(po.supplier_name) + '</strong></span>'
+        + '<span>Stone Size: <strong>' + _swEsc(po.stone_size) + '</strong></span>'
+        + '<span>Qty Ordered: <strong>' + parseFloat(po.qty_ordered_mt).toFixed(3) + ' MT</strong></span>';
+}
+
+function calcStoneEntryVariance() {
+    var s = parseFloat(document.getElementById('swEntrySupNetWt').value) || 0;
+    var e = parseFloat(document.getElementById('swEntryEstNetWt').value) || 0;
+    var v = e - s, p = s ? (v / s) * 100 : 0;
+    var empty = s === 0 && e === 0;
+    var vmt = document.getElementById('swEntryVarMT');
+    var vpc = document.getElementById('swEntryVarPct');
+    if (!vmt || !vpc) return;
+    vmt.textContent = empty ? '—' : (v >= 0 ? '+' : '') + v.toFixed(3) + ' MT';
+    vmt.className = 'wb-calc-field ' + (empty ? 'wb-zero' : v < 0 ? 'wb-neg' : 'wb-pos');
+    vpc.textContent = empty ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
+    vpc.className = 'wb-calc-field ' + (empty ? 'wb-zero' : p < 0 ? 'wb-neg' : 'wb-pos');
+}
+
+function initSwFilters() {
+    var sel = document.getElementById('swFilterYear');
+    if (!sel || sel.options.length > 0) return;
+    var now = new Date();
+    for (var y = now.getFullYear(); y >= 2020; y--) {
+        var o = document.createElement('option');
+        o.value = y; o.textContent = y;
+        sel.appendChild(o);
+    }
+}
+
+async function loadStonePOs() {
+    var yearSel = document.getElementById('swFilterYear');
+    if (!yearSel) return;
+    var year = parseInt(yearSel.value);
+    var estate = _swGetEstate();
+    var container = document.getElementById('swPOBlocks');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:28px;color:#94A3B8;">Loading…</div>';
+    var q = supabaseClient.from('stone_weighbridge_po').select('*')
+        .gte('po_date', year + '-01-01').lte('po_date', year + '-12-31')
+        .order('po_date', {ascending: true});
+    if (estate) q = q.eq('estate', estate);
+    var poRes = await q;
+    if (poRes.error) { container.innerHTML = '<div style="color:#DC2626;padding:20px;">Error: ' + poRes.error.message + '</div>'; return; }
+    if (!poRes.data || poRes.data.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:28px;color:#94A3B8;">No POs found for ' + year + '. Click &ldquo;+ Add PO&rdquo; to create one.</div>';
+        return;
+    }
+    var poIds = poRes.data.map(function(p){ return p.id; });
+    var entRes = await supabaseClient.from('stone_weighbridge_entries').select('*').in('po_id', poIds).order('supplier_do_date', {ascending: true});
+    var entries = entRes.data || [];
+    _swRenderPOBlocks(poRes.data, entries, container);
+}
+
+function _swRenderPOBlocks(pos, allEntries, container) {
+    var html = '';
+    pos.forEach(function(po) {
+        var entries = allEntries.filter(function(e){ return e.po_id === po.id; });
+        var totalSup = 0, totalEst = 0;
+        entries.forEach(function(e){ totalSup += parseFloat(e.supplier_net_weight_mt); totalEst += parseFloat(e.estate_net_weight_mt); });
+        var totalVar = totalEst - totalSup;
+        var totalVarPct = totalSup ? (totalVar / totalSup) * 100 : 0;
+        var poDateFmt = po.po_date ? _swFmtDate(po.po_date) : '';
+        html += '<div class="sw-po-block">';
+        html += '<div class="sw-po-header">';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;">';
+        html += '<span style="font-size:13px;font-weight:700;color:#B45309;">' + _swEsc(po.po_no) + '</span>';
+        html += '<span style="font-size:12.5px;color:#475569;">Date: <strong style="color:#0F172A;">' + poDateFmt + '</strong></span>';
+        html += '<span style="font-size:12.5px;color:#475569;font-weight:600;color:#0F172A;">' + _swEsc(po.supplier_name) + '</span>';
+        html += '<span style="font-size:12.5px;color:#475569;">Size: <strong style="color:#0F172A;">' + _swEsc(po.stone_size) + '</strong></span>';
+        html += '<span style="font-size:12.5px;color:#475569;">Qty Ordered: <strong style="color:#0F172A;">' + parseFloat(po.qty_ordered_mt).toFixed(3) + ' MT</strong></span>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+        html += '<button class="wb-btn" style="background:transparent;border:1px solid #E2E8F0;color:#475569;height:30px;font-size:12px;padding:0 12px;" onclick="showStoneAddPO(\'' + po.id + '\')">&#9998; Edit PO</button>';
+        html += '<button class="wb-btn" style="background:transparent;border:1px solid #B45309;color:#B45309;height:30px;font-size:12px;padding:0 12px;" onclick="showStoneAddEntry(\'' + po.id + '\')">&#xFF0B; Add Entry</button>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="sw-tbl-wrap">';
+        html += '<table class="wb-table" style="min-width:680px;">';
+        html += '<thead><tr>';
+        html += '<th style="color:#0F766E;background:#F0FDFA;">Supplier DO Date</th>';
+        html += '<th style="color:#0F766E;background:#F0FDFA;">Supplier DO No.</th>';
+        html += '<th style="color:#0F766E;background:#F0FDFA;">Supplier Net Wt (MT)</th>';
+        html += '<th style="color:#0F766E;background:#F0FDFA;">Estate Net Wt (MT)</th>';
+        html += '<th style="color:#15803D;background:#F0FDF4;">Variance (MT)</th>';
+        html += '<th style="color:#15803D;background:#F0FDF4;">Variance (%)</th>';
+        html += '<th style="text-align:center;">Action</th>';
+        html += '</tr></thead><tbody>';
+        if (entries.length === 0) {
+            html += '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;font-style:italic;">No delivery entries yet. Click &ldquo;+ Add Entry&rdquo; to record a delivery.</td></tr>';
+        } else {
+            entries.forEach(function(e, idx) {
+                var sup = parseFloat(e.supplier_net_weight_mt);
+                var est = parseFloat(e.estate_net_weight_mt);
+                var v = est - sup, vp = sup ? (v / sup) * 100 : 0;
+                var isWarn = vp < -3;
+                var isLast = idx === entries.length - 1;
+                html += '<tr class="wb-data-row' + (isWarn ? ' wb-row-warn' : '') + '">';
+                html += '<td>' + (e.supplier_do_date ? _swFmtDate(e.supplier_do_date) : '—') + '</td>';
+                html += '<td class="sw-col-del">' + _swEsc(e.supplier_do_no) + '</td>';
+                html += '<td class="sw-col-del">' + sup.toFixed(3) + '</td>';
+                html += '<td class="sw-col-del">' + est.toFixed(3) + '</td>';
+                html += '<td>' + _swTag(v, v.toFixed(3) + ' MT', isWarn) + '</td>';
+                html += '<td>' + _swTag(vp, vp.toFixed(2) + '%', isWarn) + '</td>';
+                html += '<td style="text-align:center;"><div class="wb-row-actions">';
+                html += '<button class="wb-icon-btn" onclick="showStoneEditEntry(\'' + e.id + '\',\'' + po.id + '\')" title="Edit">&#9998;</button>';
+                html += '<button class="wb-icon-btn" onclick="deleteStoneEntry(\'' + e.id + '\')" title="Delete">&#128465;</button>';
+                html += '</div></td></tr>';
+            });
+            html += '<tr class="wb-summary-row">';
+            html += '<td colspan="2">' + _swEsc(po.po_no) + ' Total</td>';
+            html += '<td style="color:#0F766E;">' + totalSup.toFixed(3) + '</td>';
+            html += '<td style="color:#0F766E;">' + totalEst.toFixed(3) + '</td>';
+            html += '<td>' + _swTagNeutral(totalVar, totalVar.toFixed(3) + ' MT') + '</td>';
+            html += '<td>' + _swTagNeutral(totalVarPct, totalVarPct.toFixed(2) + '%') + '</td>';
+            html += '<td></td></tr>';
+        }
+        html += '</tbody></table></div></div>';
+    });
+    container.innerHTML = html;
+}
+
+function _swTag(val, text, isWarn) {
+    if (isWarn) return '<span class="wb-tag wb-tag-warn">&#9888; ' + (val >= 0 ? '+' : '') + text + '</span>';
+    if (val > 0) return '<span class="wb-tag wb-tag-pos">+' + text + '</span>';
+    if (val < 0) return '<span class="wb-tag wb-tag-neg">' + text + '</span>';
+    return '<span class="wb-tag" style="background:#F1F5F9;color:#64748B;">' + text + '</span>';
+}
+
+function _swTagNeutral(val, text) {
+    if (val > 0) return '<span class="wb-tag wb-tag-pos">+' + text + '</span>';
+    if (val < 0) return '<span class="wb-tag wb-tag-neg">' + text + '</span>';
+    return '<span class="wb-tag" style="background:#F1F5F9;color:#64748B;">' + text + '</span>';
+}
+
+function _swEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _swFmtDate(d) { if (!d) return '—'; var dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+
+async function saveStoneAddPO() {
+    var poNo = document.getElementById('swPONo').value.trim();
+    var poDate = document.getElementById('swPODate').value;
+    var supplierName = document.getElementById('swSupplierName').value.trim();
+    var stoneSize = document.getElementById('swStoneSize').value.trim();
+    var qtyOrdered = parseFloat(document.getElementById('swQtyOrdered').value);
+    if (!poNo || !poDate || !supplierName || !stoneSize || isNaN(qtyOrdered) || qtyOrdered <= 0) {
+        alert('Please fill in all PO fields.'); return;
+    }
+    var estate = _swGetEstate();
+    var payload = { estate: estate, po_no: poNo, po_date: poDate, supplier_name: supplierName, stone_size: stoneSize, qty_ordered_mt: qtyOrdered };
+    var btn = document.getElementById('swSavePOBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    var res = _swCurrentEditPOId
+        ? await supabaseClient.from('stone_weighbridge_po').update(payload).eq('id', _swCurrentEditPOId)
+        : await supabaseClient.from('stone_weighbridge_po').insert([payload]);
+    if (btn) { btn.disabled = false; btn.textContent = _swCurrentEditPOId ? 'Update PO' : 'Save PO'; }
+    if (res.error) { alert('Error: ' + res.error.message); return; }
+    showStoneMain();
+}
+
+async function _swLoadPOForEdit(id) {
+    var res = await supabaseClient.from('stone_weighbridge_po').select('*').eq('id', id).single();
+    if (res.error || !res.data) return;
+    var po = res.data;
+    document.getElementById('swPONo').value = po.po_no;
+    document.getElementById('swPODate').value = po.po_date;
+    document.getElementById('swSupplierName').value = po.supplier_name;
+    document.getElementById('swStoneSize').value = po.stone_size;
+    document.getElementById('swQtyOrdered').value = po.qty_ordered_mt;
+}
+
+async function _swLoadEntryForEdit(id) {
+    var res = await supabaseClient.from('stone_weighbridge_entries').select('*').eq('id', id).single();
+    if (res.error || !res.data) return;
+    var e = res.data;
+    document.getElementById('swEntrySupDoDate').value = e.supplier_do_date;
+    document.getElementById('swEntrySupDoNo').value = e.supplier_do_no;
+    document.getElementById('swEntrySupNetWt').value = e.supplier_net_weight_mt;
+    document.getElementById('swEntryEstNetWt').value = e.estate_net_weight_mt;
+    calcStoneEntryVariance();
+    var saveBtn = document.getElementById('swSaveEntryBtn');
+    if (saveBtn) saveBtn.textContent = 'Update Entry';
+}
+
+async function saveStoneEntry() {
+    var supDoDate = document.getElementById('swEntrySupDoDate').value;
+    var supDoNo = document.getElementById('swEntrySupDoNo').value.trim();
+    var supNetWt = parseFloat(document.getElementById('swEntrySupNetWt').value);
+    var estNetWt = parseFloat(document.getElementById('swEntryEstNetWt').value);
+    if (!supDoDate || !supDoNo || isNaN(supNetWt) || isNaN(estNetWt)) {
+        alert('Please fill in all delivery fields.'); return;
+    }
+    var payload = { po_id: _swCurrentEntryPoId, supplier_do_date: supDoDate, supplier_do_no: supDoNo, supplier_net_weight_mt: supNetWt, estate_net_weight_mt: estNetWt };
+    var btn = document.getElementById('swSaveEntryBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    var res = _swCurrentEditEntryId
+        ? await supabaseClient.from('stone_weighbridge_entries').update(payload).eq('id', _swCurrentEditEntryId)
+        : await supabaseClient.from('stone_weighbridge_entries').insert([payload]);
+    if (btn) { btn.disabled = false; btn.textContent = _swCurrentEditEntryId ? 'Update Entry' : 'Save Entry'; }
+    if (res.error) { alert('Error: ' + res.error.message); return; }
+    _swCurrentEditEntryId = null;
+    showStoneMain();
+}
+
+async function deleteStoneEntry(id) {
+    if (!confirm('Delete this delivery entry?')) return;
+    var res = await supabaseClient.from('stone_weighbridge_entries').delete().eq('id', id);
+    if (res.error) { alert('Error deleting: ' + res.error.message); return; }
+    loadStonePOs();
 }
 // ── End Weighbridge Module ─────────────────────────────────────────────
 
