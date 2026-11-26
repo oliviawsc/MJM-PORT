@@ -158,8 +158,7 @@ table.wl td.nodata { text-align: center; color: var(--mute); padding: 28px 12px;
 .dlg.profile.editing .edit-tag { display: inline-block; }
 
 /* "All locations": a Location column between No. and Name (kept in view with them) */
-table.wl .c-loc { position: sticky; left: 52px; z-index: 1; min-width: 130px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
+table.wl .c-loc { position: sticky; left: 52px; z-index: 1; white-space: nowrap; color: #334155; } /* full name, never cut */
 table.wl thead .c-loc { z-index: 3; }
-table.wl.with-loc .c-name { left: 182px; }
 .locpill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
 .locpill::before { content: ''; width: 7px; height: 7px; border: 2px solid #64748B; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex: none; }

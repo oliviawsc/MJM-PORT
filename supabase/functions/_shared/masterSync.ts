@@ -28,7 +28,7 @@ export interface IntranetEstate { id: string; company_id: string; name: string; 
 export interface MasterData {
   companies: Company[]; links: { group_id: string; company_id: string }[];
   businesses?: { id: string; name: string; sort_order: number | null }[];
-  locations?: { id: string; company_id: string; group_id?: string | null; name: string; location_id?: string | null; sort_order: number | null; is_active: boolean }[]; // gw_company_locations: the Locations of each company in the Intranet
+  locations?: { id: string; company_id: string; group_id?: string | null; name: string; short_name?: string | null; location_id?: string | null; sort_order: number | null; is_active: boolean }[]; // gw_company_locations: the Locations of each company in the Intranet
   estates?: IntranetEstate[]; // gw_company_estates (older estate list)
   module_company_ids: string[]; module_business_ids: string[];
   module_users?: { id: string; email: string; full_name: string | null; is_admin: boolean; company_ids: string[] }[];
@@ -49,6 +49,17 @@ export function intranetEstatesOf(md: MasterData, companyId: string): string[] {
   const out: string[] = [];
   for (const e of locs.sort((a, b) => biz(a) - biz(b) || (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))) {
     const n = e.name.trim(); if (n && !out.includes(n)) out.push(n);
+  }
+  return out;
+}
+
+/** Short names of a company's Intranet Locations (Admin → Company → Locations → Short name), by location name. */
+export function intranetLocationShortNames(md: MasterData, companyId: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const e of md.locations ?? []) {
+    if (e.company_id !== companyId || e.is_active === false) continue;
+    const n = (e.name ?? '').trim(), sn = (e.short_name ?? '').trim();
+    if (n && sn && !out[n]) out[n] = sn;
   }
   return out;
 }
