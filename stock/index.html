@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-86';
+var APP_BUILD = '20261126-87';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -4993,10 +4993,12 @@ async function _executeSyncForEstate(key, estate, data) {
         }
 
         if (data.length > 0) {
+            const _syncCoId = (loadSession() || {}).company_id || null;
             const tagged = data.map(r => {
                 const rec = { ...r, estate };
                 delete rec.picture;
                 if (rec.created_at == null) delete rec.created_at;
+                if (_syncCoId) rec.company_id = _syncCoId;
                 return rec;
             });
             const { error: upErr } = await supabaseClient
@@ -8441,9 +8443,10 @@ async function submitDashComment() {
     if (!text) { input.focus(); return; }
     var sess  = loadSession();
     var row   = {
-        estate:      (sess && sess.estate) ? sess.estate : '',
-        author_name: (sess && sess.name)   ? sess.name  : 'Manager',
-        author_role: (sess && sess.role)   ? sess.role  : 'hq_user',
+        estate:      (sess && sess.estate)     ? sess.estate     : '',
+        company_id:  (sess && sess.company_id) ? sess.company_id : null,
+        author_name: (sess && sess.name)       ? sess.name       : 'Manager',
+        author_role: (sess && sess.role)       ? sess.role       : 'hq_user',
         comment:     text,
     };
     var btn = input.nextElementSibling;
@@ -18041,7 +18044,8 @@ async function saveMgmtInput() {
     if (!estate || !/^\d{4}-\d{2}$/.test(ym)) { err.textContent = d.mgmtreport_month_required || 'Choose the month first.'; err.style.display = ''; return; }
     const num = (id) => { const v = document.getElementById(id).value.trim(); return v === '' ? null : Number(v); };
     const row = {
-        estate, year: parseInt(ym.slice(0, 4), 10), month: parseInt(ym.slice(5, 7), 10),
+        estate, company_id: (loadSession() || {}).company_id || null,
+        year: parseInt(ym.slice(0, 4), 10), month: parseInt(ym.slice(5, 7), 10),
         ffb_mt: num('mrInFfb'), grading_pct: num('mrInGrading'), harvesters: num('mrInHarvesters'),
         notes: document.getElementById('mrInNotes').value.trim() || null,
         source: 'manual', updated_by: (loadSession() || {}).name || null, updated_at: new Date().toISOString(),
@@ -18273,7 +18277,7 @@ async function saveSettingsBlock() {
             if (error) throw error;
         } else {
             const { error } = await supabaseClient.from('port_locations')
-                .insert({ id: Date.now(), name, area, numPalms, estate: settingsBlocksEstate });
+                .insert({ id: Date.now(), name, area, numPalms, estate: settingsBlocksEstate, company_id: (loadSession() || {}).company_id || null });
             if (error) throw error;
         }
         cancelEditSettingsBlock();
@@ -18640,6 +18644,7 @@ function _ffbBlockYieldUpdateAll(blocks, daysInMonth) {
 async function ffbSaveBlockYieldMonth() {
     var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
     if (!estate) return;
+    var _bySess = loadSession(); var _byCoId = _bySess && _bySess.company_id ? _bySess.company_id : null;
     if (typeof supabaseClient === 'undefined') { alert('Not connected to database.'); return; }
     var year = _ffbBlockYieldYear, month = _ffbBlockYieldMonth;
     var blocks = await ffbLoadBlocks(estate);
@@ -18652,7 +18657,7 @@ async function ffbSaveBlockYieldMonth() {
             var el = document.getElementById('ffbBY_' + d + '_' + colKey);
             if (!el || el.value === '') return;
             var v = parseFloat(el.value);
-            if (!isNaN(v)) toUpsert.push({ estate: estate, year: year, month: month, day: d, block_name: b.block_name, ffb_mt: v });
+            if (!isNaN(v)) toUpsert.push({ estate: estate, company_id: _byCoId, year: year, month: month, day: d, block_name: b.block_name, ffb_mt: v });
         });
     }
     try {
@@ -19229,7 +19234,8 @@ async function saveWeighbridgeEntry() {
     if (!estate) { alert('Please select an estate first.'); return; }
     var d = new Date(estateDate + 'T00:00:00');
     var payload = {
-        estate: estate, year: d.getFullYear(), month: d.getMonth() + 1,
+        estate: estate, company_id: (loadSession() || {}).company_id || null,
+        year: d.getFullYear(), month: d.getMonth() + 1,
         estate_date: estateDate, estate_do_no: estateDoNo, estate_net_weight: parseFloat(estateNetWt),
         mill_date: millDate, mill_do_no: millDoNo, mill_net_weight: parseFloat(millNetWt)
     };
@@ -19500,7 +19506,7 @@ async function saveStoneAddPO() {
         alert('Please fill in all PO fields.'); return;
     }
     var estate = _swGetEstate();
-    var payload = { estate: estate, po_no: poNo, po_date: poDate, supplier_name: supplierName, stone_size: stoneSize, qty_ordered_mt: qtyOrdered };
+    var payload = { estate: estate, company_id: (loadSession() || {}).company_id || null, po_no: poNo, po_date: poDate, supplier_name: supplierName, stone_size: stoneSize, qty_ordered_mt: qtyOrdered };
     var btn = document.getElementById('swSavePOBtn');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     var res = _swCurrentEditPOId
@@ -19805,6 +19811,7 @@ function carlosAddYear() {
 async function carlosSaveYear(year) {
     var estate = (typeof activeEstate !== 'undefined') ? activeEstate : '';
     if (!estate) { alert('Please select an estate first.'); return; }
+    var _cSess = loadSession(); var _cCoId = _cSess && _cSess.company_id ? _cSess.company_id : null;
     var btn = document.getElementById('carlosSaveBtn_' + year);
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     try {
@@ -19816,7 +19823,7 @@ async function carlosSaveYear(year) {
             var closeEl = document.getElementById('carlosClose_' + year + '_' + m);
             var opened  = openEl  ? (parseInt(openEl.value)  || 0) : 0;
             var closed  = closeEl ? (parseInt(closeEl.value) || 0) : 0;
-            var row = { estate: estate, year: year, month: m, opened_cases: opened, closed_cases: closed };
+            var row = { estate: estate, company_id: _cCoId, year: year, month: m, opened_cases: opened, closed_cases: closed };
             if (m === 1) row.bring_forward = janBF;
             upserts.push(row);
         }
@@ -19987,6 +19994,7 @@ function _renderFfbHarvesterTargetSummary(prodRows) {
 async function ffbSaveHarvesterTargetYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if(!estate)return;
+    var _htCoId=(loadSession()||{}).company_id||null;
     var yRows=_ffbProdRows.rows.filter(function(r){return r.year===year;});
     var toUpsert=[];
     for(var m=1;m<=12;m++){
@@ -19995,7 +20003,7 @@ async function ffbSaveHarvesterTargetYear(year) {
         var val=el.value!==''?parseInt(el.value,10):null;
         var existing=yRows.find(function(r){return r.month===m;});
         if(val!==null||(existing&&existing.harvester_target!=null))
-            toUpsert.push({estate:estate,year:year,month:m,harvester_target:val});
+            toUpsert.push({estate:estate,company_id:_htCoId,year:year,month:m,harvester_target:val});
     }
     try{
         if(toUpsert.length>0){
@@ -20078,6 +20086,7 @@ function _renderFfbGradingSummary(allRows) {
 async function ffbSaveHarvestYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
+    var _hvCoId=(loadSession()||{}).company_id||null;
     var btn=document.getElementById('ffbSaveHarvestBtn_'+year);
     if (btn){btn.disabled=true;btn.textContent='Saving…';}
     var yRows=_ffbAllRows.rows.filter(function(r){return r.year===year;});
@@ -20088,7 +20097,7 @@ async function ffbSaveHarvestYear(year) {
         var val=el.value!==''?parseFloat(el.value):null;
         var existing=yRows.find(function(r){return r.month===m;});
         if (val!==null||(existing&&existing.ffb_mt!=null))
-            toUpsert.push({estate:estate,year:year,month:m,ffb_mt:val});
+            toUpsert.push({estate:estate,company_id:_hvCoId,year:year,month:m,ffb_mt:val});
     }
     try {
         if (toUpsert.length>0){
@@ -20142,6 +20151,7 @@ function _renderFfbTargetSummary(allRows) {
 async function ffbSaveTargetYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
+    var _tgCoId=(loadSession()||{}).company_id||null;
     var btn=document.getElementById('ffbSaveTargetBtn_'+year);
     if (btn){btn.disabled=true;btn.textContent='Saving…';}
     var yRows=_ffbAllRows.rows.filter(function(r){return r.year===year;});
@@ -20152,7 +20162,7 @@ async function ffbSaveTargetYear(year) {
         var val=el.value!==''?parseFloat(el.value):null;
         var existing=yRows.find(function(r){return r.month===m;});
         if (val!==null||(existing&&existing.ffb_target!=null))
-            toUpsert.push({estate:estate,year:year,month:m,ffb_target:val});
+            toUpsert.push({estate:estate,company_id:_tgCoId,year:year,month:m,ffb_target:val});
     }
     try {
         if (toUpsert.length>0){
@@ -20167,6 +20177,7 @@ async function ffbSaveTargetYear(year) {
 async function ffbSaveHarvestersYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
+    var _hrCoId=(loadSession()||{}).company_id||null;
     var btn=document.getElementById('ffbSaveHarvestersBtn_'+year);
     if (btn){btn.disabled=true;btn.textContent='Saving…';}
     var yRows=_ffbAllRows.rows.filter(function(r){return r.year===year;});
@@ -20177,7 +20188,7 @@ async function ffbSaveHarvestersYear(year) {
         var val=el.value!==''?parseInt(el.value,10):null;
         var existing=yRows.find(function(r){return r.month===m;});
         if (val!==null||(existing&&existing.harvesters!=null))
-            toUpsert.push({estate:estate,year:year,month:m,harvesters:val});
+            toUpsert.push({estate:estate,company_id:_hrCoId,year:year,month:m,harvesters:val});
     }
     try {
         if (toUpsert.length>0){
@@ -20192,6 +20203,7 @@ async function ffbSaveHarvestersYear(year) {
 async function ffbSaveGradingYear(year) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
+    var _grCoId=(loadSession()||{}).company_id||null;
     var btn=document.getElementById('ffbSaveGradingBtn_'+year);
     if (btn){btn.disabled=true;btn.textContent='Saving…';}
     var yRows=_ffbAllRows.rows.filter(function(r){return r.year===year;});
@@ -20202,7 +20214,7 @@ async function ffbSaveGradingYear(year) {
         var val=el.value!==''?parseFloat(el.value):null;
         var existing=yRows.find(function(r){return r.month===m;});
         if (val!==null||(existing&&existing.grading_pct!=null))
-            toUpsert.push({estate:estate,year:year,month:m,grading_pct:val});
+            toUpsert.push({estate:estate,company_id:_grCoId,year:year,month:m,grading_pct:val});
     }
     try {
         if (toUpsert.length>0){
@@ -20220,7 +20232,7 @@ async function ffbClearField(year, month, field) {
     var estate=(typeof activeEstate!=='undefined')?activeEstate:'';
     if (!estate) return;
     if (!confirm('Clear '+field.replace('_',' ')+' for '+MR_MONTH_NAMES[month-1]+' '+year+'?')) return;
-    var payload={estate:estate,year:year,month:month};
+    var payload={estate:estate,company_id:(loadSession()||{}).company_id||null,year:year,month:month};
     payload[field]=null;
     var existing=_ffbAllRows.rows.find(function(r){return r.year===year&&r.month===month;})||{};
     var merged=Object.assign({},existing,payload);
