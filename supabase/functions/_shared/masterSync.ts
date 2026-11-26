@@ -23,10 +23,21 @@ interface Company {
   opispro_id?: string | null; is_active: boolean; sort_order: number | null;
 }
 
+export interface IntranetEstate { id: string; company_id: string; name: string; short_name: string | null; sort_order: number | null; is_active: boolean }
+
 export interface MasterData {
   companies: Company[]; links: { group_id: string; company_id: string }[];
+  estates?: IntranetEstate[]; // gw_company_estates: the locations of each company, as set in the Intranet
   module_company_ids: string[]; module_business_ids: string[];
   module_users?: { id: string; email: string; full_name: string | null; is_admin: boolean; company_ids: string[] }[];
+}
+
+/** The locations (estates) of one company, exactly as set in the Intranet; [] when it has none. */
+export function intranetEstatesOf(md: MasterData, companyId: string): string[] {
+  return (md.estates ?? [])
+    .filter((e) => e.company_id === companyId && e.is_active !== false)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+    .map((e) => e.name.trim()).filter(Boolean);
 }
 
 /** A company as PORT sends it to the browser (session.companies). */

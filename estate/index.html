@@ -21,7 +21,7 @@
         .bg::before { width: 60vw; height: 60vw; left: -18vw; top: -22vw; background: #BBF7D0; }
         .bg::after { width: 55vw; height: 55vw; right: -20vw; bottom: -25vw; background: #BAE6FD; }
         .top { position: sticky; top: 0; z-index: 15; background: linear-gradient(90deg, rgba(224,242,254,.85), rgba(240,253,244,.85)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,.8); }
-        .top .in { max-width: 1400px; margin: 0 auto; height: 56px; padding: 0 16px 0 8px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+        .top .in { max-width: none; margin: 0; height: 56px; padding: 0 16px 0 8px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
         .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
         .back-slot { position: relative; height: 36px; flex: none; }
         .back { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 9px; border-radius: 999px; border: 1px solid #CBD5E1; background: #fff;
@@ -293,14 +293,8 @@
     async function loadEstates() {
         estates = [];
         if (!company) return;
-        // the company's locations: from the sign-in session, else the estate ↔ company table
+        // the company's locations, exactly as set in the Intranet (given at sign-in); none → the company itself
         if (session && session.company_estates && Array.isArray(session.company_estates[company.id])) estates = session.company_estates[company.id].filter(Boolean);
-        if (!estates.length) {
-            try {
-                const r = await api('port_estate_company?select=estate&company_id=eq.' + encodeURIComponent(company.id) + '&order=estate.asc');
-                estates = r.map((x) => x.estate).filter(Boolean);
-            } catch (e) { /* list not readable yet: the company itself is the location */ }
-        }
         if (!estates.length) estates = [company.name];
         let want = ctxEstate; try { want = want || localStorage.getItem(ESTATE_KEY + ':' + company.id) || ''; } catch (e) {}
         estate = estates.includes(want) ? want : estates[0];
@@ -333,7 +327,7 @@
     }
     function drawCtx() { // Location dropdown in the top bar, beside the company
         $('ctx').innerHTML = '';
-        const show = estates.length > 1 || (estates.length === 1 && estates[0] !== company.name);
+        const show = !!(session && session.company_estates && (session.company_estates[company.id] || []).length); // only when the Intranet lists locations
         $('esPick').style.display = show ? '' : 'none';
         if (!show) return;
         $('esBtn').textContent = estate || '— Location —';

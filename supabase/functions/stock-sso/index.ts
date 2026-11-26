@@ -11,7 +11,7 @@ import {
 } from '../_shared/common.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 import {
-  companiesForUser, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
+  companiesForUser, intranetEstatesOf, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
 } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
@@ -199,13 +199,11 @@ Deno.serve(handler(async (_req, body) => {
   if (estRes.error) throw estRes.error;
   const estRows = (estRes.data ?? []) as { estate: string; company_id: string }[];
   const estates = estRows.map((r) => r.estate);
-  // Per company: its locations (the company itself when none is linked) and the
-  // access set for it in PORT → User Access (else the person's global access)
+  // Per company: its locations exactly as set in the Intranet (gw_company_estates);
+  // a company without Intranet locations gets none. And the access set for it in
+  // PORT → User Access (else the person's global access)
   const companyEstates: Record<string, string[]> = {};
-  for (const c of companies) {
-    const list = estRows.filter((r) => r.company_id === c.id).map((r) => r.estate);
-    companyEstates[c.id] = list.length ? list : [c.name];
-  }
+  for (const c of companies) companyEstates[c.id] = intranetEstatesOf(md, c.id);
   const perCo = perCoMap.get(email);
   const companyAccess: Record<string, { role: string; permissions: Record<string, unknown>; status: string }> = {};
   for (const c of companies) {
