@@ -128,7 +128,7 @@
             const item = (n) => '<button type="button" data-es="' + esc(n) + '" class="loc-item' + (n === location_ ? ' on' : '') + '">' + esc(n) + '</button>';
             const groups = groupsOf(company).filter((g) => g.locations.some((n) => locs.includes(n)));
             const named = groups.some((g) => g.name);
-            let menu = allowAll ? '<button type="button" data-es="" class="' + (!location_ ? 'on' : '') + '">All locations</button>' : '';
+            let menu = allowAll ? '<button type="button" data-es="" class="all-item' + (!location_ ? ' on' : '') + '">All locations</button>' : '';
             if (named) {
                 // Business by business: the business (all its locations) — on the worker list — then each location
                 const listed = new Set();

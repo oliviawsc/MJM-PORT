@@ -168,3 +168,15 @@ table.wl thead .c-loc { z-index: 3; }
 .co-menu button.biz-item { font-weight: 700; margin-top: 4px; }
 .co-menu button.biz-item small { margin-left: auto; padding-left: 14px; font-weight: 500; font-size: 11.5px; color: var(--mute); }
 .co-menu button.loc-item { padding-left: 30px; }
+
+/* Location menu: "All locations" and each business are clear, clickable cards;
+   the locations under a business are plain rows. Hover and the chosen one are green. */
+.co-menu button.all-item, .co-menu button.biz-item {
+    font-weight: 700; background: #F8FAFC; border: 1px solid #E2E8F0; margin: 4px 0 2px;
+}
+.co-menu button.all-item:first-child { margin-top: 0; }
+.co-menu button.all-item:hover, .co-menu button.biz-item:hover { background: #ECFDF5; border-color: #A7F3D0; }
+.co-menu button.loc-item:hover { background: #F1F5F9; }
+.co-menu button.all-item.on, .co-menu button.biz-item.on { background: #DCFCE7; border-color: #86EFAC; color: #14532D; }
+.co-menu button.loc-item.on { background: #F0FDF4; color: #14532D; }
+.co-menu button:active { transform: translateY(1px); }
