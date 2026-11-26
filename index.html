@@ -49,6 +49,19 @@
         .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,23,42,.10); border-color: #86EFAC; }
         .tile .ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: #fff; }
         .tile .ic svg { width: 28px; height: 28px; }
+        .tile h2 small { display: block; font-size: 12.5px; font-weight: 500; color: #64748B; margin-top: 2px; }
+        /* Worker Manage: choose the Mantap mobile view or the worker list */
+        .pick-modal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 16px; background: rgba(15,23,42,.45); }
+        .pick-modal.open { display: grid; }
+        .pick-dlg { width: 100%; max-width: 420px; background: #fff; border-radius: 20px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+        .pick-dlg h3 { margin: 0; font-size: 18px; text-align: center; }
+        .pick-dlg p { margin: 4px 0 18px; font-size: 13px; color: #64748B; text-align: center; }
+        .pick-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pick-opt { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px; border-radius: 16px; border: 1px solid #E2E8F0; background: #F8FAFC; text-decoration: none; color: #0F172A; font-weight: 600; font-size: 14px; text-align: center; }
+        .pick-opt:hover { border-color: #86EFAC; background: #fff; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
+        .pick-opt .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: #fff; }
+        .pick-opt .ic svg { width: 24px; height: 24px; }
+        .pick-close { display: block; margin: 16px auto 0; height: 34px; padding: 0 16px; border-radius: 10px; border: 1px solid #CBD5E1; background: #fff; font: inherit; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; }
         .tile h2 { margin: 0; font-size: 14.5px; font-weight: 600; text-align: center; color: #0F172A; }
         .tile.ghost { opacity: .35; border-style: dashed; }
         .tile.lift { position: fixed; margin: 0; z-index: 30; pointer-events: none; transform: scale(1.05); box-shadow: 0 18px 36px rgba(15,23,42,.22); transition: none; }
@@ -78,6 +91,15 @@
         <div class="title">Plantation Operation</div>
         <div class="who" id="who"></div>
     </div></header>
+    <div class="pick-modal" id="workersPick" role="dialog" aria-modal="true" aria-labelledby="workersPickTitle"><div class="pick-dlg">
+        <h3 id="workersPickTitle">Worker Manage</h3>
+        <p>Mantap</p>
+        <div class="pick-opts">
+            <a class="pick-opt" id="optMobile" href="https://mjmelon.github.io/Mantap/#/m"><span class="ic" style="background:#0F766E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>Mantap mobile view</a>
+            <a class="pick-opt" id="optList" href="#"><span class="ic" style="background:#1D4ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Worker list</a>
+        </div>
+        <button type="button" class="pick-close" id="workersPickClose">Cancel</button>
+    </div></div>
     <main>
         <div id="note"></div>
         <div class="grid" id="grid"></div>
@@ -117,7 +139,7 @@
           icon: svg('<path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/>') },
         { module: 'rainfall',  title: 'Rainfall',          bg: '#0C4A6E',
           icon: svg('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 0 9H7"/><path d="M8 19v2M12 19v2M16 19v2"/>') },
-        { module: 'workers',   title: 'Worker Manage',     bg: '#1D4ED8', href: 'https://mjmelon.github.io/Mantap/#/portal/workers', admin: true,
+        { module: 'workers',   title: 'Worker Manage', sub: '(Mantap)', chooser: true, bg: '#1D4ED8', href: 'https://mjmelon.github.io/Mantap/#/portal/workers', admin: true,
           icon: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') },
         { module: 'access',    title: 'User Access',       bg: '#7C2D12', href: 'access/index.html', admin: true,
           icon: svg('<circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.65-8.65"/><path d="m18 5 3 3"/><path d="m15 8 3 3"/>') },
@@ -307,7 +329,7 @@
         document.getElementById('note').innerHTML = notes.join('');
         document.getElementById('grid').innerHTML = mine.map((m) =>
             '<a class="tile" draggable="false" data-module="' + esc(m.module) + '" href="' + esc(appLink(m.module)) + '">' +
-            '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + '</h2></a>').join('');
+            '<span class="ic" style="background:' + m.bg + '">' + m.icon + '</span><h2>' + esc(m.title) + (m.sub ? '<small>' + esc(m.sub) + '</small>' : '') + '</h2></a>').join('');
     }
 
     // Sign-in from MJM Intranet: ?gw_token=<60-second single-use token>. The
@@ -386,6 +408,19 @@
         }
         draw(session, error);
         enableDrag(document.getElementById('grid'));
+        // Worker Manage opens a choice: the Mantap mobile view, or the worker list
+        const wp = document.getElementById('workersPick');
+        document.getElementById('grid').addEventListener('click', (e) => {
+            const t = e.target.closest('.tile[data-module]');
+            const m = t && MODULES.find((x) => x.module === t.dataset.module);
+            if (!m || !m.chooser || e.defaultPrevented) return;
+            e.preventDefault();
+            document.getElementById('optList').href = appLink('workers');
+            wp.classList.add('open');
+        });
+        document.getElementById('workersPickClose').onclick = () => wp.classList.remove('open');
+        wp.addEventListener('click', (e) => { if (e.target === wp) wp.classList.remove('open'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') wp.classList.remove('open'); });
         document.getElementById('coSelect').addEventListener('change', (e) => { pickCompany(e.target.value); draw(session, error); });
     })();
 })();
