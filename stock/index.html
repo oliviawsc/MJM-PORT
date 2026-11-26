@@ -1089,6 +1089,60 @@
     .top-co-menu button.on { font-weight: 700; color: #14532D; }
     .top-co-menu button.on::before { content: '\2713\00a0'; color: #16A34A; }
     .top-co-menu button:not(.on)::before { content: ''; display: inline-block; width: 16px; }
+    /* ── Weighbridge Module ── */
+    .wb-filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+    .wb-filter-label{font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.04em;}
+    .wb-btn{display:inline-flex;align-items:center;gap:7px;padding:0 16px;height:36px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;}
+    .wb-btn-primary{background:#4338CA;color:#fff;}
+    .wb-btn-primary:hover{background:#3730A3;}
+    .wb-btn-ghost{background:transparent;border:1px solid #E2E8F0;color:#475569;}
+    .wb-btn-load{background:#F1F5F9;border:1px solid #E2E8F0;color:#0F172A;}
+    .wb-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;}
+    .wb-table{width:100%;border-collapse:collapse;min-width:820px;font-variant-numeric:tabular-nums;}
+    .wb-table thead{background:#F8FAFC;}
+    .wb-table th{padding:10px 14px;font-size:11.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;text-align:left;border-bottom:2px solid #E2E8F0;}
+    .wb-table th.wb-th-est{color:#1E40AF;background:#EFF6FF;}
+    .wb-table th.wb-th-mill{color:#7C3AED;background:#F5F3FF;}
+    .wb-table th.wb-th-var{color:#15803D;background:#F0FDF4;}
+    .wb-table td{padding:11px 14px;font-size:13px;border-bottom:1px solid #E2E8F0;color:#0F172A;vertical-align:middle;}
+    .wb-table tr.wb-data-row:last-child td{border-bottom:none;}
+    .wb-table tr.wb-data-row:hover td{background:#EEF2FF;}
+    .wb-est-col{color:#1E40AF;font-weight:600;}
+    .wb-mill-col{color:#7C3AED;font-weight:600;}
+    .wb-tag{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:700;}
+    .wb-tag-pos{background:#DCFCE7;color:#15803D;}
+    .wb-tag-neg{background:#FEE2E2;color:#B91C1C;}
+    .wb-tag-warn{background:#FEF08A;color:#854D0E;border:1px solid #FACC15;}
+    .wb-tag-blue{background:#BFDBFE;color:#1D4ED8;font-weight:700;}
+    .wb-row-warn td{background:#FEFCE8!important;}
+    .wb-summary-row td{background:#EEF2FF;font-weight:700;border-top:2px solid #C7D2FE;}
+    .wb-summary-warn td{background:#DBEAFE!important;border-top-color:#93C5FD!important;}
+    .wb-row-actions{display:flex;gap:6px;justify-content:center;}
+    .wb-icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid #E2E8F0;background:transparent;color:#475569;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;padding:0;}
+    .wb-icon-btn:hover{background:#F1F5F9;}
+    .wb-sub-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #E2E8F0;}
+    .wb-form-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;margin-bottom:16px;}
+    .wb-form-section{padding:18px 20px;border-bottom:1px solid #E2E8F0;}
+    .wb-form-section:last-child{border-bottom:none;}
+    .wb-col-header{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:14px;}
+    .wb-col-est{background:#EFF6FF;color:#1E40AF;}
+    .wb-col-mill{background:#F5F3FF;color:#7C3AED;}
+    .wb-col-calc{background:#F0FDF4;color:#15803D;}
+    .wb-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    @media(max-width:680px){.wb-form-row{grid-template-columns:1fr;}}
+    .wb-form-group{display:flex;flex-direction:column;gap:5px;}
+    .wb-form-label{font-size:11.5px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.04em;}
+    .wb-form-input{height:38px;padding:0 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#0F172A;font-size:13px;font-family:Inter,sans-serif;outline:none;width:100%;}
+    .wb-form-input:focus{border-color:#4338CA;box-shadow:0 0 0 2px rgba(67,56,202,.12);}
+    .wb-calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .wb-calc-field{border-radius:8px;padding:9px 13px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;min-height:38px;display:flex;align-items:center;border:1px solid #86EFAC;background:#F0FDF4;color:#15803D;}
+    .wb-calc-field.wb-neg{background:#FEF2F2;border-color:#FCA5A5;color:#B91C1C;}
+    .wb-calc-field.wb-pos{background:#F0FDF4;border-color:#86EFAC;color:#15803D;}
+    .wb-calc-field.wb-zero{background:#F8FAFC;border-color:#E2E8F0;color:#475569;}
+    .wb-actions-bar{display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;background:#F8FAFC;border-top:1px solid #E2E8F0;}
+    .wb-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;}
+    .wb-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;}
+    .wb-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     </style>
 </head>
 <body>
@@ -1099,7 +1153,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-70';
+var APP_BUILD = '20261126-71';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1324,6 +1378,8 @@ var APP_BUILD = '20261126-70';
             <!-- Management Report is opened from the Plantation Operation portal (../), not from inside Stock -->
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Cases</p>
             <button data-target="carlos" class="nav-item" onclick="navigateToSection('carlos')"><span class="nav-icon">&#128269;</span><span class="sb-label">Carlos</span></button>
+            <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Weighbridge</p>
+            <button data-target="weighbridge" class="nav-item" onclick="navigateToSection('weighbridge')"><span class="nav-icon">&#9878;&#65039;</span><span class="sb-label">Weighbridge</span></button>
             <p class="sb-section" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.42);padding:8px 8px 3px;">Admin</p>
             <button data-target="settings" id="navSettings" class="nav-item hidden">
                 <span class="nav-icon">&#9881;&#65039;</span><span class="sb-label" data-i18n="sb_lbl_settings">Settings</span>
@@ -3737,6 +3793,144 @@ var APP_BUILD = '20261126-70';
                 </div>
             </div>
             <div id="mgmtReportSheet" class="mr-sheet"></div>
+        </section>
+
+        <!-- ============ WEIGHBRIDGE ============ -->
+        <section id="weighbridge" class="page-section">
+            <!-- Main list view -->
+            <div id="weighbridgeMain">
+                <h2 class="text-3xl font-bold mb-1">&#9878;&#65039; Weighbridge</h2>
+                <p class="text-sm text-indigo-700 mb-4">Compare FFB weights between Estate and Mill Weighbridges.</p>
+                <!-- Tab bar -->
+                <div class="flex gap-1 border-b-2 border-indigo-200 mb-0">
+                    <button class="htab-btn active" style="background:#4338CA;color:#fff;border-radius:8px 8px 0 0;padding:9px 20px;font-size:13px;font-weight:600;border:1px solid #C7D2FE;border-bottom:none;cursor:pointer;font-family:Inter,sans-serif;position:relative;bottom:-2px;">FFB Weighbridge Variance</button>
+                </div>
+                <div style="background:#fff;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 14px 14px;padding:20px;">
+                    <!-- Filter row -->
+                    <div class="wb-filter-row">
+                        <span class="wb-filter-label">Period</span>
+                        <select id="wbFilterMonth" class="wb-form-input" style="width:130px;">
+                            <option value="1">January</option><option value="2">February</option>
+                            <option value="3">March</option><option value="4">April</option>
+                            <option value="5">May</option><option value="6">June</option>
+                            <option value="7">July</option><option value="8">August</option>
+                            <option value="9">September</option><option value="10">October</option>
+                            <option value="11">November</option><option value="12">December</option>
+                        </select>
+                        <select id="wbFilterYear" class="wb-form-input" style="width:88px;"></select>
+                        <button class="wb-btn wb-btn-load" onclick="loadWeighbridgeData()">Load</button>
+                        <div style="margin-left:auto;">
+                            <button class="wb-btn wb-btn-primary" onclick="showWeighbridgeAddForm(null)">&#xFF0B; Add Entry</button>
+                        </div>
+                    </div>
+                    <!-- Table -->
+                    <div class="wb-table-wrap">
+                        <table class="wb-table">
+                            <thead>
+                                <tr>
+                                    <th class="wb-th-est">Estate Date</th>
+                                    <th class="wb-th-est">Estate DO No.</th>
+                                    <th class="wb-th-est">Estate Net Wt (kg)</th>
+                                    <th class="wb-th-mill">Mill Date</th>
+                                    <th class="wb-th-mill">Mill DO No.</th>
+                                    <th class="wb-th-mill">Mill Net Wt (kg)</th>
+                                    <th class="wb-th-var">Variance (kg)</th>
+                                    <th class="wb-th-var">Variance (%)</th>
+                                    <th style="text-align:center;white-space:nowrap;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weighbridgeTableBody">
+                                <tr><td colspan="9" style="text-align:center;padding:28px;color:#94A3B8;">Select a period and click Load.</td></tr>
+                            </tbody>
+                            <tfoot>
+                                <tr id="weighbridgeSummaryRow" class="wb-summary-row" style="display:none;">
+                                    <td colspan="2" id="wbSummaryLabel"></td>
+                                    <td id="wbSummaryEstWt" class="wb-est-col"></td>
+                                    <td colspan="2"></td>
+                                    <td id="wbSummaryMillWt" class="wb-mill-col"></td>
+                                    <td id="wbSummaryVarKg"></td>
+                                    <td id="wbSummaryVarPct"></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <!-- Legend -->
+                    <div class="wb-legend">
+                        <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#15803D;"></div>Positive — Mill &gt; Estate</div>
+                        <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#DC2626;"></div>Negative — Mill &lt; Estate</div>
+                        <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#EAB308;"></div>Yellow — Individual variance &lt; −2%</div>
+                        <div class="wb-legend-item"><div class="wb-legend-dot" style="background:#3B82F6;"></div>Blue — Monthly total variance &lt; −1%</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Add / Edit entry sub-page -->
+            <div id="weighbridgeAddPage" style="display:none;">
+                <div class="wb-sub-header">
+                    <button class="wb-btn wb-btn-ghost" onclick="showWeighbridgeMain()">&#8592; Back</button>
+                    <div>
+                        <div style="font-size:20px;font-weight:700;color:#0F172A;" id="wbAddTitle">Add Weighbridge Entry</div>
+                        <div style="font-size:13px;color:#475569;margin-top:2px;" id="wbAddSubtitle">FFB Weighbridge Variance</div>
+                    </div>
+                </div>
+                <div class="wb-form-card">
+                    <!-- Estate Weighbridge -->
+                    <div class="wb-form-section">
+                        <div class="wb-col-header wb-col-est">&#127968; Estate Weighbridge</div>
+                        <div class="wb-form-row">
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Date</label>
+                                <input type="date" id="wbEstateDate" class="wb-form-input">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">DO No.</label>
+                                <input type="text" id="wbEstateDoNo" class="wb-form-input" placeholder="e.g. EST-DO-001" maxlength="100">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Net Weight (kg)</label>
+                                <input type="number" id="wbEstateNetWt" class="wb-form-input" placeholder="0" min="0" step="0.01" oninput="calculateWbVariance()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Mill Weighbridge -->
+                    <div class="wb-form-section">
+                        <div class="wb-col-header wb-col-mill">&#127981; Mill Weighbridge</div>
+                        <div class="wb-form-row">
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Date</label>
+                                <input type="date" id="wbMillDate" class="wb-form-input">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">DO No.</label>
+                                <input type="text" id="wbMillDoNo" class="wb-form-input" placeholder="e.g. MILL-DO-001" maxlength="100">
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Net Weight (kg)</label>
+                                <input type="number" id="wbMillNetWt" class="wb-form-input" placeholder="0" min="0" step="0.01" oninput="calculateWbVariance()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Variance (auto) -->
+                    <div class="wb-form-section">
+                        <div class="wb-col-header wb-col-calc">&#128202; Variance (auto-calculated)</div>
+                        <div class="wb-calc-grid">
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Weight Variance (kg) = Mill − Estate</label>
+                                <div id="wbCalcVarKg" class="wb-calc-field wb-zero">—</div>
+                            </div>
+                            <div class="wb-form-group">
+                                <label class="wb-form-label">Weight Variance (%) = Variance ÷ Estate × 100</label>
+                                <div id="wbCalcVarPct" class="wb-calc-field wb-zero">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Action bar -->
+                    <div class="wb-actions-bar">
+                        <button class="wb-btn wb-btn-ghost" onclick="showWeighbridgeMain()">Cancel</button>
+                        <button class="wb-btn wb-btn-primary" id="wbSaveBtn" onclick="saveWeighbridgeEntry()">Save Entry</button>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ============ PAGE 12: USER MANAGEMENT (Super Admin only) ============ -->
@@ -11452,6 +11646,7 @@ function bootApp(session) {
     if (activeEstate) loadFromSupabase();
 
     setLang(localStorage.getItem('opp_lang') || 'en');
+    if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters();
     renderUsersTable();
 
     // Deep link from MJM Intranet: ?module=stock opens Home, ?module=report
@@ -11466,6 +11661,7 @@ function bootApp(session) {
         else if (_module === 'rainfall') navigateToFirstRainfallSection();
         else if (_module === 'stock') navigateToSection('home');
         else if (_module === 'carlos') navigateToSection('carlos');
+        else if (_module === 'weighbridge') navigateToSection('weighbridge');
         const _url = new URL(window.location.href);
         ['module', 'gw_estate', 'gw_estate_short', 'gw_company', 'gw_company_name', 'gw_company_short'].forEach((k) => _url.searchParams.delete(k));
         history.replaceState(null, '', _url.pathname + _url.search + _url.hash);
@@ -17793,6 +17989,7 @@ function navigateToSection(target) {
     if (target === 'plantrecord') renderPlantRecord();
     if (target === 'ffbrecord') renderFfbModule();
     if (target === 'carlos') renderCarlosModule();
+    if (target === 'weighbridge') { showWeighbridgeMain(); if (typeof initWeighbridgeFilters === 'function') initWeighbridgeFilters(); }
     if (target === 'rainfall') {
         const rfDate = document.getElementById('rfDate');
         if (rfDate && !rfDate.value) rfDate.valueAsDate = new Date();
@@ -18728,6 +18925,207 @@ document.addEventListener('click', function(e) {
         if (m2) m2.classList.remove('open');
     }
 });
+
+// ── Weighbridge Module ────────────────────────────────────────────────
+var _wbCurrentEditId = null;
+
+function _wbGetEstate() {
+    var el = document.getElementById('topEstateLabel');
+    if (el && el.tagName === 'SELECT' && el.value) return el.value;
+    el = document.getElementById('sidebarEstate');
+    if (el && el.tagName === 'SELECT' && el.value) return el.value;
+    return typeof activeEstate !== 'undefined' ? (activeEstate || '') : '';
+}
+
+function showWeighbridgeMain() {
+    document.getElementById('weighbridgeMain').style.display = '';
+    document.getElementById('weighbridgeAddPage').style.display = 'none';
+    _wbCurrentEditId = null;
+}
+
+function showWeighbridgeAddForm(editId) {
+    _wbCurrentEditId = editId || null;
+    document.getElementById('weighbridgeMain').style.display = 'none';
+    document.getElementById('weighbridgeAddPage').style.display = '';
+    var estate = _wbGetEstate();
+    var subEl = document.getElementById('wbAddSubtitle');
+    if (subEl) subEl.textContent = 'FFB Weighbridge Variance' + (estate ? ' — ' + estate : '');
+    var titleEl = document.getElementById('wbAddTitle');
+    if (titleEl) titleEl.textContent = editId ? 'Edit Weighbridge Entry' : 'Add Weighbridge Entry';
+    if (editId) {
+        _wbLoadEntryForEdit(editId);
+    } else {
+        var today = new Date().toISOString().slice(0, 10);
+        document.getElementById('wbEstateDate').value = today;
+        document.getElementById('wbEstateDoNo').value = '';
+        document.getElementById('wbEstateNetWt').value = '';
+        document.getElementById('wbMillDate').value = today;
+        document.getElementById('wbMillDoNo').value = '';
+        document.getElementById('wbMillNetWt').value = '';
+        calculateWbVariance();
+    }
+}
+
+function calculateWbVariance() {
+    var estWt = parseFloat(document.getElementById('wbEstateNetWt').value) || 0;
+    var millWt = parseFloat(document.getElementById('wbMillNetWt').value) || 0;
+    var varKg = millWt - estWt;
+    var varPct = estWt !== 0 ? (varKg / estWt) * 100 : 0;
+    var kgEl = document.getElementById('wbCalcVarKg');
+    var pctEl = document.getElementById('wbCalcVarPct');
+    var empty = estWt === 0 && millWt === 0;
+    if (kgEl) {
+        kgEl.textContent = empty ? '—' : (varKg >= 0 ? '+' : '') + varKg.toLocaleString('en-MY', {maximumFractionDigits: 2});
+        kgEl.className = 'wb-calc-field ' + (empty ? 'wb-zero' : varKg < 0 ? 'wb-neg' : 'wb-pos');
+    }
+    if (pctEl) {
+        pctEl.textContent = empty ? '—' : (varPct >= 0 ? '+' : '') + varPct.toFixed(2) + '%';
+        pctEl.className = 'wb-calc-field ' + (empty ? 'wb-zero' : varPct < 0 ? 'wb-neg' : 'wb-pos');
+    }
+}
+
+function initWeighbridgeFilters() {
+    var now = new Date();
+    var monthSel = document.getElementById('wbFilterMonth');
+    var yearSel = document.getElementById('wbFilterYear');
+    if (monthSel) monthSel.value = now.getMonth() + 1;
+    if (yearSel) {
+        yearSel.innerHTML = '';
+        for (var y = now.getFullYear() + 1; y >= 2020; y--) {
+            yearSel.innerHTML += '<option value="' + y + '"' + (y === now.getFullYear() ? ' selected' : '') + '>' + y + '</option>';
+        }
+    }
+}
+
+async function loadWeighbridgeData() {
+    var month = parseInt(document.getElementById('wbFilterMonth').value);
+    var year = parseInt(document.getElementById('wbFilterYear').value);
+    var estate = _wbGetEstate();
+    var tbody = document.getElementById('weighbridgeTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#94A3B8;">Loading…</td></tr>';
+    var q = supabaseClient.from('ffb_weighbridge_variance').select('*').eq('year', year).eq('month', month).order('estate_date', {ascending: true});
+    if (estate) q = q.eq('estate', estate);
+    var res = await q;
+    if (res.error) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#ef4444;">Error: ' + res.error.message + '</td></tr>';
+        return;
+    }
+    _wbRenderTable(res.data || [], month, year);
+}
+
+var WB_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function _wbFmtDate(d) {
+    if (!d) return '—';
+    var dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function _wbRenderTable(rows, month, year) {
+    var tbody = document.getElementById('weighbridgeTableBody');
+    var summaryRow = document.getElementById('weighbridgeSummaryRow');
+    if (!tbody) return;
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:#94A3B8;">No entries for this period.</td></tr>';
+        if (summaryRow) summaryRow.style.display = 'none';
+        return;
+    }
+    var totalEst = 0, totalMill = 0;
+    var html = '';
+    rows.forEach(function(r) {
+        var estWt = parseFloat(r.estate_net_weight) || 0;
+        var millWt = parseFloat(r.mill_net_weight) || 0;
+        var varKg = millWt - estWt;
+        var varPct = estWt !== 0 ? (varKg / estWt) * 100 : 0;
+        totalEst += estWt; totalMill += millWt;
+        var rowCls = varPct < -2 ? ' class="wb-row-warn"' : ' class="wb-data-row"';
+        var kgStr = (varKg >= 0 ? '+' : '') + varKg.toLocaleString('en-MY', {maximumFractionDigits: 2});
+        var pctStr = (varPct >= 0 ? '+' : '') + varPct.toFixed(2) + '%';
+        var kgTag = varKg < 0 ? 'wb-tag-neg' : 'wb-tag-pos';
+        var pctTag = varPct < -2 ? 'wb-tag-warn' : (varPct < 0 ? 'wb-tag-neg' : 'wb-tag-pos');
+        html += '<tr' + rowCls + '>'
+            + '<td>' + _wbFmtDate(r.estate_date) + '</td>'
+            + '<td class="wb-est-col">' + (r.estate_do_no || '—') + '</td>'
+            + '<td class="wb-est-col">' + estWt.toLocaleString('en-MY') + '</td>'
+            + '<td>' + _wbFmtDate(r.mill_date) + '</td>'
+            + '<td class="wb-mill-col">' + (r.mill_do_no || '—') + '</td>'
+            + '<td class="wb-mill-col">' + millWt.toLocaleString('en-MY') + '</td>'
+            + '<td><span class="wb-tag ' + kgTag + '">' + kgStr + '</span></td>'
+            + '<td><span class="wb-tag ' + pctTag + '">' + pctStr + (varPct < -2 ? ' ⚠' : '') + '</span></td>'
+            + '<td><div class="wb-row-actions">'
+            + '<button class="wb-icon-btn" onclick="showWeighbridgeAddForm(\'' + r.id + '\')" title="Edit">✏️</button>'
+            + '<button class="wb-icon-btn" onclick="deleteWeighbridgeEntry(\'' + r.id + '\')" title="Delete">🗑️</button>'
+            + '</div></td></tr>';
+    });
+    tbody.innerHTML = html;
+    if (summaryRow) {
+        var totalVarKg = totalMill - totalEst;
+        var totalVarPct = totalEst !== 0 ? (totalVarKg / totalEst) * 100 : 0;
+        summaryRow.style.display = '';
+        summaryRow.className = 'wb-summary-row' + (totalVarPct < -1 ? ' wb-summary-warn' : '');
+        document.getElementById('wbSummaryLabel').textContent = 'Monthly Total — ' + (WB_MONTHS[month - 1] || '') + ' ' + year;
+        document.getElementById('wbSummaryEstWt').textContent = totalEst.toLocaleString('en-MY');
+        document.getElementById('wbSummaryMillWt').textContent = totalMill.toLocaleString('en-MY');
+        var tKgStr = (totalVarKg >= 0 ? '+' : '') + totalVarKg.toLocaleString('en-MY', {maximumFractionDigits: 2});
+        var tPctStr = (totalVarPct >= 0 ? '+' : '') + totalVarPct.toFixed(2) + '%';
+        var tKgCls = totalVarKg < 0 ? 'wb-tag-neg' : 'wb-tag-pos';
+        var tPctCls = totalVarPct < -1 ? 'wb-tag-blue' : (totalVarPct < 0 ? 'wb-tag-neg' : 'wb-tag-pos');
+        document.getElementById('wbSummaryVarKg').innerHTML = '<span class="wb-tag ' + tKgCls + '">' + tKgStr + '</span>';
+        document.getElementById('wbSummaryVarPct').innerHTML = '<span class="wb-tag ' + tPctCls + '">' + tPctStr + (totalVarPct < -1 ? ' 🔵' : '') + '</span>';
+    }
+}
+
+async function saveWeighbridgeEntry() {
+    var estateDate = document.getElementById('wbEstateDate').value;
+    var estateDoNo = (document.getElementById('wbEstateDoNo').value || '').trim();
+    var estateNetWt = document.getElementById('wbEstateNetWt').value;
+    var millDate = document.getElementById('wbMillDate').value;
+    var millDoNo = (document.getElementById('wbMillDoNo').value || '').trim();
+    var millNetWt = document.getElementById('wbMillNetWt').value;
+    var estate = _wbGetEstate();
+    if (!estateDate || !estateDoNo || estateNetWt === '') { alert('Please fill in all Estate Weighbridge fields.'); return; }
+    if (!millDate || !millDoNo || millNetWt === '') { alert('Please fill in all Mill Weighbridge fields.'); return; }
+    if (!estate) { alert('Please select an estate first.'); return; }
+    var d = new Date(estateDate + 'T00:00:00');
+    var payload = {
+        estate: estate, year: d.getFullYear(), month: d.getMonth() + 1,
+        estate_date: estateDate, estate_do_no: estateDoNo, estate_net_weight: parseFloat(estateNetWt),
+        mill_date: millDate, mill_do_no: millDoNo, mill_net_weight: parseFloat(millNetWt)
+    };
+    var btn = document.getElementById('wbSaveBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    var res = _wbCurrentEditId
+        ? await supabaseClient.from('ffb_weighbridge_variance').update(payload).eq('id', _wbCurrentEditId)
+        : await supabaseClient.from('ffb_weighbridge_variance').insert([payload]);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Entry'; }
+    if (res.error) { alert('Error saving: ' + res.error.message); return; }
+    showWeighbridgeMain();
+    document.getElementById('wbFilterMonth').value = payload.month;
+    document.getElementById('wbFilterYear').value = payload.year;
+    loadWeighbridgeData();
+}
+
+async function _wbLoadEntryForEdit(id) {
+    var res = await supabaseClient.from('ffb_weighbridge_variance').select('*').eq('id', id).single();
+    if (res.error || !res.data) { alert('Could not load entry.'); showWeighbridgeMain(); return; }
+    var r = res.data;
+    document.getElementById('wbEstateDate').value = r.estate_date || '';
+    document.getElementById('wbEstateDoNo').value = r.estate_do_no || '';
+    document.getElementById('wbEstateNetWt').value = r.estate_net_weight || '';
+    document.getElementById('wbMillDate').value = r.mill_date || '';
+    document.getElementById('wbMillDoNo').value = r.mill_do_no || '';
+    document.getElementById('wbMillNetWt').value = r.mill_net_weight || '';
+    calculateWbVariance();
+}
+
+async function deleteWeighbridgeEntry(id) {
+    if (!confirm('Delete this weighbridge entry?')) return;
+    var res = await supabaseClient.from('ffb_weighbridge_variance').delete().eq('id', id);
+    if (res.error) { alert('Error deleting: ' + res.error.message); return; }
+    loadWeighbridgeData();
+}
+// ── End Weighbridge Module ─────────────────────────────────────────────
 
 var _carlosCasesRows = { estate: '', rows: [], loaded: false };
 var _carlosExtraYears = [];
