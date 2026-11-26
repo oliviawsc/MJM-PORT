@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-82';
+var APP_BUILD = '20261126-83';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -3838,11 +3838,11 @@ var APP_BUILD = '20261126-82';
                                 <tr>
                                     <th class="wb-th-est">Estate Date</th>
                                     <th class="wb-th-est">Estate DO No.</th>
-                                    <th class="wb-th-est">Estate Net Wt (kg)</th>
+                                    <th class="wb-th-est">Estate Net Wt (MT)</th>
                                     <th class="wb-th-mill">Mill Date</th>
                                     <th class="wb-th-mill">Mill DO No.</th>
-                                    <th class="wb-th-mill">Mill Net Wt (kg)</th>
-                                    <th class="wb-th-var">Variance (kg)</th>
+                                    <th class="wb-th-mill">Mill Net Wt (MT)</th>
+                                    <th class="wb-th-var">Variance (MT)</th>
                                     <th class="wb-th-var">Variance (%)</th>
                                     <th style="text-align:center;white-space:nowrap;">Action</th>
                                 </tr>
@@ -4012,7 +4012,7 @@ var APP_BUILD = '20261126-82';
                                 <input type="text" id="wbEstateDoNo" class="wb-form-input" placeholder="e.g. EST-DO-001" maxlength="100">
                             </div>
                             <div class="wb-form-group">
-                                <label class="wb-form-label">Net Weight (kg)</label>
+                                <label class="wb-form-label">Net Weight (MT)</label>
                                 <input type="number" id="wbEstateNetWt" class="wb-form-input" placeholder="0" min="0" step="0.01" oninput="calculateWbVariance()">
                             </div>
                         </div>
@@ -4030,7 +4030,7 @@ var APP_BUILD = '20261126-82';
                                 <input type="text" id="wbMillDoNo" class="wb-form-input" placeholder="e.g. MILL-DO-001" maxlength="100">
                             </div>
                             <div class="wb-form-group">
-                                <label class="wb-form-label">Net Weight (kg)</label>
+                                <label class="wb-form-label">Net Weight (MT)</label>
                                 <input type="number" id="wbMillNetWt" class="wb-form-input" placeholder="0" min="0" step="0.01" oninput="calculateWbVariance()">
                             </div>
                         </div>
@@ -4040,7 +4040,7 @@ var APP_BUILD = '20261126-82';
                         <div class="wb-col-header wb-col-calc">&#128202; Variance (auto-calculated)</div>
                         <div class="wb-calc-grid">
                             <div class="wb-form-group">
-                                <label class="wb-form-label">Weight Variance (kg) = Mill − Estate</label>
+                                <label class="wb-form-label">Weight Variance (MT) = Mill − Estate</label>
                                 <div id="wbCalcVarKg" class="wb-calc-field wb-zero">—</div>
                             </div>
                             <div class="wb-form-group">
