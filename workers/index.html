@@ -45,6 +45,8 @@
     const W = window.PortWorkers;
     const draw = () => {
         W.drawTop('../');
+        // Worker list opens for this company, on All locations
+        document.getElementById('tList').href = 'list.html' + (W.company ? '?gw_company_id=' + encodeURIComponent(W.company.id) + '&loc=' : '');
         const n = document.getElementById('note');
         if (!W.session) { n.innerHTML = '<p class="note warn">You are not signed in. Please open Plantation Operation from <a href="https://mjmelon.github.io/MJM-Intranet/">MJM Intranet</a>.</p>'; document.getElementById('grid').style.display = 'none'; }
         else if (!W.company) n.innerHTML = '<p class="note warn">Choose a company in the top bar.</p>';

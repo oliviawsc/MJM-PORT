@@ -25,7 +25,6 @@
     };
     const params = new URLSearchParams(location.search);
     let company = findCompany(params.get('gw_company_id')) || findCompany(params.get('gw_company')) || findCompany(params.get('gw_company_name'));
-    try { const u = new URL(location.href); ['gw_token', 'gw_company_id', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short'].forEach((k) => u.searchParams.delete(k)); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
     if (!company) { try { company = findCompany(localStorage.getItem(COMPANY_ID_KEY)) || findCompany(localStorage.getItem(COMPANY_KEY)); } catch (e) {} }
     if (!company && companies.length === 1) company = companies[0];
 
@@ -41,6 +40,19 @@
     }
     if (company) applyCompany(company);
 
+    // This page's own address keeps the company (and the worker list's location),
+    // so a refresh reopens exactly this — not the company last chosen in another tab.
+    const urlLoc = params.has('loc') ? params.get('loc') : null; // '' = All locations
+    function syncUrl() {
+        try {
+            const u = new URL(location.href);
+            ['gw_token', 'gw_company', 'gw_company_name', 'gw_company_short', 'gw_estate', 'gw_estate_short', 'gw_company_id', 'loc'].forEach((k) => u.searchParams.delete(k));
+            if (company) u.searchParams.set('gw_company_id', company.id);
+            if (allowAll && company && locationsOf(company).length) u.searchParams.set('loc', location_);
+            history.replaceState(null, '', u.pathname + u.search + u.hash);
+        } catch (e) {}
+    }
+
     const listeners = [];
     function logout() {
         localStorage.removeItem(SESSION_KEY);
@@ -55,10 +67,18 @@
     let allowAll = false;
     const locationsOf = (c) => (c && session && session.company_estates && Array.isArray(session.company_estates[c.id])) ? session.company_estates[c.id].filter(Boolean) : [];
     const allPicked = new Set(); // companies where "All locations" was chosen on this page
+    const pinned = new Map();    // company → location chosen on this page
+    let urlLocUsed = false;
     function currentLocation() {
         const locs = locationsOf(company);
         if (!locs.length) return '';
-        if (allowAll && allPicked.has(company.id)) return '';
+        if (allowAll) {
+            // Worker list: All locations unless this page's address says otherwise (refresh)
+            if (!urlLocUsed && urlLoc != null) { urlLocUsed = true; if (urlLoc === '' || locs.includes(urlLoc)) { if (urlLoc) pinned.set(company.id, urlLoc); else allPicked.add(company.id); } }
+            if (pinned.has(company.id) && locs.includes(pinned.get(company.id))) return pinned.get(company.id);
+            return '';
+        }
+        if (allPicked.has(company.id)) return '';
         let want = params.get('gw_estate') || null;
         if (want == null) { try { want = localStorage.getItem(LOC_KEY + ':' + company.id); } catch (e) {} }
         if (want === '' && allowAll) return '';
@@ -67,7 +87,7 @@
     let location_ = '';
     function pickLocation(name) {
         location_ = name || '';
-        if (company) { if (location_) allPicked.delete(company.id); else allPicked.add(company.id); }
+        if (company) { if (location_) { allPicked.delete(company.id); pinned.set(company.id, location_); } else { allPicked.add(company.id); pinned.delete(company.id); } }
         try { if (company && location_) localStorage.setItem(LOC_KEY + ':' + company.id, location_); } catch (e) {}
         if (session && location_) { session.estate = location_; try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
     }
@@ -104,6 +124,7 @@
         if (company) u.searchParams.set('gw_company_id', company.id);
         document.getElementById('back').href = u.pathname + u.search;
         lastBack = backHref; lastOpts = opts;
+        syncUrl();
     }
     let lastBack = '../', lastOpts = null;
     // Menus open / close / choose (wired once)
