@@ -208,8 +208,8 @@
         /* User info widget — exact match of estate info .who */
         #headerWho{display:flex;align-items:center;gap:12px}
         #headerWho .hw-me{text-align:right;line-height:1.25;min-width:0}
-        #headerWho .hw-me b{display:block;font-size:14px;font-weight:500;color:#0F172A;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-        #headerWho .hw-me small{display:block;font-size:12px;color:#64748B;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+        #headerWho .hw-me b{display:block;font-size:14px;font-weight:500;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        #headerWho .hw-me small{display:block;font-size:12px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         #headerWho .hw-avatar{width:32px;height:32px;border-radius:50%;background:#E2E8F0;color:#0F172A;display:grid;place-items:center;font-size:14px;font-weight:600;flex-shrink:0;overflow:hidden}
         #headerWho .hw-logout{width:36px;height:36px;border-radius:10px;border:0;background:transparent;color:#64748B;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
         #headerWho .hw-logout:hover{background:rgba(241,245,249,.9);color:#0F172A}
@@ -1174,7 +1174,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-103';
+var APP_BUILD = '20261127-104';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -15522,7 +15522,7 @@ function populateChemFilters() {
         var name  = session.name  || '';
         var email = session.email || '';
         var role  = session.role  || '';
-        var initials = name ? name.trim().split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase() : (email[0]||'?').toUpperCase();
+        var initials = name ? (name.trim().split(' ')[0][0]||'').toUpperCase() : (email[0]||'?').toUpperCase();
         var circle = document.getElementById('avatarCircle');
         var aname  = document.getElementById('avatarName');
         var aemail = document.getElementById('avatarEmail');
