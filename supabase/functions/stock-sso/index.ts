@@ -92,7 +92,7 @@ async function createUser(email: string, name: string, module: Module): Promise<
 }
 
 /** Creates the user's Supabase Auth account if needed and returns a session for it. */
-async function issueSession(row: UserRow) {
+async function issueSession(row: { email: string; id?: number; name?: string }) {
   const admin = serviceClient().auth.admin;
   // Returning users already have an Auth account: ask for the link first and
   // create the account only when it is missing (one round trip less per sign-in)
@@ -147,34 +147,48 @@ function toSession(row: UserRow, companies: PortCompany[], avatar = '', intranet
 // When this function instance last linked old estate names to companies
 let lastLink = 0;
 
+// The Intranet's master data per module icon, kept for a short while by this
+// function instance: people opening modules one after another do not each
+// wait for the whole company / people list again.
+const MD_TTL = 30 * 1000;
+const mdCache = new Map<Module, { at: number; md: Promise<Awaited<ReturnType<typeof intranetMasterData>>> }>();
+function masterData(module: Module) {
+  const hit = mdCache.get(module);
+  if (hit && Date.now() - hit.at < MD_TTL) return hit.md;
+  const md = intranetMasterData(module);
+  mdCache.set(module, { at: Date.now(), md });
+  md.catch(() => mdCache.delete(module));
+  return md;
+}
+
 Deno.serve(handler(async (_req, body) => {
   const token = String(body.token ?? '');
   if (!token || token.length > 4000) throw new ApiError('err_sso_invalid', 400);
   const module: Module = body.module === 'report' || body.module === 'mantap' ? body.module : 'stock';
 
+  // Fast path: everything that does not depend on each other runs at the same time.
+  // 1) redeem the token  ‖  the Intranet's master data (who has which companies)
+  const mdP = masterData(module);
+  mdP.catch(() => {}); // awaited below; never an unhandled rejection
   const check = await redeem(token, module);
   if (!check.allowed || !check.user?.email) throw new ApiError('err_forbidden', 403);
   const email = check.user.email.toLowerCase();
   const fullName = (check.user.full_name ?? '').trim() || email.split('@')[0];
 
+  // 2) the sign-in session (it needs only the email)  ‖  the person's row  ‖  master data
+  const authP = issueSession({ email, name: fullName });
+  authP.catch(() => {});
+  const [md, found] = await Promise.all([
+    mdP.catch((e) => {
+      console.error('[stock-sso] Intranet master data:', e instanceof Error ? e.message : e);
+      throw new ApiError(e instanceof Error && e.message === 'err_sso_not_set_up' ? 'err_sso_not_set_up' : 'err_intranet_unavailable', 503);
+    }),
+    findUser(email),
+  ]);
   // Which companies the Intranet gives this person for this module's icon.
   // No company → no entry: the Intranet decides who may open what.
-  let md;
-  try {
-    md = await intranetMasterData(module);
-  } catch (e) {
-    console.error('[stock-sso] Intranet master data:', e instanceof Error ? e.message : e);
-    throw new ApiError(e instanceof Error && e.message === 'err_sso_not_set_up' ? 'err_sso_not_set_up' : 'err_intranet_unavailable', 503);
-  }
   const companies = companiesForUser(email, md);
   if (!companies.length) throw new ApiError('err_no_company', 403);
-
-  // Fast path: everything that does not depend on each other runs at the same time.
-  // 1) the person's row  ‖  PORT's copy of the Intranet company list
-  const [found] = await Promise.all([
-    findUser(email),
-    saveCompanies(md).catch((e) => console.warn('[stock-sso] company list skipped:', e instanceof Error ? e.message : e)),
-  ]);
   let row = found ?? await createUser(email, fullName, module);
   if (row.status === 'inactive') throw new ApiError('err_inactive', 403);
   // The person is who the Intranet says they are: the row carries the Intranet
@@ -195,14 +209,12 @@ Deno.serve(handler(async (_req, body) => {
   }
   row = { ...row, ...fix } as UserRow;
 
-  // 2) this person's company access  ‖  their companies' locations  ‖  per-company
-  //    User Access  ‖  the sign-in session
+  // 3) their companies' locations  ‖  per-company User Access  ‖  the sign-in session
   const ids = companies.map((c) => c.id);
-  const [, estRes, perCoMap, auth] = await Promise.all([
-    saveUserCompanies(email, module, companies),
+  const [estRes, perCoMap, auth] = await Promise.all([
     serviceClient().from('port_estate_company').select('estate, company_id').in('company_id', ids).order('estate'),
     companyAccessRows([email], ids),
-    issueSession(row),
+    authP,
   ]);
   if (estRes.error) throw estRes.error;
   const estRows = (estRes.data ?? []) as { estate: string; company_id: string }[];
@@ -224,9 +236,14 @@ Deno.serve(handler(async (_req, body) => {
   }
   row = { ...row, estates };
 
-  // 3) After the answer: one write for the row, and the old-estate → company
-  //    link (it scans every data table, so at most once every 10 minutes)
+  // 4) After the answer: PORT's copy of the company list and of this person's
+  //    companies, one write for the row, and the old-estate → company link (it
+  //    scans every data table, so at most once every 10 minutes)
   const after = (async () => {
+    try {
+      await saveCompanies(md);
+      await saveUserCompanies(email, module, companies);
+    } catch (e) { console.warn('[stock-sso] company list skipped:', e instanceof Error ? e.message : e); }
     const { error } = await serviceClient().from(USERS_TABLE)
       .update({ ...fix, last_active: new Date().toISOString(), companies: ids, estates }).eq('id', row.id);
     if (error) console.warn('[stock-sso] user row update skipped:', error.message);
