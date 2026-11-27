@@ -226,7 +226,14 @@ export async function matchLocations(md: MasterData): Promise<{ matched: number 
     const locs = (md.locations ?? []).filter((e) => e.company_id === co.id && e.is_active !== false)
       .map((e) => ({ name: (e.name ?? '').trim(), short: (e.short_name ?? '').trim(), id: (e.location_id ?? '').trim() })).filter((e) => e.name);
     let hit: { name: string; id: string } | null = null;
-    if (r.location_matched_by === 'manual') {
+    // Already linked to a Location ID that still exists → stay with it (follow a rename).
+    // E.g. a company that had one location (its own ID) and now has several: its first
+    // location keeps that ID, so what was linked before stays on it.
+    const byId = r.location_id ? locs.find((x) => x.id && x.id === r.location_id) : undefined;
+    if (byId) {
+      if (byId.name === r.location_name) continue;
+      hit = byId;
+    } else if (r.location_matched_by === 'manual') {
       const l = locs.find((x) => x.name === r.location_name);
       if (l && l.id !== (r.location_id ?? '')) hit = l; else continue; // refresh the ID only
     } else if (!locs.length) {
