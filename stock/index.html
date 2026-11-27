@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-91';
+var APP_BUILD = '20261127-92';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -4800,6 +4800,7 @@ let fieldMaintRounds = [];
 let maintClaims      = []; // { id, roundId, roundName, blockName, claimedArea, month }
 let chemIngredients  = []; // { id, name, itemId, itemName, unit, maxDosage }
 let rainfallTxns     = []; // { id, date, mm, picture, createdAt }
+let estateBlocks     = []; // { division, phase, block } from port_estate_blocks
 
 // Snapshot of last-known ids per estate+table for Supabase delete sync
 const lastKnownIds = {
@@ -4837,6 +4838,7 @@ function loadEstateData(estate) {
     lastKnownIds.port_maint_claims       = new Set(maintClaims.map(r => r.id));
     lastKnownIds.port_chem_ingredients   = new Set(chemIngredients.map(r => r.id));
     lastKnownIds.port_rainfall_txns      = new Set(rainfallTxns.map(r => r.id));
+    estateBlocks = []; // reset on estate switch; repopulated by loadFromSupabase()
 }
 
 // Show a spinner + disable a save button while an operation is in flight.
@@ -5162,7 +5164,7 @@ async function loadFromSupabase() {
     _showDashLoadingSpinner();
     try {
         const [itemsRes, locsRes, txnsRes, roundsRes,
-               fmRoundsRes, claimsRes, chemRes, rainfallRes] = await Promise.all([
+               fmRoundsRes, claimsRes, chemRes, rainfallRes, estBlocksRes] = await Promise.all([
             supabaseClient.from('port_items').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_locations').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_transactions').select('*').eq('estate', activeEstate),
@@ -5170,7 +5172,8 @@ async function loadFromSupabase() {
             supabaseClient.from('port_fieldmaint_rounds').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_maint_claims').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_chem_ingredients').select('*').eq('estate', activeEstate),
-            supabaseClient.from('port_rainfall_txns').select('*').eq('estate', activeEstate)
+            supabaseClient.from('port_rainfall_txns').select('*').eq('estate', activeEstate),
+            supabaseClient.from('port_estate_blocks').select('division,phase,block').eq('estate', activeEstate).order('division').order('phase').order('block')
         ]);
 
         if (itemsRes.error)    console.error('[Supabase] load items',          itemsRes.error);
@@ -5180,7 +5183,8 @@ async function loadFromSupabase() {
         if (fmRoundsRes.error) console.error('[Supabase] load fm_rounds',      fmRoundsRes.error);
         if (claimsRes.error)   console.error('[Supabase] load maint_claims',   claimsRes.error);
         if (chemRes.error)     console.error('[Supabase] load chem_ingr',      chemRes.error);
-        if (rainfallRes.error) console.error('[Supabase] load rainfall_txns',  rainfallRes.error);
+        if (rainfallRes.error)   console.error('[Supabase] load rainfall_txns',  rainfallRes.error);
+        if (estBlocksRes.error)  console.error('[Supabase] load estate_blocks',  estBlocksRes.error);
 
         if (!itemsRes.error  && itemsRes.data  !== null) items            = itemsRes.data;
         if (!locsRes.error   && locsRes.data   !== null) locations        = locsRes.data;
@@ -5267,6 +5271,7 @@ async function loadFromSupabase() {
                 syncToSupabase(STORAGE_KEYS.rainfallTxns, rainfallTxns);
             }
         }
+        if (!estBlocksRes.error && estBlocksRes.data !== null) estateBlocks = estBlocksRes.data;
 
         // Cache all tables with estate-scoped localStorage keys
         const keys = getEstateKeys(activeEstate);
@@ -5743,16 +5748,58 @@ function deleteLocation(id) {
    Each row holds an independent Quantity + Location, so a single
    submission can split one item across multiple blocks in a day.
    ----------------------------------------------------------------- */
+// Returns a human-readable label for one estate block row,
+// omitting levels that are blank ("whichever applicable").
+function _estateBlockLabel(r) {
+    var parts = [];
+    if (r.division) parts.push('Division ' + r.division);
+    if (r.phase)    parts.push('Phase ' + r.phase);
+    parts.push('Block ' + r.block);
+    return parts.join(' / ');
+}
+
 function buildLocationOptionsHtml() {
     const d = I18N[currentLang] || I18N['en'];
-    const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-    // On mobile Out Store, exclude None/Storage — blocks only
-    if (document.body.classList.contains('estate-mobile')) {
-        return `<option value="">-- Select Block --</option>` +
-            sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    const isMobile = document.body.classList.contains('estate-mobile');
+    const noneOpt  = `<option value="None/Storage">${d.opt_none_storage || 'None/Storage'}</option>`;
+
+    var blocks = estateBlocks.slice();
+    var optionsHtml;
+
+    if (!blocks.length) {
+        // No estate blocks configured — fall back to port_locations list
+        const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
+        optionsHtml = sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    } else {
+        const hasDivision = blocks.some(r => r.division);
+        const hasPhase    = blocks.some(r => r.phase);
+
+        if (!hasDivision && !hasPhase) {
+            // Flat list — no grouping needed
+            optionsHtml = blocks.map(r => `<option value="${_estateBlockLabel(r)}">${_estateBlockLabel(r)}</option>`).join('');
+        } else {
+            // Group by Division + Phase (single-level optgroup; HTML only supports one level)
+            const groups = new Map();
+            blocks.forEach(r => {
+                const grpParts = [];
+                if (r.division) grpParts.push('Division ' + r.division);
+                if (r.phase)    grpParts.push('Phase ' + r.phase);
+                const grpKey = grpParts.join(' / ');
+                if (!groups.has(grpKey)) groups.set(grpKey, []);
+                groups.get(grpKey).push(r);
+            });
+            optionsHtml = '';
+            groups.forEach((rows, grp) => {
+                const opts = rows.map(r => `<option value="${_estateBlockLabel(r)}">Block ${r.block}</option>`).join('');
+                optionsHtml += grp ? `<optgroup label="${grp}">${opts}</optgroup>` : opts;
+            });
+        }
     }
-    return `<option value="None/Storage">${d.opt_none_storage}</option>` +
-        sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+
+    if (isMobile) {
+        return `<option value="">-- Select Block --</option>` + optionsHtml;
+    }
+    return noneOpt + optionsHtml;
 }
 
 function addTxnRow() {
@@ -6607,9 +6654,7 @@ function populateLocationDropdowns() {
         sel.value = 'None/Storage';
         return;
     }
-    const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-    sel.innerHTML = `<option value="None/Storage">${d.opt_none_storage}</option>` +
-        sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    sel.innerHTML = buildLocationOptionsHtml();
 }
 
 /* -----------------------------------------------------------------
