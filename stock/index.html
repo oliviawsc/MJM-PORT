@@ -1174,7 +1174,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-104';
+var APP_BUILD = '20261127-105';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -4204,10 +4204,8 @@ var APP_BUILD = '20261127-104';
 
             <!-- Tab nav -->
             <div class="flex flex-wrap border-b border-green-200 mb-0" id="settingsTabNav">
-                <button onclick="switchSettingsTab('est-blocks')" id="stab-btn-est-blocks"
-                    class="stab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg -mb-px border border-b-white border-green-200 bg-white text-green-800 mr-1">🌴 Estates &amp; Blocks</button>
                 <button onclick="switchSettingsTab('item-files')" id="stab-btn-item-files"
-                    class="stab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg -mb-px border border-transparent bg-transparent text-gray-500 hover:text-green-800 mr-1">📦 Item Files</button>
+                    class="stab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg -mb-px border border-b-white border-green-200 bg-white text-green-800 mr-1">📦 Item Files</button>
                 <button onclick="switchSettingsTab('manuring-prog')" id="stab-btn-manuring-prog"
                     class="stab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg -mb-px border border-transparent bg-transparent text-gray-500 hover:text-green-800 mr-1">🌿 Manuring Program</button>
                 <button onclick="switchSettingsTab('maint-prog')" id="stab-btn-maint-prog"
@@ -4216,69 +4214,8 @@ var APP_BUILD = '20261127-104';
                     class="stab-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg -mb-px border border-transparent bg-transparent text-gray-500 hover:text-green-800">🧪 Chemical Usage Limits</button>
             </div>
 
-            <!-- ── Tab 1: Estates & Blocks ── -->
-            <div id="stab-est-blocks" class="stab-panel pt-6">
-                <div id="settingsEstatesPanel">
-                    <div class="bg-white p-6 rounded-xl shadow mb-6">
-                        <h3 class="text-xl font-bold mb-1">🌴 Estate Management</h3>
-                        <p class="text-xs text-gray-400 mb-4">The estate list follows the MJM Intranet. Add, rename or remove companies and estates in the Intranet (Admin → Master Manage); they appear here, in Management Report and in Mantap.</p>
-                        <div class="flex flex-wrap items-center gap-3 mb-6">
-                            <button onclick="syncEstatesFromIntranet()" id="syncEstatesBtn"
-                                class="bg-green-800 hover:bg-green-900 text-white px-5 py-2 rounded-lg font-semibold">🔄 Sync from Intranet</button>
-                            <span id="syncEstatesMsg" class="text-sm text-gray-500"></span>
-                        </div>
-                        <h4 class="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Current Estates</h4>
-                        <div id="estatesListContainer"><p class="text-sm text-gray-400 italic">Loading…</p></div>
-                    </div>
-                </div>
-
-                <!-- Blocks panel (shown when Manage Blocks clicked) -->
-                <div id="settingsBlocksPanel" class="hidden">
-                    <div class="bg-white p-6 rounded-xl shadow">
-                        <div class="flex items-center gap-3 mb-5 flex-wrap">
-                            <button onclick="settingsBackToEstates()"
-                                class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg border border-gray-300">← Back to Estates</button>
-                            <h3 class="text-xl font-bold">📍 Blocks — <span id="settingsBlocksEstateTitle" class="text-green-800">—</span></h3>
-                        </div>
-                        <!-- Add / Edit block form -->
-                        <div class="mb-6 pb-6 border-b border-gray-100">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide" id="sbFormTitle">Add New Block</h4>
-                            <input type="hidden" id="sbEditId" value="" />
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Block Name <span class="text-red-500">*</span></label>
-                                    <input id="sbName" type="text" placeholder="e.g. Block A1"
-                                        class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600"
-                                        onkeydown="if(event.key==='Enter')saveSettingsBlock()" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Area (Ha)</label>
-                                    <input id="sbArea" type="number" min="0" step="0.01" placeholder="e.g. 25.5"
-                                        class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">No. of Palms</label>
-                                    <input id="sbPalms" type="number" min="0" step="1" placeholder="e.g. 3500"
-                                        class="w-full border border-green-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-                                </div>
-                                <div class="flex gap-2">
-                                    <button id="sbSubmitBtn" onclick="saveSettingsBlock()"
-                                        class="bg-green-800 hover:bg-green-900 text-white px-4 py-2 rounded-lg font-semibold text-sm">Add Block</button>
-                                    <button id="sbCancelBtn" onclick="cancelEditSettingsBlock()"
-                                        class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-semibold text-sm">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Registered Blocks</h4>
-                        <div id="settingsBlocksContainer" class="overflow-x-auto">
-                            <p class="text-sm text-gray-400 italic">Loading…</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ── Tab 2: Item Files ── -->
-            <div id="stab-item-files" class="stab-panel hidden pt-6">
+            <!-- ── Tab 1: Item Files ── -->
+            <div id="stab-item-files" class="stab-panel pt-6">
 
                 <!-- Panel A: Register Items list (default) -->
                 <div id="itemListPanel">
@@ -5470,7 +5407,6 @@ navButtons.forEach(btn => {
             if (typeof renderToolsRecord === 'function') renderToolsRecord();
         }
         if (target === 'settings') {
-            renderEstatesList();
             renderItemsTable();
             renderManuringRounds();
             renderMrBlocksGrid();
@@ -11145,32 +11081,6 @@ let GLOBAL_ESTATES = ['Elewsun','Estet Seri Mawar','Gama Menang','Mega Jutamas (
 // The estate list follows the MJM Intranet companies (port_estates is synced
 // from the Intranet by stock-master-sync). Inactive rows are hidden.
 let GLOBAL_ESTATE_ROWS = [];
-// Settings → "Sync from Intranet": asks the stock-master-sync Edge Function to
-// copy the Intranet company / estate list into port_estates right now.
-async function syncEstatesFromIntranet() {
-    const btn = document.getElementById('syncEstatesBtn'), msg = document.getElementById('syncEstatesMsg');
-    if (btn) btn.disabled = true;
-    if (msg) msg.textContent = 'Syncing…';
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        const res = await fetch(SUPABASE_URL + '/functions/v1/stock-master-sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + ((session && session.access_token) || SUPABASE_PUBLISHABLE_KEY) },
-            body: '{}',
-        });
-        const r = await res.json().catch(() => ({}));
-        if (!res.ok || !r.ok) throw new Error(r.error === 'err_forbidden' ? 'only the Super Admin can sync' : r.error === 'err_sso_not_set_up' ? 'the Intranet API key is not set in this project' : (r.error || ('http ' + res.status)));
-        const parts = [];
-        if (r.added.length) parts.push('added ' + r.added.join(', '));
-        if (r.renamed.length) parts.push('renamed ' + r.renamed.map(x => x[0] + ' → ' + x[1]).join(', '));
-        if (r.deactivated.length) parts.push('hidden ' + r.deactivated.join(', '));
-        if (msg) msg.textContent = 'Synced ' + r.total + ' Intranet companies' + (r.unlinked && r.unlinked.length ? ' (old estate names without a company: ' + r.unlinked.join(', ') + ')' : '') + (parts.length ? ': ' + parts.join('; ') : ' (no change)') + '.';
-        await renderEstatesList();
-    } catch (e) {
-        if (msg) msg.textContent = 'Sync failed: ' + e.message;
-    }
-    if (btn) btn.disabled = false;
-}
 
 async function loadEstatesFromSupabase() {
     try {
@@ -11214,143 +11124,6 @@ function populateRegEstatesGrid() {
     ).join('');
 }
 
-async function renderEstatesList() {
-    const container = document.getElementById('estatesListContainer');
-    if (!container) return;
-    container.innerHTML = '<p class="text-sm text-gray-400 italic">Loading…</p>';
-    await loadEstatesFromSupabase();
-    populateRegEstatesGrid();
-    refreshEstateSidebar(loadSession());
-
-    // Fetch block counts per estate
-    let blockCounts = {};
-    try {
-        const { data: blkData } = await supabaseClient.from('port_locations').select('estate');
-        if (blkData) blkData.forEach(r => { blockCounts[r.estate] = (blockCounts[r.estate] || 0) + 1; });
-    } catch (e) { /* non-fatal */ }
-
-    if (GLOBAL_ESTATES.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-400 italic">No estates found.</p>';
-        return;
-    }
-    container.innerHTML = `
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-green-100 text-green-800">
-                    <tr>
-                        <th class="px-3 py-2 text-left">#</th>
-                        <th class="px-3 py-2 text-left">Estate Name</th>
-                        <th class="px-3 py-2 text-left">Intranet company</th>
-                        <th class="px-3 py-2 text-left">Blocks</th>
-                        <th class="px-3 py-2 text-left">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${GLOBAL_ESTATES.map((e, i) => `
-                        <tr class="border-b border-gray-100 hover:bg-green-50" id="estate-row-${i}">
-                            <td class="px-3 py-2 text-gray-400 tabular-nums">${i + 1}</td>
-                            <td class="px-3 py-2 font-medium" id="estate-name-${i}">🌴 ${e}</td>
-                            <td class="px-3 py-2 text-gray-500">${(GLOBAL_ESTATE_ROWS.find(r => r.name === e) || {}).intranet_id ? ((GLOBAL_ESTATE_ROWS.find(r => r.name === e) || {}).company_name || e) : '<span class="text-amber-600">not linked yet</span>'}</td>
-                            <td class="px-3 py-2 text-gray-500">${blockCounts[e] || 0} block${(blockCounts[e] || 0) !== 1 ? 's' : ''}</td>
-                            <td class="px-3 py-2 whitespace-nowrap" id="estate-actions-${i}">
-                                <button onclick="settingsManageBlocks(${i})"
-                                    class="text-green-700 hover:text-green-900 text-xs font-semibold border border-green-300 hover:bg-green-50 px-2 py-1 rounded mr-1">📍 Blocks</button>
-                            </td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
-        </div>`;
-}
-
-function deleteEstateByIdx(idx) {
-    const name = GLOBAL_ESTATES[idx];
-    if (name === undefined) return;
-    deleteEstate(name);
-}
-
-function startEditEstate(idx) {
-    const oldName     = GLOBAL_ESTATES[idx];
-    if (oldName === undefined) return;
-    const nameCell    = document.getElementById(`estate-name-${idx}`);
-    const actionsCell = document.getElementById(`estate-actions-${idx}`);
-    if (!nameCell || !actionsCell) return;
-
-    // Replace name cell with an input
-    nameCell.innerHTML = '';
-    const inp = document.createElement('input');
-    inp.type  = 'text';
-    inp.value = oldName;
-    inp.id    = `estate-edit-input-${idx}`;
-    inp.className = 'border border-blue-300 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500';
-    inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  saveEditEstate(oldName, idx);
-        if (e.key === 'Escape') renderEstatesList();
-    });
-    nameCell.appendChild(inp);
-    inp.focus();
-    inp.select();
-
-    // Replace action cell with Save / Cancel buttons
-    actionsCell.innerHTML = '';
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = '💾 Save';
-    saveBtn.className = 'text-white bg-blue-600 hover:bg-blue-700 text-xs font-semibold px-2 py-1 rounded mr-1';
-    saveBtn.addEventListener('click', () => saveEditEstate(oldName, idx));
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '✕ Cancel';
-    cancelBtn.className = 'text-gray-600 hover:text-gray-800 text-xs font-semibold border border-gray-300 hover:bg-gray-100 px-2 py-1 rounded';
-    cancelBtn.addEventListener('click', () => renderEstatesList());
-
-    actionsCell.appendChild(saveBtn);
-    actionsCell.appendChild(cancelBtn);
-}
-
-async function saveEditEstate(oldName, idx) {
-    const inp = document.getElementById(`estate-edit-input-${idx}`);
-    if (!inp) return;
-    const newName = inp.value.trim();
-    if (!newName) { alert('Estate name cannot be empty.'); inp.focus(); return; }
-    if (newName === oldName) { await renderEstatesList(); return; }
-    if (GLOBAL_ESTATES.filter(e => e !== oldName).map(e => e.toLowerCase()).includes(newName.toLowerCase())) {
-        alert('An estate with that name already exists.'); inp.focus(); return;
-    }
-    try {
-        const { error } = await supabaseClient.from('port_estates').update({ name: newName }).eq('name', oldName);
-        if (error) throw error;
-        await renderEstatesList();
-    } catch (e) {
-        alert('Error updating estate: ' + e.message);
-    }
-}
-
-async function addEstate() {
-    const input = document.getElementById('newEstateName');
-    const name  = input.value.trim();
-    if (!name) { alert('Please enter an estate name.'); return; }
-    if (GLOBAL_ESTATES.map(e => e.toLowerCase()).includes(name.toLowerCase())) {
-        alert('An estate with that name already exists.'); return;
-    }
-    try {
-        const { error } = await supabaseClient.from('port_estates').insert({ name });
-        if (error) throw error;
-        input.value = '';
-        await renderEstatesList();
-    } catch (e) {
-        alert('Error adding estate: ' + e.message);
-    }
-}
-
-async function deleteEstate(name) {
-    if (!confirm(`Delete estate "${name}"?\n\nThis removes it from the selector and user assignment. Existing stock records linked to this estate are not deleted. This cannot be undone.`)) return;
-    try {
-        const { error } = await supabaseClient.from('port_estates').delete().eq('name', name);
-        if (error) throw error;
-        await renderEstatesList();
-    } catch (e) {
-        alert('Error deleting estate: ' + e.message);
-    }
-}
 
 // ── Login attempt ──────────────────────────────────────────────────
 async function attemptLogin() {
@@ -18242,7 +18015,7 @@ function navigateToSection(target) {
         if (el && !el.value) el.valueAsDate = new Date();
         if (typeof showMobileRainfallCardGrid === 'function') showMobileRainfallCardGrid();
     }
-    if (target === 'settings') { renderEstatesList(); renderItemsTable(); renderManuringRounds(); renderMrBlocksGrid(); renderFieldMaintRounds(); renderFmBlocksGrid(); renderCiTable(); }
+    if (target === 'settings') { renderItemsTable(); renderManuringRounds(); renderMrBlocksGrid(); renderFieldMaintRounds(); renderFmBlocksGrid(); renderCiTable(); }
     if (typeof applyViewOnlyLock === 'function') applyViewOnlyLock(target);
 }
 
@@ -18259,150 +18032,12 @@ function switchSettingsTab(tab) {
         btn.classList.add('border-green-200', 'bg-white', 'text-green-800');
         btn.classList.remove('border-transparent', 'bg-transparent', 'text-gray-500');
     }
-    if (tab === 'est-blocks')    { renderEstatesList(); }
     if (tab === 'item-files')    { renderItemsTable(); }
     if (tab === 'manuring-prog') { renderManuringRounds(); renderMrBlocksGrid(); }
     if (tab === 'maint-prog')    { renderFieldMaintRounds(); renderFmBlocksGrid(); }
     if (tab === 'chem-limits')   { renderCiTable(); }
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// SETTINGS — BLOCK MANAGEMENT (per estate)
-// ══════════════════════════════════════════════════════════════════════
-
-let settingsBlocksEstate = null;
-
-function settingsManageBlocks(idx) {
-    const estate = GLOBAL_ESTATES[idx];
-    if (!estate) return;
-    settingsBlocksEstate = estate;
-    document.getElementById('settingsEstatesPanel').classList.add('hidden');
-    document.getElementById('settingsBlocksPanel').classList.remove('hidden');
-    document.getElementById('settingsBlocksEstateTitle').textContent = estate;
-    renderSettingsBlocksList();
-}
-
-function settingsBackToEstates() {
-    settingsBlocksEstate = null;
-    document.getElementById('settingsBlocksPanel').classList.add('hidden');
-    document.getElementById('settingsEstatesPanel').classList.remove('hidden');
-    renderEstatesList();
-}
-
-async function renderSettingsBlocksList() {
-    const container = document.getElementById('settingsBlocksContainer');
-    if (!container || !settingsBlocksEstate) return;
-    container.innerHTML = '<p class="text-sm text-gray-400 italic">Loading…</p>';
-    try {
-        const { data, error } = await supabaseClient
-            .from('port_locations').select('*')
-            .eq('estate', settingsBlocksEstate);
-        if (error) throw error;
-        const blocks = (data || []).sort((a, b) =>
-            (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-        if (blocks.length === 0) {
-            container.innerHTML = '<p class="text-sm text-gray-400 italic">No blocks registered yet for this estate. Use the form above to add the first block.</p>';
-            return;
-        }
-        let totalArea = 0, totalPalms = 0;
-        blocks.forEach(b => { totalArea += parseFloat(b.area) || 0; totalPalms += parseInt(b.numPalms) || 0; });
-        container.innerHTML = `
-            <div class="flex gap-4 mb-3 text-sm font-semibold text-green-800 bg-green-50 px-4 py-2 rounded-lg w-fit">
-                <span>Total Area: ${totalArea.toFixed(2)} Ha</span>
-                <span>|</span>
-                <span>Total Palms: ${totalPalms.toLocaleString()}</span>
-            </div>
-            <table class="min-w-full text-sm">
-                <thead class="bg-green-100 text-green-800">
-                    <tr>
-                        <th class="px-3 py-2 text-left">#</th>
-                        <th class="px-3 py-2 text-left">Block Name</th>
-                        <th class="px-3 py-2 text-right">Area (Ha)</th>
-                        <th class="px-3 py-2 text-right">No. of Palms</th>
-                        <th class="px-3 py-2 text-left">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${blocks.map((b, i) => `
-                        <tr class="border-b border-gray-100 hover:bg-green-50">
-                            <td class="px-3 py-2 text-gray-400">${i + 1}</td>
-                            <td class="px-3 py-2 font-medium">📍 ${b.name || ''}</td>
-                            <td class="px-3 py-2 text-right">${b.area != null ? parseFloat(b.area).toFixed(2) : '—'}</td>
-                            <td class="px-3 py-2 text-right">${b.numPalms != null ? parseInt(b.numPalms).toLocaleString() : '—'}</td>
-                            <td class="px-3 py-2 whitespace-nowrap">
-                                <button onclick="startEditSettingsBlock(${b.id})"
-                                    class="text-blue-600 hover:text-blue-800 text-xs font-semibold border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded mr-1">✏️ Edit</button>
-                                <button onclick="deleteSettingsBlock(${b.id})"
-                                    class="text-red-600 hover:text-red-800 text-xs font-semibold border border-red-200 hover:bg-red-50 px-2 py-1 rounded">🗑 Delete</button>
-                            </td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>`;
-    } catch (e) {
-        container.innerHTML = `<p class="text-red-500 text-sm">Error loading blocks: ${e.message}</p>`;
-    }
-}
-
-async function saveSettingsBlock() {
-    const name = (document.getElementById('sbName').value || '').trim();
-    const area = document.getElementById('sbArea').value !== '' ? parseFloat(document.getElementById('sbArea').value) : null;
-    const numPalms = document.getElementById('sbPalms').value !== '' ? parseInt(document.getElementById('sbPalms').value) : null;
-    const editId = document.getElementById('sbEditId').value;
-    if (!name) { alert('Block name is required.'); document.getElementById('sbName').focus(); return; }
-    if (!settingsBlocksEstate) return;
-    try {
-        if (editId) {
-            const { error } = await supabaseClient.from('port_locations')
-                .update({ name, area, numPalms }).eq('id', parseInt(editId)).eq('estate', settingsBlocksEstate);
-            if (error) throw error;
-        } else {
-            const { error } = await supabaseClient.from('port_locations')
-                .insert({ id: Date.now(), name, area, numPalms, estate: settingsBlocksEstate, company_id: (loadSession() || {}).company_id || null });
-            if (error) throw error;
-        }
-        cancelEditSettingsBlock();
-        await renderSettingsBlocksList();
-        if (settingsBlocksEstate === activeEstate) { loadEstateData(activeEstate); refreshAll(); }
-    } catch (e) {
-        alert('Error saving block: ' + e.message);
-    }
-}
-
-function startEditSettingsBlock(id) {
-    supabaseClient.from('port_locations').select('*').eq('id', id).single().then(({ data, error }) => {
-        if (error || !data) { alert('Could not load block data.'); return; }
-        document.getElementById('sbEditId').value  = id;
-        document.getElementById('sbName').value    = data.name || '';
-        document.getElementById('sbArea').value    = data.area != null ? data.area : '';
-        document.getElementById('sbPalms').value   = data.numPalms != null ? data.numPalms : '';
-        document.getElementById('sbFormTitle').textContent = 'Edit Block';
-        document.getElementById('sbSubmitBtn').textContent = '💾 Update Block';
-        document.getElementById('sbCancelBtn').classList.remove('hidden');
-        document.getElementById('sbName').focus();
-    });
-}
-
-function cancelEditSettingsBlock() {
-    document.getElementById('sbEditId').value = '';
-    document.getElementById('sbName').value   = '';
-    document.getElementById('sbArea').value   = '';
-    document.getElementById('sbPalms').value  = '';
-    document.getElementById('sbFormTitle').textContent = 'Add New Block';
-    document.getElementById('sbSubmitBtn').textContent = 'Add Block';
-    document.getElementById('sbCancelBtn').classList.add('hidden');
-}
-
-async function deleteSettingsBlock(id) {
-    if (!confirm('Delete this block? This removes it from all manuring and maintenance rounds that reference it. This cannot be undone.')) return;
-    try {
-        const { error } = await supabaseClient.from('port_locations').delete().eq('id', id);
-        if (error) throw error;
-        await renderSettingsBlocksList();
-        if (settingsBlocksEstate === activeEstate) { loadEstateData(activeEstate); refreshAll(); }
-    } catch (e) {
-        alert('Error deleting block: ' + e.message);
-    }
-}
 </script>
 
 <!-- ============ FFB PRODUCTION RECORD — JS ============ -->
