@@ -29,7 +29,12 @@
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html{scroll-behavior:smooth}
-        body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif;background:#F8FAFC;color:#0F172A;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+        body{font-family:'Inter',ui-sans-serif,system-ui,sans-serif;background:#F6F8FB;color:#0F172A;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+        /* Portal-matching ambient background — fixed layer behind all content */
+        #appBg{position:fixed;inset:0;z-index:-1;background:#F6F8FB;overflow:hidden;pointer-events:none}
+        #appBg::before,#appBg::after{content:'';position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+        #appBg::before{width:60vw;height:60vw;left:-18vw;top:-22vw;background:#BBF7D0}
+        #appBg::after{width:55vw;height:55vw;right:-20vw;bottom:-25vw;background:#BAE6FD}
 
         /* Layout */
         #appLayout{display:none;flex-direction:column;min-height:100vh}
@@ -1153,6 +1158,7 @@
     </style>
 </head>
 <body>
+<div id="appBg"></div>
 <!-- Pre-auth flash prevention: hide the login overlay immediately (synchronous,
      runs before any element is painted) if a valid session is cached in
      sessionStorage. The overlay is restored on logout or if Supabase rejects
@@ -1160,7 +1166,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-98';
+var APP_BUILD = '20261127-99';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
