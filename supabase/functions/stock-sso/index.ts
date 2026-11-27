@@ -1,5 +1,5 @@
 // Sign-in from MJM Intranet (Intranet "level 2: token redirect").
-//   { token, module: 'stock' | 'report' } → { session, auth, module }
+//   { token, module: 'stock' | 'report' | 'mantap' } → { session, auth, module }
 // The Intranet opens the app with ?gw_token=<60-second single-use token>.
 // We redeem it once with the Intranet's gw-check-access (server to server,
 // with that module's API key), then look the person up in port_users — and
@@ -11,12 +11,13 @@ import {
 } from '../_shared/common.ts';
 import { companyAccessRows, resolveAccess } from '../_shared/companyAccess.ts';
 import {
-  companiesForUser, intranetEstatesOf, matchLocations, intranetLocationIds, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
+  companiesForUser, intranetEstatesOf, matchLocations, moduleApiKey, intranetLocationIds, intranetLocationShortNames, intranetMasterData, linkEstates, saveCompanies, saveUserCompanies, type PortCompany,
 } from '../_shared/masterSync.ts';
 
 const INTRANET_URL = Deno.env.get('INTRANET_SUPABASE_URL') ?? 'https://briqzyxfxsvulyizzbiu.supabase.co';
 
-type Module = 'stock' | 'report';
+// Each Intranet icon: Plantation Operation (stock), Management Report (report), Mantap (mantap)
+type Module = 'stock' | 'report' | 'mantap';
 
 // Must match ALL_SECTIONS in the classic app (root index.html) — the Super
 // Admin's session carries every section id as an array.
@@ -39,9 +40,7 @@ interface CheckResult {
 
 /** One API key per Intranet module (the token's audience is the module code). */
 function apiKeyFor(module: Module): string {
-  const key = module === 'report'
-    ? Deno.env.get('INTRANET_REPORT_API_KEY')
-    : Deno.env.get('INTRANET_PORT_API_KEY') || Deno.env.get('INTRANET_STOCK_API_KEY') || Deno.env.get('INTRANET_MODULE_API_KEY');
+  const key = moduleApiKey(module);
   if (!key) throw new ApiError('err_sso_not_set_up', 500);
   return key;
 }
@@ -75,11 +74,14 @@ async function findUser(email: string): Promise<UserRow | null> {
 /** First visit: create an HQ User row that can open the module they came from.
  *  - stock:  no __configured flag → the app defaults every section to 'view'
  *  - report: only Management Report ('view'); everything else 'none'
+ *  - mantap: only Worker Manage ('view'); everything else 'none'
  *  Estates are left empty — an admin assigns them in User Management. */
 async function createUser(email: string, name: string, module: Module): Promise<UserRow> {
   const permissions: Record<string, unknown> = module === 'report'
     ? { __role: 'hq_user', __configured: true, mgmtreport: 'view' }
-    : { __role: 'hq_user' };
+    : module === 'mantap'
+      ? { __role: 'hq_user', __configured: true, workers: 'view' }
+      : { __role: 'hq_user' };
   const row = {
     id: Date.now(), // same id scheme as the app / mantap-worker-admin
     name, email, password_hash: '', estates: [], permissions, status: 'active',
@@ -148,7 +150,7 @@ let lastLink = 0;
 Deno.serve(handler(async (_req, body) => {
   const token = String(body.token ?? '');
   if (!token || token.length > 4000) throw new ApiError('err_sso_invalid', 400);
-  const module: Module = body.module === 'report' ? 'report' : 'stock';
+  const module: Module = body.module === 'report' || body.module === 'mantap' ? body.module : 'stock';
 
   const check = await redeem(token, module);
   if (!check.allowed || !check.user?.email) throw new ApiError('err_forbidden', 403);

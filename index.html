@@ -368,7 +368,7 @@
             const res = await fetch(SUPABASE_URL + '/functions/v1/stock-sso', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY },
-                body: JSON.stringify({ token, module: module === 'report' ? 'report' : 'stock' }), // the Intranet icon's API key
+                body: JSON.stringify({ token, module: module === 'report' || module === 'mantap' ? module : 'stock' }), // the Intranet icon's API key
             });
             const data = await res.json().catch(() => ({}));
             if (res.ok && data && data.session && data.session.email) {
@@ -424,7 +424,17 @@
             let last = ''; try { last = localStorage.getItem(COMPANY_KEY) || ''; } catch (e) {}
             if (last) pickCompany(last);
         }
-        if (session && companies.length && wanted && MODULES.some((m) => m.module === wanted)) return location.replace(appLink(wanted));
+        // An Intranet icon that points straight at one module (Management Report: ?module=report,
+        // Mantap: ?module=mantap → Worker Manage): open it for the company the Intranet chose
+        // (else the first), if this person may open it there; otherwise the front page.
+        const wantMod = wanted === 'mantap' ? 'workers' : wanted;
+        const wantM = wantMod && MODULES.find((m) => m.module === wantMod);
+        if (session && companies.length && wantM) {
+            if (!currentCompany()) pickCompany(companies[0].id);
+            const c = currentCompany();
+            if (c) currentLocation(c, locationsOf(c));
+            if (canOpen(liveSession, wantM)) return location.replace(appLink(wantMod));
+        }
         if (session && window.supabase) {
             try {
                 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
