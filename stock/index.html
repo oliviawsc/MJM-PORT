@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-90';
+var APP_BUILD = '20261127-91';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -11610,6 +11610,14 @@ function bootApp(session) {
         var _p = new URLSearchParams(window.location.search);
         var _coId = _p.get('gw_company_id');
         if (!_coId) return;
+        // Strip ALL Intranet company hint params immediately so applyIntranetCompany()
+        // below does not see gw_company_name etc. and try to match the portal company
+        // name against estate names (which would show a spurious "no estate matches" error).
+        try {
+            var _uC = new URL(window.location.href);
+            ['gw_company_id','gw_estate','gw_estate_short','gw_company','gw_company_name','gw_company_short'].forEach(function(k){_uC.searchParams.delete(k);});
+            history.replaceState(null, '', _uC.pathname + _uC.search + _uC.hash);
+        } catch(e0) {}
         var _companies = Array.isArray(session.companies) ? session.companies : [];
         var _co = _companies.find(function(c) { return c.id === _coId; });
         if (!_co || _co.id === session.company_id) return;
@@ -11625,11 +11633,6 @@ function bootApp(session) {
         session.company_name = _co.name;
         saveSession(session);
         try { localStorage.setItem('port_company_id', _co.id); localStorage.setItem('port_company', _co.name); } catch(e2) {}
-        try {
-            var _u = new URL(window.location.href);
-            _u.searchParams.delete('gw_company_id');
-            history.replaceState(null, '', _u.pathname + _u.search + _u.hash);
-        } catch(e3) {}
     })();
 
     // Remove the pre-auth flash-prevention style (no longer needed once booted)
