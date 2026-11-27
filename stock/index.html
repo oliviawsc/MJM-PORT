@@ -205,6 +205,13 @@
         /* Top header bar */
         #topHeaderBar{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;flex-shrink:0;background:linear-gradient(90deg,rgba(224,242,254,.85),rgba(240,253,244,.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(226,232,240,.8);position:fixed;top:0;left:0;right:0;z-index:90}
         .dark #topHeaderBar{background:#16162A;border-color:#252540}
+        /* User info widget — matches portal .who */
+        #headerWho{display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:10px;padding:4px 2px 4px 6px;transition:background .13s;}
+        #headerWho:hover{background:rgba(226,232,240,.5)}
+        #headerWho .hw-me{text-align:right;line-height:1.25;min-width:0}
+        #headerWho .hw-me b{display:block;font-size:13.5px;font-weight:600;color:#0F172A;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+        #headerWho .hw-me small{display:block;font-size:11.5px;color:#64748B;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+        #headerWho .hw-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2E7D32,#43A047);display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
 
         /* Summary card */
         .summary-card{transition:transform .15s,box-shadow .15s}
@@ -373,8 +380,7 @@
         /* Right: always keeps its natural width; never gets squeezed */
         body.estate-mobile #topHeaderBar > div:last-child { flex: 0 0 auto !important; flex-shrink: 0 !important; }
         /* Hide avatar name + email text — saves ~120 px so the estate name gets more room */
-        body.estate-mobile #avatarName,
-        body.estate-mobile #avatarEmail { display: none !important; }
+        body.estate-mobile #headerWho .hw-me { display: none !important; }
         /* Estate select width is driven by JS (resizeTopEstateSelect); just ensure no overflow */
         /* Avatar dropdown: fixed so it always sits within the viewport, regardless of flex layout */
         body.estate-mobile #avatarDropdown {
@@ -1166,7 +1172,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-101';
+var APP_BUILD = '20261127-102';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1483,15 +1489,13 @@ var APP_BUILD = '20261127-101';
                     <button id="topLangMS" onclick="setLang('ms')"
                         style="padding:5px 11px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:Inter,sans-serif;background:#F0FDF4;color:#2E7D32;transition:background .13s;">BM</button>
                 </div>
-                <button id="avatarBtn" onclick="toggleAvatarDropdown(event)"
-                    style="display:flex;align-items:center;gap:10px;padding:4px 2px 4px 8px;border-radius:10px;border:none;background:transparent;cursor:pointer;font-family:Inter,sans-serif;transition:background .13s;"
-                    onmouseover="this.style.background='rgba(226,232,240,.5)'" onmouseout="this.style.background='transparent'">
-                    <div style="text-align:right;line-height:1.25;min-width:0;">
-                        <div id="avatarName" style="font-size:13.5px;font-weight:600;color:#0F172A;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;">—</div>
-                        <div id="avatarEmail" style="font-size:11.5px;color:#64748B;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;">—</div>
+                <div id="headerWho" onclick="toggleAvatarDropdown(event)">
+                    <div class="hw-me">
+                        <b id="avatarName">—</b>
+                        <small id="avatarEmail">—</small>
                     </div>
-                    <div id="avatarCircle" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2E7D32,#43A047);display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">?</div>
-                </button>
+                    <div id="avatarCircle" class="hw-avatar">?</div>
+                </div>
                 <!-- Dropdown -->
                 <div id="avatarDropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:192px;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.10);z-index:999;overflow:hidden;">
                     <div style="padding:12px 14px;border-bottom:1px solid #F1F5F9;background:#F8FAFC;">
@@ -15554,9 +15558,9 @@ function populateChemFilters() {
         if(dd) dd.style.display='none';
     };
     document.addEventListener('click', function(e){
-        var dd = document.getElementById('avatarDropdown');
-        var btn = document.getElementById('avatarBtn');
-        if(dd && btn && !btn.contains(e.target) && !dd.contains(e.target)){
+        var dd  = document.getElementById('avatarDropdown');
+        var who = document.getElementById('headerWho');
+        if(dd && who && !who.contains(e.target) && !dd.contains(e.target)){
             dd.style.display='none';
         }
         var photoMenu = document.getElementById('txnPhotoMenu');
