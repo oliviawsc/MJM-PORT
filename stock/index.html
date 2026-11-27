@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-96';
+var APP_BUILD = '20261127-97';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1914,68 +1914,75 @@ var APP_BUILD = '20261127-96';
                     <h2 id="estateHubGreetName" style="font-size:28px;font-weight:800;color:#0F172A;letter-spacing:-.3px;font-family:Inter,sans-serif;">—</h2>
                 </div>
 
-                <!-- Module cards -->
-                <div style="padding:0 16px;display:flex;flex-direction:column;gap:20px;">
+                <!-- Two main cards: Stock & Rainfall -->
+                <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
-                    <!-- ── Stock Mobile Interface ── -->
-                    <div>
-                        <div style="font-size:11px;font-weight:700;color:#64748B;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-family:Inter,sans-serif;">Stock Mobile Interface</div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
-                            <!-- Baja -->
-                            <button id="estateHubFertCard" class="estate-card" onclick="navToEstateCategory('Fertilizer')" style="padding:22px 12px;">
-                                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#16a34a,#166534);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(22,163,74,.25);">
-                                    <span style="font-size:28px;">&#127807;</span>
-                                </div>
-                                <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="cat_fertilizer">Baja</div>
-                            </button>
-
-                            <!-- Kimia -->
-                            <button id="estateHubChemCard" class="estate-card" onclick="navToEstateCategory('Chemical')" style="padding:22px 12px;">
-                                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,99,235,.25);">
-                                    <span style="font-size:28px;">&#9879;&#65039;</span>
-                                </div>
-                                <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="cat_chemical">Racun</div>
-                            </button>
-
-                            <!-- Anak Sawit -->
-                            <button id="estateHubOPSCard" class="estate-card" onclick="navToEstateCategory('Oil Palm Seedling')" style="padding:22px 12px;">
-                                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#d97706,#b45309);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(217,119,6,.25);">
-                                    <span style="font-size:28px;">&#127807;</span>
-                                </div>
-                                <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_anak_sawit">Anak Sawit</div>
-                            </button>
-
-                            <!-- Peralatan / Tools -->
-                            <button id="estateHubToolsCard" class="estate-card" onclick="navToSection('tools_mobile_cat')" style="padding:22px 12px;">
-                                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(124,58,237,.25);">
-                                    <span style="font-size:28px;">&#128295;</span>
-                                </div>
-                                <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_peralatan">Peralatan</div>
-                            </button>
-
+                    <!-- Stock -->
+                    <button id="estateHubStockCard" class="estate-card" onclick="navToSection('estate_stock_hub')" style="padding:28px 12px;">
+                        <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#16a34a,#166534);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 16px rgba(22,163,74,.28);">
+                            <span style="font-size:30px;">&#128230;</span>
                         </div>
-                    </div>
+                        <div style="font-size:16px;font-weight:800;color:#0F172A;" data-i18n="hub_stok">Stok</div>
+                    </button>
 
-                    <!-- ── Rainfall Mobile Interface ── -->
-                    <div>
-                        <div style="font-size:11px;font-weight:700;color:#64748B;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-family:Inter,sans-serif;">Rainfall Mobile Interface</div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
-                            <!-- Hujan / Rainfall -->
-                            <button id="estateHubRainfallCard" class="estate-card" onclick="navToSection('mobile_rainfall')" style="padding:22px 12px;">
-                                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(14,165,233,.25);">
-                                    <span style="font-size:28px;">&#127783;&#65039;</span>
-                                </div>
-                                <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_hujan">Hujan</div>
-                            </button>
-
+                    <!-- Hujan / Rainfall -->
+                    <button id="estateHubRainfallCard" class="estate-card" onclick="navToSection('mobile_rainfall')" style="padding:28px 12px;">
+                        <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 4px 16px rgba(14,165,233,.28);">
+                            <span style="font-size:30px;">&#127783;&#65039;</span>
                         </div>
-                    </div>
+                        <div style="font-size:16px;font-weight:800;color:#0F172A;" data-i18n="hub_hujan">Hujan</div>
+                    </button>
 
                 </div>
 
 
+            </div>
+        </section>
+
+        <!-- ============ STOCK SUB-HUB ============ -->
+        <section id="estate_stock_hub" class="page-section">
+            <div style="min-height:100vh;background:linear-gradient(160deg,#F0FDF4 0%,#E8F5E9 40%,#F8FAFC 100%);padding-bottom:48px;">
+                <!-- Header -->
+                <div style="background:#fff;border-bottom:1px solid #E2E8F0;padding:12px 20px;display:flex;align-items:center;justify-content:center;position:sticky;top:0;z-index:10;">
+                    <button onclick="navToSection('estate_hub')" style="position:absolute;left:16px;background:none;border:none;cursor:pointer;font-size:26px;color:#374151;line-height:1;padding:0 8px;-webkit-tap-highlight-color:transparent;">&#8249;</button>
+                    <h2 style="font-size:17px;font-weight:800;color:#0F172A;font-family:Inter,sans-serif;margin:0;text-align:center;">&#128230; Stok</h2>
+                </div>
+                <!-- 2×2 category cards -->
+                <div style="padding:20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+                    <!-- Baja -->
+                    <button id="estateStockHubFertCard" class="estate-card" onclick="navToEstateCategory('Fertilizer')" style="padding:22px 12px;">
+                        <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#16a34a,#166534);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(22,163,74,.25);">
+                            <span style="font-size:28px;">&#127807;</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="cat_fertilizer">Baja</div>
+                    </button>
+
+                    <!-- Kimia -->
+                    <button id="estateStockHubChemCard" class="estate-card" onclick="navToEstateCategory('Chemical')" style="padding:22px 12px;">
+                        <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,99,235,.25);">
+                            <span style="font-size:28px;">&#9879;&#65039;</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="cat_chemical">Racun</div>
+                    </button>
+
+                    <!-- Anak Sawit -->
+                    <button id="estateStockHubOPSCard" class="estate-card" onclick="navToEstateCategory('Oil Palm Seedling')" style="padding:22px 12px;">
+                        <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#d97706,#b45309);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(217,119,6,.25);">
+                            <span style="font-size:28px;">&#127807;</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_anak_sawit">Anak Sawit</div>
+                    </button>
+
+                    <!-- Peralatan / Tools -->
+                    <button id="estateStockHubToolsCard" class="estate-card" onclick="navToSection('tools_mobile_cat')" style="padding:22px 12px;">
+                        <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 14px rgba(124,58,237,.25);">
+                            <span style="font-size:28px;">&#128295;</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:#0F172A;" data-i18n="hub_peralatan">Peralatan</div>
+                    </button>
+
+                </div>
             </div>
         </section>
 
@@ -12081,26 +12088,27 @@ function applyNavPermissions(session) {
 // Hide hub cards for sections the current user cannot access.
 // Called once during bootApp for estate-mobile users.
 function applyEstateHubPermissions(session) {
-    const dashOk  = getSectionAccess(session, 'dashboard')      !== 'none';
-    const fertOk  = getSectionAccess(session, 'estate_baja')    !== 'none';
-    const chemOk  = getSectionAccess(session, 'estate_racun')   !== 'none';
-    const opsOk   = getSectionAccess(session, 'estate_anak')    !== 'none';
-    const sumOk   = getSectionAccess(session, 'summary')        !== 'none';
+    const fertOk     = getSectionAccess(session, 'estate_baja')      !== 'none';
+    const chemOk     = getSectionAccess(session, 'estate_racun')     !== 'none';
+    const opsOk      = getSectionAccess(session, 'estate_anak')      !== 'none';
     const toolsOk    = getSectionAccess(session, 'tools_mobile_cat') !== 'none';
     const rainfallOk = getSectionAccess(session, 'mobile_rainfall')  !== 'none';
+    const stockOk    = fertOk || chemOk || opsOk || toolsOk;
 
     const hide = (id, show) => {
         const el = document.getElementById(id);
         if (el) el.style.display = show ? '' : 'none';
     };
 
-    hide('estateHubDashCard',     dashOk);
-    hide('estateHubFertCard',     fertOk);
-    hide('estateHubChemCard',     chemOk);
-    hide('estateHubOPSCard',      opsOk);
-    hide('estateHubSumCard',      sumOk);
-    hide('estateHubToolsCard',    toolsOk);
-    hide('estateHubRainfallCard', rainfallOk);
+    // Main hub: two top-level cards
+    hide('estateHubStockCard',      stockOk);
+    hide('estateHubRainfallCard',   rainfallOk);
+
+    // Stock sub-hub: individual category cards
+    hide('estateStockHubFertCard',  fertOk);
+    hide('estateStockHubChemCard',  chemOk);
+    hide('estateStockHubOPSCard',   opsOk);
+    hide('estateStockHubToolsCard', toolsOk);
 }
 
 // ── View-only enforcement ────────────────────────────────────────
