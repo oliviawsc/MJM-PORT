@@ -399,11 +399,43 @@
     }
     if (window.caches) caches.delete('opp-v1').catch(() => {});
 
+    // The Intranet already signed this person in while showing its own small
+    // "Opening…" box, and hands the result over in the address's #hash
+    // (#gw_handoff=<base64url JSON { session, auth }>, or #gw_error=<code>).
+    function takeHandoff() {
+        const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+        const raw = h.get('gw_handoff'), err = h.get('gw_error');
+        if (!raw && !err) return null;
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        if (err) return { error: SSO_ERRORS[err] || err };
+        try {
+            const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+            const json = decodeURIComponent(Array.prototype.map.call(atob(b64), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            const data = JSON.parse(json);
+            if (!data || !data.session || !data.session.email) return { error: SSO_ERRORS.err_sso_invalid };
+            return { data };
+        } catch (e) { return { error: SSO_ERRORS.err_sso_invalid }; }
+    }
+
     (async () => {
         const token = params.get('gw_token');
         const wanted = params.get('module'); // Intranet icon that points straight at one module
         let session = loadSession(), error = '';
-        if (token) {
+        const handoff = takeHandoff();
+        if (handoff && handoff.data) {
+            // Going straight on to one module: show nothing of this page in between
+            if (wanted) document.documentElement.style.visibility = 'hidden';
+            localStorage.setItem(SESSION_KEY, JSON.stringify(handoff.data.session));
+            session = handoff.data.session;
+            const a = handoff.data.auth;
+            if (a && a.access_token && window.supabase) {
+                try { await window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY).auth.setSession(a); } catch (e) {}
+            }
+        } else if (handoff && handoff.error) {
+            localStorage.removeItem(SESSION_KEY);
+            session = null;
+            error = handoff.error;
+        } else if (token) {
             const r = await signInFromIntranet(token, wanted);
             session = r.session || null;
             error = r.error || '';
@@ -435,6 +467,7 @@
             if (c) currentLocation(c, locationsOf(c));
             if (canOpen(liveSession, wantM)) return location.replace(appLink(wantMod));
         }
+        document.documentElement.style.visibility = '';
         if (session && window.supabase) {
             try {
                 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
