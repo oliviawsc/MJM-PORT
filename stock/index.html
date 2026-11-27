@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261126-89';
+var APP_BUILD = '20261127-90';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -19437,8 +19437,8 @@ function _swRenderPOBlocks(pos, allEntries, container) {
         html += '<span style="font-size:12.5px;color:#475569;">Qty Ordered: <strong style="color:#0F172A;">' + parseFloat(po.qty_ordered_mt).toFixed(3) + ' MT</strong></span>';
         html += '</div>';
         html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
-        html += '<button class="wb-btn" style="background:transparent;border:1px solid #E2E8F0;color:#475569;height:30px;font-size:12px;padding:0 12px;" onclick="showStoneAddPO(\'' + po.id + '\')">&#9998; Edit PO</button>';
         html += '<button class="wb-btn" style="background:transparent;border:1px solid #B45309;color:#B45309;height:30px;font-size:12px;padding:0 12px;" onclick="showStoneAddEntry(\'' + po.id + '\')">&#xFF0B; Add Entry</button>';
+        html += '<button class="wb-btn" style="background:transparent;border:1px solid #E2E8F0;color:#475569;height:30px;font-size:12px;padding:0 12px;" onclick="showStoneAddPO(\'' + po.id + '\')">&#9998; Edit PO</button>';
         html += '<button class="wb-btn" style="background:transparent;border:1px solid #DC2626;color:#DC2626;height:30px;font-size:12px;padding:0 12px;" onclick="deleteStonePO(\'' + po.id + '\',\'' + _swEsc(po.po_no) + '\')">&#128465; Delete PO</button>';
         html += '</div>';
         html += '</div>';
