@@ -372,9 +372,9 @@
         body.estate-mobile #topHeaderBar > div:nth-child(2) { flex: 0 0 0 !important; width: 0 !important; overflow: hidden !important; }
         /* Right: always keeps its natural width; never gets squeezed */
         body.estate-mobile #topHeaderBar > div:last-child { flex: 0 0 auto !important; flex-shrink: 0 !important; }
-        /* Hide avatar name + role text — saves ~120 px so the estate name gets more room */
+        /* Hide avatar name + email text — saves ~120 px so the estate name gets more room */
         body.estate-mobile #avatarName,
-        body.estate-mobile #avatarRole { display: none !important; }
+        body.estate-mobile #avatarEmail { display: none !important; }
         /* Estate select width is driven by JS (resizeTopEstateSelect); just ensure no overflow */
         /* Avatar dropdown: fixed so it always sits within the viewport, regardless of flex layout */
         body.estate-mobile #avatarDropdown {
@@ -1166,7 +1166,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-100';
+var APP_BUILD = '20261127-101';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -1484,14 +1484,13 @@ var APP_BUILD = '20261127-100';
                         style="padding:5px 11px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:Inter,sans-serif;background:#F0FDF4;color:#2E7D32;transition:background .13s;">BM</button>
                 </div>
                 <button id="avatarBtn" onclick="toggleAvatarDropdown(event)"
-                    style="display:flex;align-items:center;gap:9px;padding:5px 10px 5px 6px;border-radius:99px;border:1px solid #D1FAE5;background:#F0FDF4;cursor:pointer;font-family:Inter,sans-serif;transition:background .13s;"
-                    onmouseover="this.style.background='#D1FAE5'" onmouseout="this.style.background='#F0FDF4'">
-                    <div id="avatarCircle" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2E7D32,#43A047);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">?</div>
-                    <div style="text-align:left;line-height:1.25;">
-                        <div id="avatarName" style="font-size:12.5px;font-weight:600;color:#0F172A;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">—</div>
-                        <div id="avatarRole" style="font-size:10.5px;color:#2E7D32;font-weight:500;text-transform:capitalize;">—</div>
+                    style="display:flex;align-items:center;gap:10px;padding:4px 2px 4px 8px;border-radius:10px;border:none;background:transparent;cursor:pointer;font-family:Inter,sans-serif;transition:background .13s;"
+                    onmouseover="this.style.background='rgba(226,232,240,.5)'" onmouseout="this.style.background='transparent'">
+                    <div style="text-align:right;line-height:1.25;min-width:0;">
+                        <div id="avatarName" style="font-size:13.5px;font-weight:600;color:#0F172A;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;">—</div>
+                        <div id="avatarEmail" style="font-size:11.5px;color:#64748B;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;">—</div>
                     </div>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:#94A3B8;flex-shrink:0;"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <div id="avatarCircle" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2E7D32,#43A047);display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">?</div>
                 </button>
                 <!-- Dropdown -->
                 <div id="avatarDropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:192px;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.10);z-index:999;overflow:hidden;">
@@ -15534,15 +15533,15 @@ function populateChemFilters() {
         var initials = name ? name.trim().split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase() : (email[0]||'?').toUpperCase();
         var circle = document.getElementById('avatarCircle');
         var aname  = document.getElementById('avatarName');
-        var arole  = document.getElementById('avatarRole');
+        var aemail = document.getElementById('avatarEmail');
         var dname  = document.getElementById('dropdownUserName');
         var demail = document.getElementById('dropdownUserEmail');
-        var roleLabel = role === 'superadmin' ? 'Super Admin' : (getRoleDef(role).label || role);
+        var cleanEmail = email.replace(/@psms\.app$/, '');
         if(circle) circle.textContent = initials;
         if(aname)  aname.textContent  = name || email;
-        if(arole)  arole.textContent  = roleLabel;
+        if(aemail) aemail.textContent = cleanEmail;
         if(dname)  dname.textContent  = name || email;
-        if(demail) demail.textContent = email.replace(/@psms\.app$/, '');
+        if(demail) demail.textContent = cleanEmail;
     }
     window.toggleAvatarDropdown = function(e){
         e.stopPropagation();
