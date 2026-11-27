@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-92';
+var APP_BUILD = '20261127-93';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -5771,29 +5771,12 @@ function buildLocationOptionsHtml() {
         const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
         optionsHtml = sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
     } else {
-        const hasDivision = blocks.some(r => r.division);
-        const hasPhase    = blocks.some(r => r.phase);
-
-        if (!hasDivision && !hasPhase) {
-            // Flat list — no grouping needed
-            optionsHtml = blocks.map(r => `<option value="${_estateBlockLabel(r)}">${_estateBlockLabel(r)}</option>`).join('');
-        } else {
-            // Group by Division + Phase (single-level optgroup; HTML only supports one level)
-            const groups = new Map();
-            blocks.forEach(r => {
-                const grpParts = [];
-                if (r.division) grpParts.push('Division ' + r.division);
-                if (r.phase)    grpParts.push('Phase ' + r.phase);
-                const grpKey = grpParts.join(' / ');
-                if (!groups.has(grpKey)) groups.set(grpKey, []);
-                groups.get(grpKey).push(r);
-            });
-            optionsHtml = '';
-            groups.forEach((rows, grp) => {
-                const opts = rows.map(r => `<option value="${_estateBlockLabel(r)}">Block ${r.block}</option>`).join('');
-                optionsHtml += grp ? `<optgroup label="${grp}">${opts}</optgroup>` : opts;
-            });
-        }
+        // Flat list — full label as both value and display text so the stored
+        // transaction value already carries the full context (Phase / Block etc.)
+        optionsHtml = blocks.map(r => {
+            const lbl = _estateBlockLabel(r);
+            return `<option value="${lbl}">${lbl}</option>`;
+        }).join('');
     }
 
     if (isMobile) {
