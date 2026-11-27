@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-94';
+var APP_BUILD = '20261127-95';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -5173,7 +5173,7 @@ async function loadFromSupabase() {
             supabaseClient.from('port_maint_claims').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_chem_ingredients').select('*').eq('estate', activeEstate),
             supabaseClient.from('port_rainfall_txns').select('*').eq('estate', activeEstate),
-            supabaseClient.from('port_estate_blocks').select('division,phase,block').eq('estate', activeEstate).order('division').order('phase').order('block')
+            supabaseClient.from('port_estate_blocks').select('division,phase,block,palm_count').eq('estate', activeEstate).order('division').order('phase').order('block')
         ]);
 
         if (itemsRes.error)    console.error('[Supabase] load items',          itemsRes.error);
@@ -6255,19 +6255,21 @@ function calcRoundBudget(round) {
 function renderMrBlocksGrid(checkedBlocks) {
     const grid = document.getElementById('mrBlocksGrid');
     if (!grid) return;
-    if (locations.length === 0) {
-        grid.innerHTML = '<p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Location Area first.</p>';
+    if (estateBlocks.length === 0) {
+        grid.innerHTML = '<p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Estate Info first.</p>';
         return;
     }
-    const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-    grid.innerHTML = sorted.map(l => `
+    grid.innerHTML = estateBlocks.map(r => {
+        const lbl = _estateBlockLabel(r);
+        return `
         <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
             <input type="checkbox" class="mr-block-cb accent-green-700 w-4 h-4"
-                value="${l.name}"
-                ${checkedBlocks && checkedBlocks.includes(l.name) ? 'checked' : ''} />
-            <span>${l.name}</span>
-            <span class="text-xs text-gray-400">(${l.numPalms || 0} palms)</span>
-        </label>`).join('');
+                value="${lbl}"
+                ${checkedBlocks && checkedBlocks.includes(lbl) ? 'checked' : ''} />
+            <span>${lbl}</span>
+            <span class="text-xs text-gray-400">(${r.palm_count || 0} palms)</span>
+        </label>`;
+    }).join('');
 }
 
 // Select / deselect all block checkboxes in the manuring form
@@ -9148,10 +9150,7 @@ function openEditTxnModal(id) {
 
     // Populate location dropdown and pre-select current value
     const locSel = document.getElementById('editTxnLocation');
-    const _dLoc = I18N[currentLang] || I18N['en'];
-    const _sortedLoc = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-    locSel.innerHTML = `<option value="None/Storage">${_dLoc.opt_none_storage}</option>` +
-        _sortedLoc.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    locSel.innerHTML = buildLocationOptionsHtml();
     locSel.value = t.location;
 
     // Show manuring round picker only for Fertilizer Out
@@ -13327,19 +13326,21 @@ let editingFmRoundId = null;
 function renderFmBlocksGrid(checkedBlocks) {
     const grid = document.getElementById('fmBlocksGrid');
     if (!grid) return;
-    if (locations.length === 0) {
-        grid.innerHTML = '<p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Location Area first.</p>';
+    if (estateBlocks.length === 0) {
+        grid.innerHTML = '<p class="text-xs text-gray-400 col-span-full italic">No blocks registered yet. Add blocks in Estate Info first.</p>';
         return;
     }
-    const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-    grid.innerHTML = sorted.map(l => `
+    grid.innerHTML = estateBlocks.map(r => {
+        const lbl = _estateBlockLabel(r);
+        return `
         <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
             <input type="checkbox" class="fm-block-cb accent-green-700 w-4 h-4"
-                value="${l.name}"
-                ${checkedBlocks && checkedBlocks.includes(l.name) ? 'checked' : ''} />
-            <span>${l.name}</span>
-            <span class="text-xs text-gray-400">(${l.numPalms || 0} palms)</span>
-        </label>`).join('');
+                value="${lbl}"
+                ${checkedBlocks && checkedBlocks.includes(lbl) ? 'checked' : ''} />
+            <span>${lbl}</span>
+            <span class="text-xs text-gray-400">(${r.palm_count || 0} palms)</span>
+        </label>`;
+    }).join('');
 }
 
 /** Tick or untick all block checkboxes in the Field Maintenance form. */
