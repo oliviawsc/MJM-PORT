@@ -1160,7 +1160,7 @@
 <script>
 // APP_BUILD is checked by the auto-refresh guard below.
 // Bump this string whenever code is deployed to force stale cached pages to reload.
-var APP_BUILD = '20261127-93';
+var APP_BUILD = '20261127-94';
 (function () {
     var _vr = window.location.search.indexOf('_vr') !== -1;
     // Legacy guard: very old cached pages have no APP_BUILD at all.
@@ -5766,18 +5766,12 @@ function buildLocationOptionsHtml() {
     var blocks = estateBlocks.slice();
     var optionsHtml;
 
-    if (!blocks.length) {
-        // No estate blocks configured — fall back to port_locations list
-        const sorted = locations.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' }));
-        optionsHtml = sorted.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
-    } else {
-        // Flat list — full label as both value and display text so the stored
-        // transaction value already carries the full context (Phase / Block etc.)
-        optionsHtml = blocks.map(r => {
-            const lbl = _estateBlockLabel(r);
-            return `<option value="${lbl}">${lbl}</option>`;
-        }).join('');
-    }
+    // Flat list — full label as both value and display text so the stored
+    // transaction value already carries the full context (Phase / Block etc.)
+    optionsHtml = blocks.map(r => {
+        const lbl = _estateBlockLabel(r);
+        return `<option value="${lbl}">${lbl}</option>`;
+    }).join('');
 
     if (isMobile) {
         return `<option value="">-- Select Block --</option>` + optionsHtml;
